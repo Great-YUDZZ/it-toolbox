@@ -21,39 +21,17 @@ Instalasi **IT Toolbox** dirancang sangat praktis dan ramah pengguna. Anda tidak
 
 ---
 
-### 🪟 1. Untuk Pengguna Windows (Windows 10 / 11 64-bit)
-
-#### Langkah 1: Unduh Installer
-Unduh file installer resmi:
-👉 **[Download IT-Toolbox-Setup-x64.exe](https://github.com/Great-YUDZZ/it-toolbox/releases/latest)** *(atau dari folder `dist/IT-Toolbox-Setup-x64.exe`)*.
-
-#### Langkah 2: Jalankan Installer
-1. **Double-click** file `IT-Toolbox-Setup-x64.exe`.
-2. Pilih bahasa (tersedia **Bahasa Indonesia** & English).
-3. Klik **Lanjut / Next**.
-4. Pilihan centang **"Buat icon di Desktop"** sudah otomatis aktif secara default.
-5. Klik **Pasang / Install**.
-6. Klik **Selesai / Finish**.
-
-#### 🎉 Hasil:
-- Shortcut resmi **IT Toolbox** **langsung muncul di Desktop** Anda!
-- Shortcut juga otomatis terdaftar di **Start Menu** Windows.
-- Aplikasi langsung terbuka tanpa jendela CMD hitam (*clean GUI mode*).
-- Dapat di-uninstall kapan saja secara bersih melalui *Windows Settings > Installed Apps*.
-
----
-
-### 🐧 2. Untuk Pengguna Linux (Ubuntu, Debian, Linux Mint, Pop!_OS, Zorin, dll.)
+### 🐧 1. Untuk Pengguna Linux (Ubuntu, Debian, Linux Mint, Pop!_OS, Zorin, dll.)
 
 Tersedia dua metode instalasi mudah untuk Linux:
 
 #### Metode Utama: Menggunakan Paket `.deb` (Paling Direkomendasikan)
 
 ##### Langkah 1: Unduh Paket `.deb`
-Unduh file paket:
-👉 **[Download it-toolbox_1.0.0_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/latest)** *(atau dari folder `dist/it-toolbox_1.0.0_amd64.deb`)*.
+Klik link download langsung di bawah ini:
+👉 **[Download it-toolbox_1.0.0_amd64.deb (v1.0.0)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.0.0/it-toolbox_1.0.0_amd64.deb)**
 
-##### Langkah 2: Install dengan 1 Klik
+##### Langkah 2: Install dengan 1 Klik (Klik-Klik Aja)
 1. Buka File Manager Anda dan cari file `it-toolbox_1.0.0_amd64.deb`.
 2. **Double-click** file `.deb` tersebut.
 3. Jendela **App Center / Software Center / GDebi** akan terbuka secara otomatis.
@@ -67,6 +45,38 @@ Unduh file paket:
 > ```bash
 > sudo apt install ./it-toolbox_1.0.0_amd64.deb
 > ```
+
+---
+
+### 🪟 2. Untuk Pengguna Windows (Windows 10 / 11 64-bit)
+
+#### Opsi A: Unduh Installer Resmi
+Unduh file installer dari halaman rilis:
+👉 **[Halaman Rilis IT Toolbox](https://github.com/Great-YUDZZ/it-toolbox/releases/latest)**
+
+#### Opsi B: Kompilasi & Buat Setup Mandiri di Windows
+Jika Anda sedang berada di komputer Windows:
+1. Clone repositori ini:
+   ```cmd
+   git clone https://github.com/Great-YUDZZ/it-toolbox.git
+   cd it-toolbox
+   ```
+2. Jalankan skrip pembuat installer:
+   ```cmd
+   build\windows\build.bat
+   ```
+3. File installer `dist\IT-Toolbox-Setup-x64.exe` akan otomatis dibuat.
+
+#### Cara Instalasi di Windows:
+1. **Double-click** file `IT-Toolbox-Setup-x64.exe`.
+2. Pilih bahasa (tersedia **Bahasa Indonesia** & English).
+3. Klik **Lanjut / Next** -> Pilihan centang **"Buat icon di Desktop"** sudah otomatis aktif.
+4. Klik **Pasang / Install** -> **Selesai / Finish**.
+
+#### 🎉 Hasil:
+- Shortcut resmi **IT Toolbox** **langsung muncul di Desktop** Anda!
+- Shortcut juga otomatis terdaftar di **Start Menu** Windows.
+- Aplikasi langsung terbuka tanpa jendela CMD hitam (*clean GUI mode*).
 
 ---
 
