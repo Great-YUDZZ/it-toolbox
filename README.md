@@ -152,4 +152,4 @@ Kontribusi selalu disambut dengan baik!
 
 Proyek ini didistribusikan di bawah lisensi [MIT License](LICENSE).
 
-Dibuat dengan ❤️ oleh [Great-YUDZZ](https://github.com/Great-YUDZZ).
+Dibuat oleh [Great-YUDZZ](https://github.com/Great-YUDZZ).
