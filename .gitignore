@@ -1,0 +1,21 @@
+# Compiled binaries and builds
+/it-toolbox
+*.exe
+*.dll
+*.so
+*.dylib
+*.syso
+/dist/
+
+# Test and coverage artifacts
+*.test
+*.out
+coverage.txt
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/

@@ -1,0 +1,124 @@
+{
+  "ports": [
+    {
+      "port": 20,
+      "protocol": "TCP",
+      "service": "FTP Data",
+      "description": "File Transfer Protocol transfer data stream"
+    },
+    {
+      "port": 21,
+      "protocol": "TCP",
+      "service": "FTP Control",
+      "description": "File Transfer Protocol perintah dan kontrol koneksi"
+    },
+    {
+      "port": 22,
+      "protocol": "TCP",
+      "service": "SSH / SFTP",
+      "description": "Secure Shell remote terminal login dan transfer file terenkripsi"
+    },
+    {
+      "port": 23,
+      "protocol": "TCP",
+      "service": "Telnet",
+      "description": "Protokol remote terminal tanpa enkripsi (legacy/insecure)"
+    },
+    {
+      "port": 25,
+      "protocol": "TCP",
+      "service": "SMTP",
+      "description": "Simple Mail Transfer Protocol pengiriman email antar mail server"
+    },
+    {
+      "port": 53,
+      "protocol": "TCP/UDP",
+      "service": "DNS",
+      "description": "Domain Name System resolusi nama domain ke alamat IP"
+    },
+    {
+      "port": 67,
+      "protocol": "UDP",
+      "service": "DHCP Server",
+      "description": "Dynamic Host Configuration Protocol server broadcast"
+    },
+    {
+      "port": 68,
+      "protocol": "UDP",
+      "service": "DHCP Client",
+      "description": "Dynamic Host Configuration Protocol client request"
+    },
+    {
+      "port": 80,
+      "protocol": "TCP",
+      "service": "HTTP",
+      "description": "Hypertext Transfer Protocol lalu lintas web unencrypted"
+    },
+    {
+      "port": 110,
+      "protocol": "TCP",
+      "service": "POP3",
+      "description": "Post Office Protocol v3 penerimaan email klien"
+    },
+    {
+      "port": 123,
+      "protocol": "UDP",
+      "service": "NTP",
+      "description": "Network Time Protocol sinkronisasi waktu jaringan"
+    },
+    {
+      "port": 143,
+      "protocol": "TCP",
+      "service": "IMAP",
+      "description": "Internet Message Access Protocol manajemen kotak surat email"
+    },
+    {
+      "port": 161,
+      "protocol": "UDP",
+      "service": "SNMP",
+      "description": "Simple Network Management Protocol monitoring perangkat jaringan"
+    },
+    {
+      "port": 443,
+      "protocol": "TCP",
+      "service": "HTTPS / TLS",
+      "description": "Hypertext Transfer Protocol Secure lalu lintas web terenkripsi TLS/SSL"
+    },
+    {
+      "port": 445,
+      "protocol": "TCP",
+      "service": "SMB",
+      "description": "Server Message Block file sharing dan printer jaringan Windows"
+    },
+    {
+      "port": 3306,
+      "protocol": "TCP",
+      "service": "MySQL / MariaDB",
+      "description": "Port default koneksi database engine MySQL dan MariaDB"
+    },
+    {
+      "port": 3389,
+      "protocol": "TCP/UDP",
+      "service": "RDP",
+      "description": "Remote Desktop Protocol GUI remote access Windows"
+    },
+    {
+      "port": 5432,
+      "protocol": "TCP",
+      "service": "PostgreSQL",
+      "description": "Port default koneksi database engine PostgreSQL"
+    },
+    {
+      "port": 6379,
+      "protocol": "TCP",
+      "service": "Redis",
+      "description": "Port default in-memory key-value cache database Redis"
+    },
+    {
+      "port": 8080,
+      "protocol": "TCP",
+      "service": "HTTP Alternate",
+      "description": "Port umum untuk web server pengembangan lokal (Dev server, Tomcat, Spring Boot)"
+    }
+  ]
+}

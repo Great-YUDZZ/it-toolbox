@@ -1,0 +1,76 @@
+name: Build Installers (Windows & Linux)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-linux-deb:
+    name: Build Linux .deb Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Install Linux dependencies (OpenGL/X11 & dpkg)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev dpkg-dev
+
+      - name: Package .deb installer
+        run: |
+          bash build/linux/package-deb.sh 1.0.0
+
+      - name: Upload Linux .deb Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IT-Toolbox-Linux-deb
+          path: dist/*.deb
+
+  build-windows-exe:
+    name: Build Windows Inno Setup Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Generate Windows Resource Icons
+        run: |
+          go run github.com/tc-hib/go-winres@latest simply --icon assets/icon.png
+
+      - name: Build Windows Executable (No Console)
+        run: |
+          go build -ldflags "-H=windowsgui -s -w" -o it-toolbox.exe .
+
+      - name: Compile Inno Setup Installer
+        uses: MinamimotoCondo/action-inno-setup@v1
+        with:
+          filepath: build/windows/installer.iss
+
+      - name: Upload Windows Setup Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IT-Toolbox-Windows-Setup
+          path: dist/IT-Toolbox-Setup-x64.exe
+
+      - name: Upload Windows Standalone Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: IT-Toolbox-Windows-Binary
+          path: it-toolbox.exe

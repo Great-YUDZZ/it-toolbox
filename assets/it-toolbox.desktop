@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=IT Toolbox
+GenericName=Developer & Network Utilities
+Comment=All-in-one IT Utility suite for networking, security, data conversion, and developer tools
+Exec=it-toolbox
+Icon=it-toolbox
+Terminal=false
+Categories=Utility;Development;Network;
+Keywords=it;toolbox;converter;network;hash;jwt;ping;dns;
+StartupNotify=true
+StartupWMClass=com.yudz.it-toolbox

@@ -1,0 +1,159 @@
+{
+  "categories": [
+    {
+      "name": "Linux Terminal",
+      "commands": [
+        {
+          "command": "ls -la",
+          "description": "Menampilkan seluruh isi direktori termasuk file tersembunyi (dotfiles) beserta detail izin dan ukuran.",
+          "example": "ls -la /var/log"
+        },
+        {
+          "command": "ps aux | grep <process>",
+          "description": "Melihat seluruh proses yang sedang berjalan di sistem dan memfilternya dengan kata kunci tertentu.",
+          "example": "ps aux | grep nginx"
+        },
+        {
+          "command": "chmod +x <file>",
+          "description": "Memberikan hak akses eksekusi (executable) pada sebuah file atau script.",
+          "example": "chmod +x deploy.sh"
+        },
+        {
+          "command": "tar -czvf <archive.tar.gz> <folder>",
+          "description": "Membuat arsip terkompresi gzip dari sebuah folder atau kumpulan file.",
+          "example": "tar -czvf backup_2026.tar.gz /var/www/html"
+        },
+        {
+          "command": "df -h",
+          "description": "Menampilkan sisa ruang penyimpanan (disk space) di seluruh mount point dalam format human-readable.",
+          "example": "df -h"
+        },
+        {
+          "command": "netstat -tulpn",
+          "description": "Menampilkan port TCP dan UDP yang sedang listening beserta nomor PID aplikasi pemiliknya.",
+          "example": "sudo netstat -tulpn"
+        },
+        {
+          "command": "curl -I <url>",
+          "description": "Mengambil HTTP response header dari server web tujuan tanpa mendownload body.",
+          "example": "curl -I https://google.com"
+        }
+      ]
+    },
+    {
+      "name": "Git",
+      "commands": [
+        {
+          "command": "git status",
+          "description": "Melihat status staging area, file yang dimodifikasi, dan file yang belum di-track.",
+          "example": "git status"
+        },
+        {
+          "command": "git commit -m \"<pesan>\"",
+          "description": "Menyimpan snapshot perubahan staged ke dalam git history dengan pesan deskriptif.",
+          "example": "git commit -m \"feat: implement network calculator\""
+        },
+        {
+          "command": "git checkout -b <branch-baru>",
+          "description": "Membuat branch baru dan langsung beralih ke branch tersebut.",
+          "example": "git checkout -b feature/auth"
+        },
+        {
+          "command": "git stash / git stash pop",
+          "description": "Menyimpan sementara perubahan yang belum di-commit ke stash stack dan mengembalikannya nanti.",
+          "example": "git stash && git pull && git stash pop"
+        },
+        {
+          "command": "git log --oneline --graph",
+          "description": "Menampilkan riwayat commit secara ringkas dan visual dengan cabang graph.",
+          "example": "git log --oneline --graph -n 10"
+        },
+        {
+          "command": "git reset --hard HEAD~1",
+          "description": "Membatalkan 1 commit terakhir dan membuang semua perubahan file yang terkait.",
+          "example": "git reset --hard HEAD~1"
+        }
+      ]
+    },
+    {
+      "name": "Docker",
+      "commands": [
+        {
+          "command": "docker ps -a",
+          "description": "Menampilkan daftar seluruh kontainer Docker (baik yang aktif maupun yang berhenti).",
+          "example": "docker ps -a"
+        },
+        {
+          "command": "docker run -d -p <host>:<container> <image>",
+          "description": "Menjalankan kontainer di background (detached) dengan port forwarding ke host.",
+          "example": "docker run -d -p 8080:80 nginx:alpine"
+        },
+        {
+          "command": "docker exec -it <container> /bin/sh",
+          "description": "Membuka sesi terminal shell interaktif di dalam kontainer yang sedang berjalan.",
+          "example": "docker exec -it my_database /bin/bash"
+        },
+        {
+          "command": "docker-compose up -d --build",
+          "description": "Membangun ulang image dan menjalankan multi-container stack sesuai konfigurasi docker-compose.yml.",
+          "example": "docker-compose up -d --build"
+        },
+        {
+          "command": "docker system prune -a",
+          "description": "Membersihkan seluruh kontainer yang mati, network yang tidak terpakai, dan image dangling.",
+          "example": "docker system prune -a --volumes"
+        }
+      ]
+    },
+    {
+      "name": "SQL",
+      "commands": [
+        {
+          "command": "SELECT ... JOIN ... ON ...",
+          "description": "Menggabungkan baris dari dua tabel atau lebih berdasarkan kolom relasi yang bersesuaian.",
+          "example": "SELECT u.name, o.id FROM users u INNER JOIN orders o ON u.id = o.user_id;"
+        },
+        {
+          "command": "CREATE INDEX idx_name ON table(column)",
+          "description": "Membuat index pada kolom tabel untuk mempercepat kueri pencarian data.",
+          "example": "CREATE INDEX idx_user_email ON users(email);"
+        },
+        {
+          "command": "INSERT INTO table (col1, col2) VALUES (?, ?)",
+          "description": "Menambahkan baris rekaman baru ke dalam tabel dengan parameterized values.",
+          "example": "INSERT INTO products (name, price) VALUES ('Keyboard', 350000);"
+        },
+        {
+          "command": "ALTER TABLE ... ADD COLUMN ...",
+          "description": "Memodifikasi struktur tabel yang sudah ada dengan menambahkan kolom baru.",
+          "example": "ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE;"
+        }
+      ]
+    },
+    {
+      "name": "PowerShell",
+      "commands": [
+        {
+          "command": "Get-Service | Where-Object Status -eq 'Running'",
+          "description": "Menampilkan seluruh background service Windows yang saat ini berstatus berjalan.",
+          "example": "Get-Service | Where-Object Status -eq 'Running'"
+        },
+        {
+          "command": "Test-NetConnection -ComputerName <host> -Port <port>",
+          "description": "Menguji konektivitas jaringan dan status port TCP tujuan (mirip telnet / ping port).",
+          "example": "Test-NetConnection -ComputerName 192.168.1.1 -Port 80"
+        },
+        {
+          "command": "Get-Process | Sort-Object CPU -Descending | Select -First 5",
+          "description": "Menampilkan 5 proses yang memakan penggunaan CPU tertinggi di Windows.",
+          "example": "Get-Process | Sort-Object CPU -Descending | Select -First 5"
+        },
+        {
+          "command": "Invoke-WebRequest -Uri <url> -OutFile <file>",
+          "description": "Mengunduh file dari web atau mengirimkan HTTP request via PowerShell.",
+          "example": "Invoke-WebRequest -Uri 'https://example.com/file.zip' -OutFile 'download.zip'"
+        }
+      ]
+    }
+  ]
+}

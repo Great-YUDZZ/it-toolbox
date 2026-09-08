@@ -1,0 +1,100 @@
+{
+  "codes": [
+    {
+      "code": 200,
+      "name": "OK",
+      "description": "Permintaan klien berhasil diproses oleh server.",
+      "cause": "Respons standar untuk permintaan GET/POST yang sukses dan valid."
+    },
+    {
+      "code": 201,
+      "name": "Created",
+      "description": "Permintaan berhasil dan menghasilkan sumber daya (resource) baru di server.",
+      "cause": "Umumnya dihasilkan setelah request POST atau PUT yang membuat data baru."
+    },
+    {
+      "code": 204,
+      "name": "No Content",
+      "description": "Permintaan berhasil diproses tetapi tidak mengembalikan data di body response.",
+      "cause": "Sering dipakai pada operasi DELETE yang berhasil menghapus data tanpa perlu mengirim body."
+    },
+    {
+      "code": 301,
+      "name": "Moved Permanently",
+      "description": "Target resource telah dipindahkan ke URI baru secara permanen.",
+      "cause": "Pengalihan URL permanen (SEO redirect). Klien harus menggunakan URL baru di masa mendatang."
+    },
+    {
+      "code": 302,
+      "name": "Found (Temporary Redirect)",
+      "description": "Target resource berada di URI lain untuk sementara waktu.",
+      "cause": "Pengalihan sementara, misalnya redirect ke login page saat session expired."
+    },
+    {
+      "code": 304,
+      "name": "Not Modified",
+      "description": "Resource belum berubah sejak versi cache terakhir klien.",
+      "cause": "Browser caching (conditional GET dengan If-None-Match atau If-Modified-Since)."
+    },
+    {
+      "code": 400,
+      "name": "Bad Request",
+      "description": "Server tidak dapat memproses request karena sintaks klien yang salah atau data payload tidak valid.",
+      "cause": "Format JSON salah, parameter query hilang, atau validasi skema gagal."
+    },
+    {
+      "code": 401,
+      "name": "Unauthorized",
+      "description": "Autentikasi diperlukan sebelum resource dapat diakses.",
+      "cause": "Token JWT hilang, kedaluwarsa, atau kredensial API key salah."
+    },
+    {
+      "code": 403,
+      "name": "Forbidden",
+      "description": "Klien telah diautentikasi tetapi tidak memiliki hak izin akses ke resource tersebut.",
+      "cause": "Role pengguna tidak mencukupi (misal: user biasa mencoba mengakses endpoint admin)."
+    },
+    {
+      "code": 404,
+      "name": "Not Found",
+      "description": "Server tidak dapat menemukan sumber daya (endpoint/file) yang diminta.",
+      "cause": "URL salah ketik, rute API tidak terdaftar, atau ID entitas tidak ada di database."
+    },
+    {
+      "code": 405,
+      "name": "Method Not Allowed",
+      "description": "Metode HTTP yang digunakan tidak diizinkan untuk endpoint ini.",
+      "cause": "Mengirim POST ke endpoint yang hanya mendukung GET."
+    },
+    {
+      "code": 429,
+      "name": "Too Many Requests",
+      "description": "Klien telah mengirim terlalu banyak request dalam rentang waktu tertentu (Rate Limiting).",
+      "cause": "Melebihi kuota request API per menit/jam."
+    },
+    {
+      "code": 500,
+      "name": "Internal Server Error",
+      "description": "Server mengalami kondisi tidak terduga yang mencegahnya memenuhi permintaan.",
+      "cause": "Bug backend yang tidak tertangani, database crash, atau unhandled exception."
+    },
+    {
+      "code": 502,
+      "name": "Bad Gateway",
+      "description": "Server yang bertindak sebagai gateway/proxy menerima respons tidak valid dari server upstream.",
+      "cause": "Reverse proxy (Nginx) tidak dapat berkomunikasi dengan backend service (Node/Go/Python)."
+    },
+    {
+      "code": 503,
+      "name": "Service Unavailable",
+      "description": "Server sedang tidak siap menangani permintaan (sedang overload atau maintenance).",
+      "cause": "Kapasitas server penuh atau server sedang restart untuk deploy pembaruan."
+    },
+    {
+      "code": 504,
+      "name": "Gateway Timeout",
+      "description": "Gateway/proxy tidak menerima respons tepat waktu dari server upstream.",
+      "cause": "Kueri backend terlalu lambat atau proses upstream mengalami hanging/timeout."
+    }
+  ]
+}
