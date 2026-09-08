@@ -7,7 +7,7 @@
 #define MyAppName "IT Toolbox"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "Yudz"
-#define MyAppURL "https://github.com/yudz/it-toolbox"
+#define MyAppURL "https://github.com/Great-YUDZZ/it-toolbox"
 #define MyAppExeName "it-toolbox.exe"
 
 [Setup]
