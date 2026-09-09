@@ -50,33 +50,26 @@ Klik link download langsung di bawah ini:
 
 ### 🪟 2. Untuk Pengguna Windows (Windows 10 / 11 64-bit)
 
-#### Opsi A: Unduh Installer Resmi
-Unduh file installer dari halaman rilis:
-👉 **[Halaman Rilis IT Toolbox](https://github.com/Great-YUDZZ/it-toolbox/releases/latest)**
+#### Langkah 1: Unduh File Windows
+Klik salah satu link download langsung di bawah ini:
+- 👉 **[Download it-toolbox.exe (Aplikasi Langsung Siap Pakai)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.0.0/it-toolbox.exe)**
+- 👉 **[Download IT-Toolbox-Windows-Portable-x64.zip (Paket Zip)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.0.0/IT-Toolbox-Windows-Portable-x64.zip)**
 
-#### Opsi B: Kompilasi & Buat Setup Mandiri di Windows
-Jika Anda sedang berada di komputer Windows:
-1. Clone repositori ini:
-   ```cmd
-   git clone https://github.com/Great-YUDZZ/it-toolbox.git
-   cd it-toolbox
-   ```
-2. Jalankan skrip pembuat installer:
-   ```cmd
-   build\windows\build.bat
-   ```
-3. File installer `dist\IT-Toolbox-Setup-x64.exe` akan otomatis dibuat.
+#### Langkah 2: Cara Menggunakan & Membuat Shortcut Desktop
+1. Simpan file `it-toolbox.exe` di folder yang Anda inginkan (misal di `C:\Program Files\IT Toolbox\` atau folder favorit Anda).
+2. **Untuk membuat Shortcut di Desktop Windows (Langsung Muncul):**
+   - **Klik kanan** pada file `it-toolbox.exe`
+   - Pilih **Kirim ke / Send to** ➔ **Desktop (buat shortcut / create shortcut)**
+   - Shortcut resmi **IT Toolbox** langsung muncul di layar Desktop Anda!
+3. **Double-click shortcut tersebut**: Aplikasi akan langsung terbuka secara instan dengan tema gelap modern tanpa memunculkan jendela hitam CMD (*clean GUI mode*).
 
-#### Cara Instalasi di Windows:
-1. **Double-click** file `IT-Toolbox-Setup-x64.exe`.
-2. Pilih bahasa (tersedia **Bahasa Indonesia** & English).
-3. Klik **Lanjut / Next** -> Pilihan centang **"Buat icon di Desktop"** sudah otomatis aktif.
-4. Klik **Pasang / Install** -> **Selesai / Finish**.
+---
 
-#### 🎉 Hasil:
-- Shortcut resmi **IT Toolbox** **langsung muncul di Desktop** Anda!
-- Shortcut juga otomatis terdaftar di **Start Menu** Windows.
-- Aplikasi langsung terbuka tanpa jendela CMD hitam (*clean GUI mode*).
+#### 💡 Ingin Membuat Setup Wizard (.exe Installer)?
+Jika Anda ingin membuat paket installer `IT-Toolbox-Setup-x64.exe` (wizard Next -> Next -> Selesai):
+1. Buka folder proyek ini di Windows.
+2. Jalankan `build\windows\build.bat`.
+3. Installer setup lengkap dengan wizard otomatis akan langsung ter-generate di folder `dist\`.
 
 ---
 
