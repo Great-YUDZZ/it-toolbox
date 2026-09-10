@@ -133,7 +133,7 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 			{Text: "Tags (dipisah koma)", Widget: tagsEntry},
 		}
 
-		dialog.ShowForm("Tambah Catatan Error", "Simpan", "Batal", formItems, func(ok bool) {
+		d := dialog.NewForm("Tambah Catatan Error", "Simpan", "Batal", formItems, func(ok bool) {
 			if !ok || titleEntry.Text == "" {
 				return
 			}
@@ -149,6 +149,8 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 			}
 			reloadLogs("")
 		}, p.window)
+		d.Resize(fyne.NewSize(580, 460))
+		d.Show()
 	})
 	addBtn.Importance = widget.HighImportance
 
@@ -243,7 +245,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 			{Text: "Kode / Script", Widget: contentEntry},
 		}
 
-		dialog.ShowForm("Tambah Snippet Baru", "Simpan", "Batal", formItems, func(ok bool) {
+		d := dialog.NewForm("Tambah Snippet Baru", "Simpan", "Batal", formItems, func(ok bool) {
 			if !ok || titleEntry.Text == "" || contentEntry.Text == "" {
 				return
 			}
@@ -259,6 +261,8 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 			}
 			reloadSnippets()
 		}, p.window)
+		d.Resize(fyne.NewSize(620, 500))
+		d.Show()
 	})
 	addBtn.Importance = widget.HighImportance
 

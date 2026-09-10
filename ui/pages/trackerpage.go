@@ -166,7 +166,7 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 			{Text: "Deskripsi", Widget: descEntry},
 		}
 
-		dialog.ShowForm("Tambah Tugas Kanban", "Simpan", "Batal", formItems, func(ok bool) {
+		d := dialog.NewForm("Tambah Tugas Kanban", "Simpan", "Batal", formItems, func(ok bool) {
 			if !ok || titleEntry.Text == "" {
 				return
 			}
@@ -183,6 +183,8 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 			}
 			reloadKanban()
 		}, p.window)
+		d.Resize(fyne.NewSize(560, 440))
+		d.Show()
 	})
 	addTaskBtn.Importance = widget.HighImportance
 
@@ -298,7 +300,7 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 			{Text: "Deskripsi", Widget: descEntry},
 		}
 
-		dialog.ShowForm("Tambah Proyek ke Portofolio", "Simpan", "Batal", formItems, func(ok bool) {
+		d := dialog.NewForm("Tambah Proyek ke Portofolio", "Simpan", "Batal", formItems, func(ok bool) {
 			if !ok || titleEntry.Text == "" {
 				return
 			}
@@ -315,6 +317,8 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 			}
 			reloadProjects()
 		}, p.window)
+		d.Resize(fyne.NewSize(580, 480))
+		d.Show()
 	})
 	addProjBtn.Importance = widget.HighImportance
 
