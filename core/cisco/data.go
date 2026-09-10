@@ -17,18 +17,21 @@ func GetAllCommands() []CiscoCommand {
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryBasic,
 			Description: "Mengubah identitas nama router/switch agar mudah dikenali di topologi dan menambahkan banner peringatan saat ada yang mengakses CLI.",
-			IPExample:   "Topologi: R1-Kantor-Pusat (Router 1941) & SW1-Lantai1 (Switch 2960)",
+			Parameters: []Parameter{
+				{Key: "HOSTNAME", Label: "Nama Hostname", DefaultValue: "R1-Pusat", Placeholder: "cth: R1-Kantor / SW1-Lab"},
+				{Key: "BANNER", Label: "Pesan Peringatan (MOTD)", DefaultValue: "PERINGATAN: HANYA PERSONEL RESMI YANG DIIZINKAN!\nAKSES ILEGAL AKAN DITINDAK SECARA HUKUM.", Placeholder: "Teks banner sambutan"},
+			},
+			IPExample: "Topologi: {{HOSTNAME}} (Router 1941) & SW1-Lantai1 (Switch 2960)",
 			Commands: `enable
 configure terminal
-hostname R1-Pusat
+hostname {{HOSTNAME}}
 banner motd #
 ==================================================
- PERINGATAN: HANYA PERSONEL RESMI YANG DIIZINKAN!
- AKSES ILEGAL AKAN DITINDAK SECARA HUKUM.
+ {{BANNER}}
 ==================================================
 #
 exit`,
-			Verification:        "Ketik 'exit' hingga kembali ke prompt awal. Saat menekan Enter, pesan Banner MOTD akan muncul dan nama prompt berubah menjadi 'R1-Pusat>'.",
+			Verification:        "Ketik 'exit' hingga kembali ke prompt awal. Saat menekan Enter, pesan Banner MOTD akan muncul dan nama prompt berubah menjadi '{{HOSTNAME}}>'.",
 			TroubleshootingTips: "Karakter pembatas (#) di awal dan akhir banner harus sama. Jangan gunakan karakter yang ada di dalam isi pesan.",
 		},
 		{
@@ -38,11 +41,15 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryBasic,
 			Description: "Mengunci hak akses 'enable' dengan password terenkripsi MD5 (secret) dan memberi password saat login lewat kabel Console.",
-			IPExample:   "Password Privilege: class | Password Console: cisco",
+			Parameters: []Parameter{
+				{Key: "SECRET_PASS", Label: "Password Enable Secret", DefaultValue: "class", Placeholder: "Password rahasia privilege"},
+				{Key: "CONSOLE_PASS", Label: "Password Console Login", DefaultValue: "cisco", Placeholder: "Password login console"},
+			},
+			IPExample: "Password Privilege: {{SECRET_PASS}} | Password Console: {{CONSOLE_PASS}}",
 			Commands: `configure terminal
-enable secret class
+enable secret {{SECRET_PASS}}
 line console 0
-password cisco
+password {{CONSOLE_PASS}}
 login
 logging synchronous
 exec-timeout 10 0
@@ -59,18 +66,24 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryBasic,
 			Description: "Mengaktifkan SSH agar perangkat Cisco dapat diremote secara terenkripsi dari Command Prompt PC di Packet Tracer tanpa Telnet polos.",
-			IPExample:   "IP Router: 192.168.1.1/24 | Domain: labcisco.local | User: admin",
+			Parameters: []Parameter{
+				{Key: "DOMAIN", Label: "Domain Name", DefaultValue: "labcisco.local", Placeholder: "cth: lab.local"},
+				{Key: "USER", Label: "Username Admin", DefaultValue: "admin", Placeholder: "cth: admin"},
+				{Key: "PASS", Label: "Password Akun", DefaultValue: "cisco123", Placeholder: "cth: admin123"},
+				{Key: "IP", Label: "Alamat IP Router", DefaultValue: "192.168.1.1", Placeholder: "cth: 192.168.1.1"},
+			},
+			IPExample: "IP Router: {{IP}}/24 | Domain: {{DOMAIN}} | User: {{USER}}",
 			Commands: `configure terminal
-ip domain-name labcisco.local
+ip domain-name {{DOMAIN}}
 crypto key generate rsa
 1024
 ip ssh version 2
-username admin privilege 15 secret cisco123
+username {{USER}} privilege 15 secret {{PASS}}
 line vty 0 4
 transport input ssh
 login local
 exit`,
-			Verification:        "Buka PC di Packet Tracer > Command Prompt > ketik: ssh -l admin 192.168.1.1, lalu masukkan password 'cisco123'. Jika berhasil masuk prompt 'R1#', SSH sukses.",
+			Verification:        "Buka PC di Packet Tracer > Command Prompt > ketik: ssh -l {{USER}} {{IP}}, lalu masukkan password. Jika berhasil masuk prompt, SSH sukses.",
 			TroubleshootingTips: "RSA Key minimal 1024-bit untuk mendukung SSHv2. Pastikan hostname dan domain-name sudah diset sebelum 'crypto key generate rsa'.",
 		},
 
@@ -84,14 +97,20 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryInterface,
 			Description: "Mengonfigurasi IPv4 dan Subnet Mask pada port LAN Router serta mengaktifkan port yang secara default mati (shutdown).",
-			IPExample:   "Interface G0/0: 192.168.10.1/24 (Subnet Mask: 255.255.255.0)",
+			Parameters: []Parameter{
+				{Key: "IFACE", Label: "Nama Port Interface", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "IP", Label: "Alamat IPv4", DefaultValue: "192.168.10.1", Placeholder: "cth: 192.168.10.1"},
+				{Key: "NETMASK", Label: "Subnet Mask", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "DESC", Label: "Deskripsi Port", DefaultValue: "KONEKSI_KE_LAN_KANTOR", Placeholder: "cth: LINK_LAN_UTAMA"},
+			},
+			IPExample: "Interface {{IFACE}}: {{IP}} (Subnet Mask: {{NETMASK}})",
 			Commands: `configure terminal
-interface GigabitEthernet 0/0
-description KONEKSI_KE_LAN_KANTOR
-ip address 192.168.10.1 255.255.255.0
+interface {{IFACE}}
+description {{DESC}}
+ip address {{IP}} {{NETMASK}}
 no shutdown
 exit`,
-			Verification:        "Ketik 'show ip interface brief'. Pastikan GigabitEthernet0/0 berstatus 'Status: up' dan 'Protocol: up' serta lampu link di Packet Tracer berubah hijau.",
+			Verification:        "Ketik 'show ip interface brief'. Pastikan port berstatus 'Status: up' dan 'Protocol: up' serta lampu link di Packet Tracer berubah hijau.",
 			TroubleshootingTips: "Di Router Cisco, SEMUA interface secara default berstatus 'administratively down'. Wajib ketik 'no shutdown' agar port aktif!",
 		},
 		{
@@ -101,15 +120,21 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryInterface,
 			Description: "Menghubungkan dua Router lewat kabel Serial WAN. Ujung kabel bertanda jam (DCE) memerlukan pengaturan clock rate.",
-			IPExample:   "R1 (Serial0/0/0 DCE): 10.10.10.1/30 | R2 (Serial0/0/0 DTE): 10.10.10.2/30",
+			Parameters: []Parameter{
+				{Key: "IFACE", Label: "Interface Serial", DefaultValue: "Serial 0/0/0", Placeholder: "cth: Serial 0/0/0"},
+				{Key: "IP", Label: "Alamat IP (DCE)", DefaultValue: "10.10.10.1", Placeholder: "cth: 10.10.10.1"},
+				{Key: "NETMASK", Label: "Subnet Mask WAN", DefaultValue: "255.255.255.252", Placeholder: "cth: 255.255.255.252"},
+				{Key: "CLOCK", Label: "Clock Rate (DCE)", DefaultValue: "64000", Placeholder: "cth: 64000 / 128000"},
+			},
+			IPExample: "R1 ({{IFACE}} DCE): {{IP}}/30 | Serial Subnet Mask: {{NETMASK}}",
 			Commands: `configure terminal
-interface Serial 0/0/0
+interface {{IFACE}}
 description LINK_WAN_KE_ROUTER2
-ip address 10.10.10.1 255.255.255.252
-clock rate 64000
+ip address {{IP}} {{NETMASK}}
+clock rate {{CLOCK}}
 no shutdown
 exit`,
-			Verification:        "Ketik 'show controllers Serial 0/0/0'. Pastikan terdeteksi 'DCE V.35' dengan clock rate 64000, lalu ping 10.10.10.2 pastikan Success rate 100% (!!!!!).",
+			Verification:        "Ketik 'show controllers {{IFACE}}'. Pastikan terdeteksi 'DCE' dengan clock rate {{CLOCK}}, lalu ping IP router lawan.",
 			TroubleshootingTips: "Gunakan kabel bertanda jam (Serial DCE) di Packet Tracer. Hanya sisi DCE yang butuh 'clock rate', sisi DTE tidak perlu.",
 		},
 		{
@@ -119,13 +144,18 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryInterface,
 			Description: "Interface virtual yang selalu UP dan tidak pernah down secara fisik. Sangat berguna untuk ID Router OSPF atau target uji ping.",
-			IPExample:   "Loopback 0: 1.1.1.1/32 (Subnet Mask: 255.255.255.255)",
+			Parameters: []Parameter{
+				{Key: "LOOP_NUM", Label: "Nomor Loopback", DefaultValue: "0", Placeholder: "cth: 0"},
+				{Key: "IP", Label: "Alamat IP Loopback", DefaultValue: "1.1.1.1", Placeholder: "cth: 1.1.1.1"},
+				{Key: "NETMASK", Label: "Subnet Mask Host", DefaultValue: "255.255.255.255", Placeholder: "cth: 255.255.255.255"},
+			},
+			IPExample: "Loopback {{LOOP_NUM}}: {{IP}} (Subnet Mask: {{NETMASK}})",
 			Commands: `configure terminal
-interface Loopback 0
+interface Loopback {{LOOP_NUM}}
 description SIMULASI_SERVER_INTERNET
-ip address 1.1.1.1 255.255.255.255
+ip address {{IP}} {{NETMASK}}
 exit`,
-			Verification:        "Ketik 'show ip interface brief'. Interface Loopback0 langsung berstatus 'up/up' tanpa perlu perintah 'no shutdown'.",
+			Verification:        "Ketik 'show ip interface brief'. Interface Loopback{{LOOP_NUM}} langsung berstatus 'up/up' tanpa perlu perintah 'no shutdown'.",
 			TroubleshootingTips: "Subnet mask 255.255.255.255 (/32) menghemat IP karena interface loopback hanya memerlukan 1 IP unik.",
 		},
 
@@ -138,26 +168,34 @@ exit`,
 			Device:      DeviceSwitchL2,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryVLAN,
-			Description: "Memisahkan broadcast domain pada Switch ke dalam segmen VLAN berbeda (misal: VLAN 10 untuk Guru, VLAN 20 untuk Siswa).",
-			IPExample:   "VLAN 10: 192.168.10.0/24 (Port Fa0/1 - Fa0/10) | VLAN 20: 192.168.20.0/24 (Port Fa0/11 - Fa0/20)",
+			Description: "Memisahkan broadcast domain pada Switch ke dalam segmen VLAN berbeda (misal: VLAN Guru & Siswa).",
+			Parameters: []Parameter{
+				{Key: "VLAN1_ID", Label: "Nomor ID VLAN 1", DefaultValue: "10", Placeholder: "cth: 10"},
+				{Key: "VLAN1_NAME", Label: "Nama VLAN 1", DefaultValue: "GURU", Placeholder: "cth: GURU"},
+				{Key: "PORT1_RANGE", Label: "Rentang Port VLAN 1", DefaultValue: "FastEthernet 0/1 - 10", Placeholder: "cth: FastEthernet 0/1 - 10"},
+				{Key: "VLAN2_ID", Label: "Nomor ID VLAN 2", DefaultValue: "20", Placeholder: "cth: 20"},
+				{Key: "VLAN2_NAME", Label: "Nama VLAN 2", DefaultValue: "SISWA", Placeholder: "cth: SISWA"},
+				{Key: "PORT2_RANGE", Label: "Rentang Port VLAN 2", DefaultValue: "FastEthernet 0/11 - 20", Placeholder: "cth: FastEthernet 0/11 - 20"},
+			},
+			IPExample: "VLAN {{VLAN1_ID}} ({{VLAN1_NAME}}): {{PORT1_RANGE}} | VLAN {{VLAN2_ID}} ({{VLAN2_NAME}}): {{PORT2_RANGE}}",
 			Commands: `configure terminal
-vlan 10
-name GURU
-vlan 20
-name SISWA
+vlan {{VLAN1_ID}}
+name {{VLAN1_NAME}}
+vlan {{VLAN2_ID}}
+name {{VLAN2_NAME}}
 exit
 
-interface range FastEthernet 0/1 - 10
+interface range {{PORT1_RANGE}}
 switchport mode access
-switchport access vlan 10
+switchport access vlan {{VLAN1_ID}}
 exit
 
-interface range FastEthernet 0/11 - 20
+interface range {{PORT2_RANGE}}
 switchport mode access
-switchport access vlan 20
+switchport access vlan {{VLAN2_ID}}
 exit`,
-			Verification:        "Ketik 'show vlan brief'. Pastikan VLAN 10 (GURU) aktif dan memuat port Fa0/1 s/d Fa0/10, serta VLAN 20 (SISWA) memuat Fa0/11 s/d Fa0/20.",
-			TroubleshootingTips: "PC di VLAN 10 TIDAK AKAN BISA saling ping dengan PC di VLAN 20 sebelum dikonfigurasi Router-on-a-Stick (Inter-VLAN Routing).",
+			Verification:        "Ketik 'show vlan brief'. Pastikan VLAN {{VLAN1_ID}} ({{VLAN1_NAME}}) dan VLAN {{VLAN2_ID}} ({{VLAN2_NAME}}) aktif dengan port sesuai.",
+			TroubleshootingTips: "PC di VLAN {{VLAN1_ID}} TIDAK AKAN BISA saling ping dengan PC di VLAN {{VLAN2_ID}} sebelum dikonfigurasi Router-on-a-Stick (Inter-VLAN Routing).",
 		},
 		{
 			ID:          "vlan-trunk-port",
@@ -166,14 +204,18 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryVLAN,
 			Description: "Membuka jalur Trunk pada port penghubung agar dapat melewatkan multi-VLAN sekaligus antar switch atau menuju Router.",
-			IPExample:   "Port GigabitEthernet0/1 terhubung ke Switch tetangga atau port GigabitEthernet Router",
+			Parameters: []Parameter{
+				{Key: "IFACE", Label: "Port Interface Trunk", DefaultValue: "GigabitEthernet 0/1", Placeholder: "cth: GigabitEthernet 0/1"},
+				{Key: "ALLOWED_VLANS", Label: "VLAN yang Diizinkan", DefaultValue: "10,20", Placeholder: "cth: 10,20 / all"},
+			},
+			IPExample: "Port {{IFACE}} terhubung ke Switch tetangga atau Router (VLAN: {{ALLOWED_VLANS}})",
 			Commands: `configure terminal
-interface GigabitEthernet 0/1
+interface {{IFACE}}
 description TRUNK_KE_ROUTER_ATAU_SWITCH2
 switchport mode trunk
-switchport trunk allowed vlan 10,20
+switchport trunk allowed vlan {{ALLOWED_VLANS}}
 exit`,
-			Verification:        "Ketik 'show interfaces trunk'. Pastikan port Gi0/1 berstatus 'Mode: on / Status: trunking' dengan encapsulation 802.1q.",
+			Verification:        "Ketik 'show interfaces trunk'. Pastikan port berstatus 'Mode: on / Status: trunking' dengan encapsulation 802.1q.",
 			TroubleshootingTips: "Jika menghubungkan Switch ke Switch lain, pastikan kedua ujung port diatur sebagai trunk mode.",
 		},
 		{
@@ -183,15 +225,21 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryVLAN,
 			Description: "Memberikan alamat IP pada Switch agar Switch dapat diping dan diremote (SSH/Telnet) dari jaringan komputer.",
-			IPExample:   "IP Switch: 192.168.1.2/24 | Default Gateway: 192.168.1.1",
+			Parameters: []Parameter{
+				{Key: "VLAN_ID", Label: "Nomor VLAN Management", DefaultValue: "1", Placeholder: "cth: 1 / 99"},
+				{Key: "IP", Label: "Alamat IP Switch", DefaultValue: "192.168.1.2", Placeholder: "cth: 192.168.1.2"},
+				{Key: "NETMASK", Label: "Subnet Mask", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "GATEWAY", Label: "Default Gateway", DefaultValue: "192.168.1.1", Placeholder: "cth: 192.168.1.1"},
+			},
+			IPExample: "IP Switch SVI (VLAN {{VLAN_ID}}): {{IP}} | Default Gateway: {{GATEWAY}}",
 			Commands: `configure terminal
-interface vlan 1
-ip address 192.168.1.2 255.255.255.0
+interface vlan {{VLAN_ID}}
+ip address {{IP}} {{NETMASK}}
 no shutdown
 exit
-ip default-gateway 192.168.1.1
+ip default-gateway {{GATEWAY}}
 exit`,
-			Verification:        "Buka PC ber-IP 192.168.1.10, buka Command Prompt lalu ketik 'ping 192.168.1.2'. Pastikan menerima reply.",
+			Verification:        "Buka PC klien di jaringan, buka Command Prompt lalu ketik 'ping {{IP}}'. Pastikan menerima reply.",
 			TroubleshootingTips: "'ip default-gateway' sangat penting agar Switch bisa dijangkau dari luar subnet lokalnya.",
 		},
 
@@ -205,22 +253,31 @@ exit`,
 			Mode:        ModeSubInterface,
 			Category:    CategoryVLAN,
 			Description: "Menghubungkan komunikasi antar VLAN yang berbeda melalui satu kabel fisik Router menggunakan sub-interface dan enkapsulasi 802.1Q.",
-			IPExample:   "VLAN 10 Gateway: 192.168.10.1/24 | VLAN 20 Gateway: 192.168.20.1/24 (Port Fisik: G0/0)",
+			Parameters: []Parameter{
+				{Key: "PHY_IFACE", Label: "Port Fisik Router", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "VLAN1_ID", Label: "ID VLAN 1", DefaultValue: "10", Placeholder: "cth: 10"},
+				{Key: "VLAN1_IP", Label: "IP Gateway VLAN 1", DefaultValue: "192.168.10.1", Placeholder: "cth: 192.168.10.1"},
+				{Key: "VLAN1_MASK", Label: "Netmask VLAN 1", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "VLAN2_ID", Label: "ID VLAN 2", DefaultValue: "20", Placeholder: "cth: 20"},
+				{Key: "VLAN2_IP", Label: "IP Gateway VLAN 2", DefaultValue: "192.168.20.1", Placeholder: "cth: 192.168.20.1"},
+				{Key: "VLAN2_MASK", Label: "Netmask VLAN 2", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+			},
+			IPExample: "VLAN {{VLAN1_ID}} Gateway: {{VLAN1_IP}} | VLAN {{VLAN2_ID}} Gateway: {{VLAN2_IP}} (Port Fisik: {{PHY_IFACE}})",
 			Commands: `configure terminal
-interface GigabitEthernet 0/0
+interface {{PHY_IFACE}}
 no shutdown
 exit
 
-interface GigabitEthernet 0/0.10
-encapsulation dot1Q 10
-ip address 192.168.10.1 255.255.255.0
+interface {{PHY_IFACE}}.{{VLAN1_ID}}
+encapsulation dot1Q {{VLAN1_ID}}
+ip address {{VLAN1_IP}} {{VLAN1_MASK}}
 exit
 
-interface GigabitEthernet 0/0.20
-encapsulation dot1Q 20
-ip address 192.168.20.1 255.255.255.0
+interface {{PHY_IFACE}}.{{VLAN2_ID}}
+encapsulation dot1Q {{VLAN2_ID}}
+ip address {{VLAN2_IP}} {{VLAN2_MASK}}
 exit`,
-			Verification:        "Ketik 'show ip interface brief' di Router. Pastikan G0/0.10 dan G0/0.20 berstatus UP. Lalu uji ping dari PC VLAN 10 ke PC VLAN 20.",
+			Verification:        "Ketik 'show ip interface brief' di Router. Pastikan sub-interface berstatus UP, lalu uji ping dari PC VLAN {{VLAN1_ID}} ke PC VLAN {{VLAN2_ID}}.",
 			TroubleshootingTips: "Wajib ketik 'encapsulation dot1Q <nomor_vlan>' TERLEBIH DAHULU sebelum memberi IP address di sub-interface, dan port Switch lawan wajib berstatus TRUNK!",
 		},
 		{
@@ -230,25 +287,35 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryVLAN,
 			Description: "Mengaktifkan fungsi routing pada Switch Layer 3 agar switching dan routing antar VLAN berjalan dengan kecepatan kabel tanpa router eksternal.",
-			IPExample:   "VLAN 10: 192.168.10.1/24 | VLAN 20: 192.168.20.1/24",
+			Parameters: []Parameter{
+				{Key: "VLAN1_ID", Label: "ID VLAN 1", DefaultValue: "10", Placeholder: "cth: 10"},
+				{Key: "VLAN1_NAME", Label: "Nama VLAN 1", DefaultValue: "KANTOR", Placeholder: "cth: KANTOR"},
+				{Key: "VLAN1_IP", Label: "IP SVI VLAN 1", DefaultValue: "192.168.10.1", Placeholder: "cth: 192.168.10.1"},
+				{Key: "VLAN1_MASK", Label: "Netmask VLAN 1", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "VLAN2_ID", Label: "ID VLAN 2", DefaultValue: "20", Placeholder: "cth: 20"},
+				{Key: "VLAN2_NAME", Label: "Nama VLAN 2", DefaultValue: "LAB", Placeholder: "cth: LAB"},
+				{Key: "VLAN2_IP", Label: "IP SVI VLAN 2", DefaultValue: "192.168.20.1", Placeholder: "cth: 192.168.20.1"},
+				{Key: "VLAN2_MASK", Label: "Netmask VLAN 2", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+			},
+			IPExample: "VLAN {{VLAN1_ID}} ({{VLAN1_NAME}}): {{VLAN1_IP}} | VLAN {{VLAN2_ID}} ({{VLAN2_NAME}}): {{VLAN2_IP}}",
 			Commands: `configure terminal
 ip routing
 
-vlan 10
-name KANTOR
-vlan 20
-name LAB
+vlan {{VLAN1_ID}}
+name {{VLAN1_NAME}}
+vlan {{VLAN2_ID}}
+name {{VLAN2_NAME}}
 
-interface vlan 10
-ip address 192.168.10.1 255.255.255.0
+interface vlan {{VLAN1_ID}}
+ip address {{VLAN1_IP}} {{VLAN1_MASK}}
 no shutdown
 exit
 
-interface vlan 20
-ip address 192.168.20.1 255.255.255.0
+interface vlan {{VLAN2_ID}}
+ip address {{VLAN2_IP}} {{VLAN2_MASK}}
 no shutdown
 exit`,
-			Verification:        "Ketik 'show ip route'. Pastikan muncul kode 'C 192.168.10.0/24 is directly connected, Vlan10' dan lakukan ping antar VLAN.",
+			Verification:        "Ketik 'show ip route'. Pastikan muncul kode 'C {{VLAN1_IP}} is directly connected' dan lakukan ping antar VLAN.",
 			TroubleshootingTips: "Perintah 'ip routing' adalah kunci mutlak. Tanpa perintah ini, Switch L3 hanya akan bekerja sebagai Switch L2 biasa.",
 		},
 
@@ -262,11 +329,14 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryRouting,
 			Description: "Meneruskan semua paket data yang tujuannya tidak diketahui di tabel routing ke arah router upstream/ISP.",
-			IPExample:   "IP Next-Hop ISP: 200.100.50.2 (atau keluar lewat Serial0/0/0)",
+			Parameters: []Parameter{
+				{Key: "NEXT_HOP", Label: "Alamat IP Next-Hop / Gateway ISP", DefaultValue: "200.100.50.2", Placeholder: "cth: 200.100.50.2"},
+			},
+			IPExample: "IP Next-Hop ISP: {{NEXT_HOP}}",
 			Commands: `configure terminal
-ip route 0.0.0.0 0.0.0.0 200.100.50.2
+ip route 0.0.0.0 0.0.0.0 {{NEXT_HOP}}
 exit`,
-			Verification:        "Ketik 'show ip route'. Pastikan ada baris 'S* 0.0.0.0/0 [1/0] via 200.100.50.2' dan 'Gateway of last resort is 200.100.50.2 to network 0.0.0.0'.",
+			Verification:        "Ketik 'show ip route'. Pastikan ada baris 'S* 0.0.0.0/0 [1/0] via {{NEXT_HOP}}' dan 'Gateway of last resort is {{NEXT_HOP}}'.",
 			TroubleshootingTips: "0.0.0.0 0.0.0.0 berarti 'segala alamat IP dengan segala subnet mask'. Sangat efisien untuk router cabang yang terhubung ke ISP.",
 		},
 		{
@@ -276,11 +346,16 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryRouting,
 			Description: "Menentukan jalur manual menuju subnet jaringan tertentu di belakang router tetangga.",
-			IPExample:   "Tujuan LAN Cabang: 192.168.20.0/24 | Lewat Next-Hop IP: 10.10.10.2",
+			Parameters: []Parameter{
+				{Key: "DEST_NET", Label: "Subnet Network Tujuan", DefaultValue: "192.168.20.0", Placeholder: "cth: 192.168.20.0"},
+				{Key: "DEST_MASK", Label: "Subnet Mask Tujuan", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "NEXT_HOP", Label: "IP Next-Hop Router Lawan", DefaultValue: "10.10.10.2", Placeholder: "cth: 10.10.10.2"},
+			},
+			IPExample: "Tujuan: {{DEST_NET}} (Mask: {{DEST_MASK}}) | Lewat Next-Hop: {{NEXT_HOP}}",
 			Commands: `configure terminal
-ip route 192.168.20.0 255.255.255.0 10.10.10.2
+ip route {{DEST_NET}} {{DEST_MASK}} {{NEXT_HOP}}
 exit`,
-			Verification:        "Ketik 'show ip route'. Pastikan ada kode 'S 192.168.20.0/24 [1/0] via 10.10.10.2', lalu ping dari Router 1 ke 192.168.20.1.",
+			Verification:        "Ketik 'show ip route'. Pastikan ada kode 'S {{DEST_NET}} via {{NEXT_HOP}}', lalu ping IP di subnet tujuan.",
 			TroubleshootingTips: "Ingat prinsip routing: 'Koneksi dua arah'. Pastikan router lawan juga memiliki static route balik (return route) ke jaringan asal!",
 		},
 		{
@@ -290,12 +365,21 @@ exit`,
 			Mode:        ModeRouterConfig,
 			Category:    CategoryRouting,
 			Description: "Mengaktifkan protokol routing dinamis OSPF open standard yang cepat konvergen menggunakan Wildcard Mask.",
-			IPExample:   "Router-ID: 1.1.1.1 | Net1: 192.168.1.0/24 | Net2: 10.10.10.0/30 (Wildcard: 0.0.0.3)",
+			Parameters: []Parameter{
+				{Key: "PROCESS_ID", Label: "OSPF Process ID", DefaultValue: "1", Placeholder: "cth: 1"},
+				{Key: "ROUTER_ID", Label: "Router ID OSPF", DefaultValue: "1.1.1.1", Placeholder: "cth: 1.1.1.1"},
+				{Key: "NET1", Label: "Network LAN 1", DefaultValue: "192.168.1.0", Placeholder: "cth: 192.168.1.0"},
+				{Key: "WILDCARD1", Label: "Wildcard Mask LAN 1", DefaultValue: "0.0.0.255", Placeholder: "cth: 0.0.0.255"},
+				{Key: "NET2", Label: "Network Link WAN 2", DefaultValue: "10.10.10.0", Placeholder: "cth: 10.10.10.0"},
+				{Key: "WILDCARD2", Label: "Wildcard Mask WAN 2", DefaultValue: "0.0.0.3", Placeholder: "cth: 0.0.0.3"},
+				{Key: "AREA", Label: "Nomor Area OSPF", DefaultValue: "0", Placeholder: "cth: 0 (Backbone Area)"},
+			},
+			IPExample: "Router-ID: {{ROUTER_ID}} | Net1: {{NET1}} (Wildcard: {{WILDCARD1}}) | Area: {{AREA}}",
 			Commands: `configure terminal
-router ospf 1
-router-id 1.1.1.1
-network 192.168.1.0 0.0.0.255 area 0
-network 10.10.10.0 0.0.0.3 area 0
+router ospf {{PROCESS_ID}}
+router-id {{ROUTER_ID}}
+network {{NET1}} {{WILDCARD1}} area {{AREA}}
+network {{NET2}} {{WILDCARD2}} area {{AREA}}
 passive-interface GigabitEthernet 0/0
 exit`,
 			Verification:        "Ketik 'show ip ospf neighbor'. Pastikan status tetangga 'FULL/BDR' atau 'FULL/DROTHER'. Ketik 'show ip route' dan pastikan rute ditandai kode 'O'.",
@@ -308,13 +392,17 @@ exit`,
 			Mode:        ModeRouterConfig,
 			Category:    CategoryRouting,
 			Description: "Protokol routing distance vector berbasis Hop Count yang mudah dikonfigurasi untuk jaringan skala kecil.",
-			IPExample:   "Jaringan lokal: 192.168.1.0/24 dan link antar router: 10.0.0.0/8",
+			Parameters: []Parameter{
+				{Key: "NET1", Label: "Network Lokal 1", DefaultValue: "192.168.1.0", Placeholder: "cth: 192.168.1.0"},
+				{Key: "NET2", Label: "Network Link WAN 2", DefaultValue: "10.0.0.0", Placeholder: "cth: 10.0.0.0"},
+			},
+			IPExample: "Jaringan lokal: {{NET1}} dan link antar router: {{NET2}}",
 			Commands: `configure terminal
 router rip
 version 2
 no auto-summary
-network 192.168.1.0
-network 10.0.0.0
+network {{NET1}}
+network {{NET2}}
 exit`,
 			Verification:        "Ketik 'show ip route'. Rute yang dipelajari dari RIP akan ditandai dengan huruf 'R'.",
 			TroubleshootingTips: "Selalu ketik 'version 2' dan 'no auto-summary' agar RIP mendukung subnetting VLSM/CIDR dan tidak merangkum IP ke classful.",
@@ -330,16 +418,25 @@ exit`,
 			Mode:        ModeDHCPConfig,
 			Category:    CategoryServices,
 			Description: "Memberikan alamat IP, Subnet Mask, Gateway, dan DNS secara otomatis kepada komputer klien di jaringan LAN.",
-			IPExample:   "Pool: POOL_LAN | Network: 192.168.1.0/24 | IP Dikecualikan: 192.168.1.1 s/d 192.168.1.10",
+			Parameters: []Parameter{
+				{Key: "POOL_NAME", Label: "Nama Pool DHCP", DefaultValue: "POOL_LAN", Placeholder: "cth: POOL_LAN"},
+				{Key: "NETWORK", Label: "Network Subnet Klien", DefaultValue: "192.168.1.0", Placeholder: "cth: 192.168.1.0"},
+				{Key: "NETMASK", Label: "Subnet Mask Klien", DefaultValue: "255.255.255.0", Placeholder: "cth: 255.255.255.0"},
+				{Key: "GATEWAY", Label: "Default Gateway Router", DefaultValue: "192.168.1.1", Placeholder: "cth: 192.168.1.1"},
+				{Key: "DNS", Label: "DNS Server", DefaultValue: "8.8.8.8", Placeholder: "cth: 8.8.8.8"},
+				{Key: "EXCLUDE_START", Label: "Excluded IP Mulai", DefaultValue: "192.168.1.1", Placeholder: "cth: 192.168.1.1"},
+				{Key: "EXCLUDE_END", Label: "Excluded IP Selesai", DefaultValue: "192.168.1.10", Placeholder: "cth: 192.168.1.10"},
+			},
+			IPExample: "Pool: {{POOL_NAME}} | Network: {{NETWORK}} | IP Exclude: {{EXCLUDE_START}} s/d {{EXCLUDE_END}}",
 			Commands: `configure terminal
-ip dhcp excluded-address 192.168.1.1 192.168.1.10
-ip dhcp pool POOL_LAN
-network 192.168.1.0 255.255.255.0
-default-router 192.168.1.1
-dns-server 8.8.8.8
+ip dhcp excluded-address {{EXCLUDE_START}} {{EXCLUDE_END}}
+ip dhcp pool {{POOL_NAME}}
+network {{NETWORK}} {{NETMASK}}
+default-router {{GATEWAY}}
+dns-server {{DNS}}
 exit`,
-			Verification:        "Buka PC di Packet Tracer > Desktop > IP Configuration > Pilih tombol 'DHCP'. Pastikan IP terisi otomatis (cth: 192.168.1.11) dan muncul pesan 'DHCP request successful'.",
-			TroubleshootingTips: "'excluded-address' wajib diset agar IP Gateway router (192.168.1.1) tidak bentrok diberikan ke PC klien!",
+			Verification:        "Buka PC di Packet Tracer > Desktop > IP Configuration > Pilih tombol 'DHCP'. Pastikan IP terisi otomatis dan muncul pesan 'DHCP request successful'.",
+			TroubleshootingTips: "'excluded-address' wajib diset agar IP Gateway router ({{GATEWAY}}) tidak bentrok diberikan ke PC klien!",
 		},
 		{
 			ID:          "dhcp-relay-agent",
@@ -348,10 +445,14 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategoryServices,
 			Description: "Meneruskan pesan broadcast DHCP Discover dari PC di satu LAN menuju Server DHCP terpusat di jaringan lain.",
-			IPExample:   "Interface Klien: G0/0 | Alamat IP Server DHCP Terpusat: 10.10.10.100",
+			Parameters: []Parameter{
+				{Key: "CLIENT_IFACE", Label: "Interface Menghadap Klien", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "DHCP_SERVER", Label: "Alamat IP Server DHCP", DefaultValue: "10.10.10.100", Placeholder: "cth: 10.10.10.100"},
+			},
+			IPExample: "Interface Klien: {{CLIENT_IFACE}} | Alamat IP Server DHCP Terpusat: {{DHCP_SERVER}}",
 			Commands: `configure terminal
-interface GigabitEthernet 0/0
-ip helper-address 10.10.10.100
+interface {{CLIENT_IFACE}}
+ip helper-address {{DHCP_SERVER}}
 exit`,
 			Verification:        "Ubah konfigurasi IP PC di sisi klien dari Static ke DHCP. PC akan berhasil memperoleh IP dari Server DHCP meskipun berbeda subnet.",
 			TroubleshootingTips: "Perintah 'ip helper-address' diketik pada interface router yang MENGHADAP KE KLIEN (bukan yang menghadap ke server).",
@@ -367,16 +468,21 @@ exit`,
 			Mode:        ModeInterface,
 			Category:    CategorySecurity,
 			Description: "Mencegah perangkat liar dicolokkan ke port switch. Port akan mati otomatis (shutdown) jika terdeteksi MAC address yang tidak terdaftar.",
-			IPExample:   "Port Fa0/1 hanya boleh dipakai oleh 1 PC yang pertama kali terhubung",
+			Parameters: []Parameter{
+				{Key: "IFACE", Label: "Port FastEthernet", DefaultValue: "FastEthernet 0/1", Placeholder: "cth: FastEthernet 0/1"},
+				{Key: "MAX_MAC", Label: "Jumlah Maksimal MAC", DefaultValue: "1", Placeholder: "cth: 1"},
+				{Key: "VIOLATION", Label: "Aksi Pelanggaran", DefaultValue: "shutdown", Placeholder: "shutdown / protect / restrict"},
+			},
+			IPExample: "Port {{IFACE}} hanya boleh dipakai oleh {{MAX_MAC}} PC (Violation: {{VIOLATION}})",
 			Commands: `configure terminal
-interface FastEthernet 0/1
+interface {{IFACE}}
 switchport mode access
 switchport port-security
-switchport port-security maximum 1
+switchport port-security maximum {{MAX_MAC}}
 switchport port-security mac-address sticky
-switchport port-security violation shutdown
+switchport port-security violation {{VIOLATION}}
 exit`,
-			Verification:        "Ketik 'show port-security interface fa0/1'. Pastikan 'Port Security: Enabled' dan status 'Secure-up'. Coba colokkan PC lain, lampu port akan langsung merah (err-disabled).",
+			Verification:        "Ketik 'show port-security interface {{IFACE}}'. Pastikan 'Port Security: Enabled' dan status 'Secure-up'. Coba colokkan PC lain, lampu port akan langsung merah.",
 			TroubleshootingTips: "Jika port terkunci merah karena violation, buka port kembali dengan masuk ke interface lalu ketik: 'shutdown' kemudian 'no shutdown'.",
 		},
 		{
@@ -386,15 +492,21 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategorySecurity,
 			Description: "Memfilter paket data hanya berdasarkan IP Address sumber (source IP). Nomor rentang Standard ACL: 1 - 99.",
-			IPExample:   "Blokir PC 192.168.1.50 dari mengakses jaringan lain, izinkan PC lainnya",
+			Parameters: []Parameter{
+				{Key: "ACL_NUM", Label: "Nomor ACL (1 - 99)", DefaultValue: "10", Placeholder: "cth: 10"},
+				{Key: "BLOCKED_HOST", Label: "IP Host yang Diblokir", DefaultValue: "192.168.1.50", Placeholder: "cth: 192.168.1.50"},
+				{Key: "APPLY_IFACE", Label: "Interface Penempatan ACL", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "DIRECTION", Label: "Arah Filter (in / out)", DefaultValue: "in", Placeholder: "in atau out"},
+			},
+			IPExample: "Blokir PC {{BLOCKED_HOST}} di port {{APPLY_IFACE}} (Arah: {{DIRECTION}})",
 			Commands: `configure terminal
-access-list 10 deny host 192.168.1.50
-access-list 10 permit any
+access-list {{ACL_NUM}} deny host {{BLOCKED_HOST}}
+access-list {{ACL_NUM}} permit any
 
-interface GigabitEthernet 0/0
-ip access-group 10 in
+interface {{APPLY_IFACE}}
+ip access-group {{ACL_NUM}} {{DIRECTION}}
 exit`,
-			Verification:        "Uji ping dari PC 192.168.1.50, pastikan hasilnya 'Destination Host Unreachable'. Uji ping dari PC lain (cth: 192.168.1.51), pastikan berhasil reply.",
+			Verification:        "Uji ping dari PC {{BLOCKED_HOST}}, pastikan hasilnya 'Destination Host Unreachable'. Uji ping dari PC lain, pastikan berhasil reply.",
 			TroubleshootingTips: "Ingat kaidah Cisco: 'Implicit Deny Any' ada di akhir semua ACL. Selalu tambahkan 'permit any' di akhir jika tidak ingin semua traffic terblokir!",
 		},
 		{
@@ -404,16 +516,24 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategorySecurity,
 			Description: "Memfilter paket data secara presisi berdasarkan IP asal, IP tujuan, protokol (TCP/UDP/ICMP), dan nomor port (cth: HTTP port 80).",
-			IPExample:   "Blokir seluruh LAN 192.168.1.0/24 dari ping (ICMP) ke Server 10.10.10.10, tapi izinkan akses Web HTTP (port 80)",
+			Parameters: []Parameter{
+				{Key: "ACL_NUM", Label: "Nomor ACL (100 - 199)", DefaultValue: "100", Placeholder: "cth: 100"},
+				{Key: "SRC_NET", Label: "Source Network Asal", DefaultValue: "192.168.1.0", Placeholder: "cth: 192.168.1.0"},
+				{Key: "SRC_WILDCARD", Label: "Wildcard Source", DefaultValue: "0.0.0.255", Placeholder: "cth: 0.0.0.255"},
+				{Key: "DEST_HOST", Label: "IP Host Tujuan", DefaultValue: "10.10.10.10", Placeholder: "cth: 10.10.10.10"},
+				{Key: "PORT", Label: "Nomor Port Layanan", DefaultValue: "80", Placeholder: "cth: 80 (HTTP) / 443 (HTTPS)"},
+				{Key: "APPLY_IFACE", Label: "Interface Penempatan ACL", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+			},
+			IPExample: "Izinkan port {{PORT}} ke Server {{DEST_HOST}}, blokir ICMP Ping dari {{SRC_NET}}",
 			Commands: `configure terminal
-access-list 100 permit tcp 192.168.1.0 0.0.0.255 host 10.10.10.10 eq 80
-access-list 100 deny icmp 192.168.1.0 0.0.0.255 host 10.10.10.10
-access-list 100 permit ip any any
+access-list {{ACL_NUM}} permit tcp {{SRC_NET}} {{SRC_WILDCARD}} host {{DEST_HOST}} eq {{PORT}}
+access-list {{ACL_NUM}} deny icmp {{SRC_NET}} {{SRC_WILDCARD}} host {{DEST_HOST}}
+access-list {{ACL_NUM}} permit ip any any
 
-interface GigabitEthernet 0/0
-ip access-group 100 in
+interface {{APPLY_IFACE}}
+ip access-group {{ACL_NUM}} in
 exit`,
-			Verification:        "Ketik 'show access-lists'. Coba buka Web Browser di PC ke 10.10.10.10 (sukses) lalu coba ping 10.10.10.10 di CMD (Request timed out). Hit counter ACL akan bertambah.",
+			Verification:        "Ketik 'show access-lists'. Coba buka Web Browser di PC ke {{DEST_HOST}} (sukses) lalu coba ping {{DEST_HOST}} di CMD (Request timed out). Hit counter ACL akan bertambah.",
 			TroubleshootingTips: "Extended ACL ditempatkan sedekat mungkin dengan sumber traffic (traffic source).",
 		},
 
@@ -427,19 +547,26 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryNAT,
 			Description: "Menerjemahkan banyak alamat IP Private di LAN ke satu alamat IP Public milik port Serial/Gigabit WAN menuju ISP.",
-			IPExample:   "LAN Inside: 192.168.1.0/24 (G0/0) | WAN Outside: Serial0/0/0 (IP Public dari ISP)",
+			Parameters: []Parameter{
+				{Key: "INSIDE_IFACE", Label: "Inside Interface (LAN)", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "OUTSIDE_IFACE", Label: "Outside Interface (WAN)", DefaultValue: "Serial 0/0/0", Placeholder: "cth: Serial 0/0/0"},
+				{Key: "ACL_NUM", Label: "Nomor Standard ACL", DefaultValue: "1", Placeholder: "cth: 1"},
+				{Key: "LAN_NET", Label: "Network Subnet LAN", DefaultValue: "192.168.1.0", Placeholder: "cth: 192.168.1.0"},
+				{Key: "LAN_WILDCARD", Label: "Wildcard Mask LAN", DefaultValue: "0.0.0.255", Placeholder: "cth: 0.0.0.255"},
+			},
+			IPExample: "LAN Inside: {{LAN_NET}}/24 ({{INSIDE_IFACE}}) | WAN Outside: {{OUTSIDE_IFACE}}",
 			Commands: `configure terminal
-interface GigabitEthernet 0/0
+interface {{INSIDE_IFACE}}
 ip nat inside
 exit
 
-interface Serial 0/0/0
+interface {{OUTSIDE_IFACE}}
 ip nat outside
 exit
 
-access-list 1 permit 192.168.1.0 0.0.0.255
+access-list {{ACL_NUM}} permit {{LAN_NET}} {{LAN_WILDCARD}}
 
-ip nat inside source list 1 interface Serial 0/0/0 overload
+ip nat inside source list {{ACL_NUM}} interface {{OUTSIDE_IFACE}} overload
 exit`,
 			Verification:        "Dari PC LAN, lakukan ping ke Server Internet (misal 8.8.8.8). Di Router, ketik 'show ip nat translations'. Pastikan muncul entri terjemahan IP Inside Global & Local.",
 			TroubleshootingTips: "Jangan lupa menandai 'ip nat inside' pada interface LAN dan 'ip nat outside' pada interface WAN. Kata kunci 'overload' adalah penentu fitur PAT.",
@@ -451,19 +578,25 @@ exit`,
 			Mode:        ModeGlobalConfig,
 			Category:    CategoryNAT,
 			Description: "Memetakan satu IP Private Server di LAN secara permanen ke satu IP Public agar dapat diakses oleh pengguna dari internet.",
-			IPExample:   "IP Server Private: 192.168.1.100 <==> IP Public Server: 200.100.10.5",
+			Parameters: []Parameter{
+				{Key: "INSIDE_IFACE", Label: "Inside Interface (LAN)", DefaultValue: "GigabitEthernet 0/0", Placeholder: "cth: GigabitEthernet 0/0"},
+				{Key: "OUTSIDE_IFACE", Label: "Outside Interface (WAN)", DefaultValue: "Serial 0/0/0", Placeholder: "cth: Serial 0/0/0"},
+				{Key: "PRIVATE_IP", Label: "IP Private Server Lokal", DefaultValue: "192.168.1.100", Placeholder: "cth: 192.168.1.100"},
+				{Key: "PUBLIC_IP", Label: "IP Public Server (ISP)", DefaultValue: "200.100.10.5", Placeholder: "cth: 200.100.10.5"},
+			},
+			IPExample: "IP Server Private: {{PRIVATE_IP}} <==> IP Public Server: {{PUBLIC_IP}}",
 			Commands: `configure terminal
-interface GigabitEthernet 0/0
+interface {{INSIDE_IFACE}}
 ip nat inside
 exit
 
-interface Serial 0/0/0
+interface {{OUTSIDE_IFACE}}
 ip nat outside
 exit
 
-ip nat inside source static 192.168.1.100 200.100.10.5
+ip nat inside source static {{PRIVATE_IP}} {{PUBLIC_IP}}
 exit`,
-			Verification:        "Dari PC di sisi Internet/ISP, lakukan ping atau browsing ke 200.100.10.5. Di Router ketik 'show ip nat translations', akan terlihat entri static translation.",
+			Verification:        "Dari PC di sisi Internet/ISP, lakukan ping atau browsing ke {{PUBLIC_IP}}. Di Router ketik 'show ip nat translations', akan terlihat entri static translation.",
 			TroubleshootingTips: "Static NAT menghabiskan 1 IP Public per 1 Server. Cocok untuk Web Server, Mail Server, atau FTP Server sekolah/perusahaan.",
 		},
 
@@ -535,7 +668,12 @@ show cdp neighbors detail`,
 			Mode:        ModePrivExec,
 			Category:    CategoryVerification,
 			Description: "Prosedur standar pengujian menyeluruh dari Layer 1 Fisik hingga Layer 7 Aplikasi untuk memastikan jaringan berfungsi 100%.",
-			IPExample:   "Uji Koneksi PC Klien (192.168.1.10) menuju Server Tujuan (10.10.10.10)",
+			Parameters: []Parameter{
+				{Key: "GW_IP", Label: "IP Default Gateway", DefaultValue: "192.168.1.1", Placeholder: "cth: 192.168.1.1"},
+				{Key: "NEXT_HOP_IP", Label: "IP Router Next-Hop", DefaultValue: "10.10.10.2", Placeholder: "cth: 10.10.10.2"},
+				{Key: "DEST_IP", Label: "IP Server / PC Tujuan", DefaultValue: "10.10.10.10", Placeholder: "cth: 10.10.10.10"},
+			},
+			IPExample: "Uji Koneksi PC Klien menuju Gateway {{GW_IP}} dan Server {{DEST_IP}}",
 			Commands: `# 1. CEK FISIK (Packet Tracer Link Lights):
 #    - Lampu Hijau = Link Up (Normal)
 #    - Lampu Oranye = Spanning Tree Protocol (STP) sedang listening (tunggu 30 detik atau klik Fast Forward Time)
@@ -548,14 +686,14 @@ ipconfig /all
 ping 127.0.0.1
 
 # 4. PING DEFAULT GATEWAY (Cek koneksi PC ke Port Router Lokal):
-ping 192.168.1.1
+ping {{GW_IP}}
 
 # 5. PING ROUTER NEXT-HOP (Cek link antar router WAN):
-ping 10.10.10.2
+ping {{NEXT_HOP_IP}}
 
 # 6. PING END-TO-END KE SERVER / PC TUJUAN:
-ping 10.10.10.10
-tracert 10.10.10.10`,
+ping {{DEST_IP}}
+tracert {{DEST_IP}}`,
 			Verification:        "Jika tracert menampilkan seluruh hop tanpa bintang (* * * Request timed out), maka jalur data pulang-pergi (round-trip) sudah 100% sempurna.",
 			TroubleshootingTips: "Ping pertama di Packet Tracer sering 'Request timed out' 1 kali lalu reply (!!!!!). Ini normal karena proses ARP (Address Resolution Protocol). Coba ping kedua kali!",
 		},

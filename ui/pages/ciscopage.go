@@ -228,9 +228,51 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Wrapping = fyne.TextWrapWord
 
-	// Copy Script Button (Centered vertically, not stretched)
+	// State for dynamic parameters
+	userParams := make(map[string]string)
+	for _, param := range cmd.Parameters {
+		userParams[param.Key] = param.DefaultValue
+	}
+
+	initialCommands := cmd.RenderCommands(userParams)
+	initialIPExample := cmd.RenderIPExample(userParams)
+
+	// CLI Script Entry (Monospace)
+	codeEntry := widget.NewMultiLineEntry()
+	codeEntry.SetText(initialCommands)
+	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	codeEntry.Wrapping = fyne.TextWrapWord
+
+	lines := strings.Split(initialCommands, "\n")
+	lineCount := len(lines)
+	if lineCount < 4 {
+		lineCount = 4
+	}
+	minHeight := float32(lineCount*21 + 28)
+	if minHeight < 120 {
+		minHeight = 120
+	}
+	if minHeight > 360 {
+		minHeight = 360
+	}
+
+	codeSpacer := canvas.NewRectangle(color.Transparent)
+	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
+	codeStack := container.NewStack(codeSpacer, codeEntry)
+
+	codeLabel := canvas.NewText("⌨ PERINTAH CLI CISCO IOS (SIAP SALIN):", constants.ColorTextPrimary)
+	codeLabel.TextSize = constants.FontSizeLabel
+	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	lineInfo := canvas.NewText(fmt.Sprintf("%d baris perintah", len(lines)), constants.ColorTextMuted)
+	lineInfo.TextSize = constants.FontSizeLabel
+	lineInfo.TextStyle = fyne.TextStyle{Monospace: true}
+
+	codeHeader := container.NewBorder(nil, nil, codeLabel, lineInfo)
+
+	// Copy Script Button (Always copies current codeEntry.Text)
 	copyBtn := widget.NewButtonWithIcon("Salin Script CLI", theme.ContentCopyIcon(), func() {
-		p.copyToClip(cmd.Commands)
+		p.copyToClip(codeEntry.Text)
 	})
 	copyBtn.Importance = widget.HighImportance
 
@@ -251,9 +293,10 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	}
 
 	// IP Example (if available) with clean aligned metadata strip
+	var ipLabel *widget.Label
 	if cmd.IPExample != "" {
 		ipBadge := components.BadgeWarning("SKEMA IP / TOPOLOGI")
-		ipLabel := widget.NewLabel(cmd.IPExample)
+		ipLabel = widget.NewLabel(initialIPExample)
 		ipLabel.Wrapping = fyne.TextWrapWord
 		ipLabel.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
 
@@ -268,38 +311,99 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		cardItems = append(cardItems, ipCard)
 	}
 
-	// CLI Script Panel - Spacious & comfortable layout
-	lines := strings.Split(cmd.Commands, "\n")
-	lineCount := len(lines)
-	if lineCount < 4 {
-		lineCount = 4
-	}
-	minHeight := float32(lineCount*21 + 28)
-	if minHeight < 120 {
-		minHeight = 120
-	}
-	if minHeight > 360 {
-		minHeight = 360
+	// Update output function
+	updateOutput := func() {
+		rendered := cmd.RenderCommands(userParams)
+		codeEntry.SetText(rendered)
+		if ipLabel != nil {
+			ipLabel.SetText(cmd.RenderIPExample(userParams))
+		}
+		currLines := strings.Split(rendered, "\n")
+		lineInfo.Text = fmt.Sprintf("%d baris perintah", len(currLines))
+		lineInfo.Refresh()
 	}
 
-	codeEntry := widget.NewMultiLineEntry()
-	codeEntry.SetText(cmd.Commands)
-	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	codeEntry.Wrapping = fyne.TextWrapWord
+	var fullCardContent *fyne.Container
 
-	codeSpacer := canvas.NewRectangle(color.Transparent)
-	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
-	codeStack := container.NewStack(codeSpacer, codeEntry)
+	// Dynamic Parameter Customization Panel (if parameters exist)
+	if len(cmd.Parameters) > 0 {
+		var paramInputs []*widget.Entry
+		var paramGridItems []fyne.CanvasObject
 
-	codeLabel := canvas.NewText("⌨ PERINTAH CLI CISCO IOS (SIAP SALIN):", constants.ColorTextPrimary)
-	codeLabel.TextSize = constants.FontSizeLabel
-	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
+		for _, param := range cmd.Parameters {
+			pKey := param.Key
+			pDef := param.DefaultValue
 
-	lineInfo := canvas.NewText(fmt.Sprintf("%d baris perintah", len(lines)), constants.ColorTextMuted)
-	lineInfo.TextSize = constants.FontSizeLabel
-	lineInfo.TextStyle = fyne.TextStyle{Monospace: true}
+			pLbl := canvas.NewText(param.Label, constants.ColorTextPrimary)
+			pLbl.TextSize = constants.FontSizeLabel
+			pLbl.TextStyle = fyne.TextStyle{Bold: true}
 
-	codeHeader := container.NewBorder(nil, nil, codeLabel, lineInfo)
+			pEnt := widget.NewEntry()
+			pEnt.SetText(pDef)
+			pEnt.SetPlaceHolder(param.Placeholder)
+			paramInputs = append(paramInputs, pEnt)
+
+			pEnt.OnChanged = func(val string) {
+				userParams[pKey] = val
+				updateOutput()
+			}
+
+			box := container.NewVBox(pLbl, pEnt)
+			paramGridItems = append(paramGridItems, box)
+		}
+
+		cols := 2
+		if len(paramGridItems) == 1 {
+			cols = 1
+		}
+		paramGrid := container.NewGridWithColumns(cols, paramGridItems...)
+
+		resetBtn := widget.NewButtonWithIcon("Reset Default", theme.ViewRefreshIcon(), func() {
+			for i, pr := range cmd.Parameters {
+				userParams[pr.Key] = pr.DefaultValue
+				if i < len(paramInputs) {
+					paramInputs[i].SetText(pr.DefaultValue)
+				}
+			}
+			updateOutput()
+		})
+		resetBtn.Importance = widget.LowImportance
+
+		paramBadge := components.BadgeYellow("⚙️ PARAMETER KUSTOMISASI TOPOLOGI")
+		paramTop := container.NewBorder(nil, nil, paramBadge, resetBtn)
+
+		paramBg := canvas.NewRectangle(constants.ColorBgCardInner)
+		paramBg.StrokeColor = constants.ColorAccentYellow
+		paramBg.StrokeWidth = 1.5
+		paramBg.CornerRadius = constants.CornerRadiusBrutal
+
+		paramContent := container.NewVBox(
+			paramTop,
+			widget.NewSeparator(),
+			paramGrid,
+		)
+		paramPanel := container.NewStack(paramBg, container.NewPadded(paramContent))
+		paramPanel.Hide()
+
+		var toggleBtn *widget.Button
+		toggleBtn = widget.NewButtonWithIcon("⚙️ Kustomisasi Parameter (Hostname, IP, VLAN...)", theme.SettingsIcon(), func() {
+			if paramPanel.Visible() {
+				paramPanel.Hide()
+				toggleBtn.SetText("⚙️ Kustomisasi Parameter (Hostname, IP, VLAN...)")
+				toggleBtn.SetIcon(theme.SettingsIcon())
+			} else {
+				paramPanel.Show()
+				toggleBtn.SetText("▲ Sembunyikan Form Parameter")
+				toggleBtn.SetIcon(theme.MenuDropUpIcon())
+			}
+			if fullCardContent != nil {
+				fullCardContent.Refresh()
+			}
+		})
+		toggleBtn.Importance = widget.MediumImportance
+
+		cardItems = append(cardItems, toggleBtn, paramPanel)
+	}
 
 	terminalBg := canvas.NewRectangle(constants.ColorBgCardInner)
 	terminalBg.StrokeColor = constants.ColorBorderSubtle
@@ -350,7 +454,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		cardItems = append(cardItems, tipsCard)
 	}
 
-	fullCardContent := container.NewVBox(cardItems...)
+	fullCardContent = container.NewVBox(cardItems...)
 	return components.NewPlainCardWithAccent(fullCardContent, accentColor)
 }
 

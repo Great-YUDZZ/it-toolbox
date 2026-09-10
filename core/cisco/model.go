@@ -1,5 +1,7 @@
 package cisco
 
+import "strings"
+
 // DeviceType represents the target hardware in Cisco Packet Tracer
 type DeviceType string
 
@@ -44,18 +46,60 @@ const (
 	CategoryVerification Category = "Panduan Verifikasi Topologi"
 )
 
+// Parameter represents a customizable variable in a Cisco command recipe
+type Parameter struct {
+	Key          string `json:"key"`           // Placeholder key, e.g. "HOSTNAME", "IP_ADDR", "VLAN_ID"
+	Label        string `json:"label"`         // User-friendly label, e.g. "Nama Hostname", "Alamat IP"
+	DefaultValue string `json:"default_value"` // Default standard value, e.g. "R1-Pusat", "192.168.10.1"
+	Placeholder  string `json:"placeholder"`   // Input hint, e.g. "cth: R1-Kantor"
+}
+
 // CiscoCommand represents a comprehensive Cisco Packet Tracer configuration recipe
 type CiscoCommand struct {
-	ID                  string     `json:"id"`
-	Title               string     `json:"title"`
-	Device              DeviceType `json:"device"`
-	Mode                CLIMode    `json:"mode"`
-	Category            Category   `json:"category"`
-	Description         string     `json:"description"`
-	IPExample           string     `json:"ip_example,omitempty"`
-	Commands            string     `json:"commands"`
-	Verification        string     `json:"verification"`
-	TroubleshootingTips string     `json:"troubleshooting_tips,omitempty"`
+	ID                  string      `json:"id"`
+	Title               string      `json:"title"`
+	Device              DeviceType  `json:"device"`
+	Mode                CLIMode     `json:"mode"`
+	Category            Category    `json:"category"`
+	Description         string      `json:"description"`
+	Parameters          []Parameter `json:"parameters,omitempty"`
+	IPExample           string      `json:"ip_example,omitempty"`
+	Commands            string      `json:"commands"`
+	Verification        string      `json:"verification"`
+	TroubleshootingTips string      `json:"troubleshooting_tips,omitempty"`
+}
+
+// RenderCommands applies custom parameter values to the commands template.
+// If a value is empty or not provided, the default value is used.
+func (c CiscoCommand) RenderCommands(values map[string]string) string {
+	res := c.Commands
+	for _, p := range c.Parameters {
+		val := ""
+		if values != nil {
+			val = strings.TrimSpace(values[p.Key])
+		}
+		if val == "" {
+			val = p.DefaultValue
+		}
+		res = strings.ReplaceAll(res, "{{"+p.Key+"}}", val)
+	}
+	return res
+}
+
+// RenderIPExample applies custom parameter values to the IP Example template.
+func (c CiscoCommand) RenderIPExample(values map[string]string) string {
+	res := c.IPExample
+	for _, p := range c.Parameters {
+		val := ""
+		if values != nil {
+			val = strings.TrimSpace(values[p.Key])
+		}
+		if val == "" {
+			val = p.DefaultValue
+		}
+		res = strings.ReplaceAll(res, "{{"+p.Key+"}}", val)
+	}
+	return res
 }
 
 // FilterCriteria defines search and filter options
