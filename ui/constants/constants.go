@@ -15,12 +15,25 @@ const (
 	NavLogbook     = "Catatan & Debugging"
 	NavTracker     = "Pelacak Tugas"
 	NavFileConverter = "Konverter Berkas"
+	NavCisco         = "Cisco Packet Tracer"
 
 	// Calculator Tabs
 	TabConverter   = "Number & Data"
 	TabSubnet      = "Subnet & IP"
 	TabHashGen     = "Hash & Password"
 	TabFormatter   = "Format & Encode"
+
+	// Cisco Packet Tracer Tabs
+	TabCiscoAll        = "Semua Perintah"
+	TabCiscoBasic      = "Dasar & Keamanan"
+	TabCiscoIP         = "IP & Interface"
+	TabCiscoVLAN       = "VLAN & Switching"
+	TabCiscoRouting    = "Routing (OSPF/Static)"
+	TabCiscoServices   = "DHCP & Services"
+	TabCiscoSecurity   = "ACL & Port Security"
+	TabCiscoNAT        = "NAT & PAT"
+	TabCiscoDiag       = "Show & Troubleshoot"
+	TabCiscoVerify     = "Verifikasi Topologi"
 
 	// File Converter Tabs
 	TabDocConverter = "Konversi Dokumen"
@@ -70,6 +83,7 @@ const (
 	SearchCommandPlaceholder = "Cari command (misal: docker, git, ls)..."
 	SearchPortPlaceholder    = "Cari port atau protokol (misal: 80, SSH, HTTPS)..."
 	SearchHTTPPlaceholder    = "Cari status code (misal: 404, Unauthorized)..."
+	SearchCiscoPlaceholder   = "Cari perintah Cisco (misal: vlan, ospf, dhcp, nat, roas, ping)..."
 
 	// Subnet Recommender
 	SubnetRecommenderTitle   = "Rekomendasi Subnet Sesuai Kebutuhan Host"

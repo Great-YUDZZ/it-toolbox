@@ -158,12 +158,14 @@ type MainWindow struct {
 
 	navToolbox  *NavItem
 	navFileConv *NavItem
+	navCisco    *NavItem
 	navRef      *NavItem
 	navLogbook  *NavItem
 	navTracker  *NavItem
 
 	calcPage     *pages.CalculatorPage
 	fileConvPage *pages.FileConverterPage
+	ciscoPage    *pages.CiscoPage
 	refPage      *pages.ReferencePage
 	logbookPage  *pages.LogbookPage
 	trackerPage  *pages.TrackerPage
@@ -190,6 +192,7 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		IsDark:       isDark,
 		calcPage:     pages.NewCalculatorPage(win),
 		fileConvPage: pages.NewFileConverterPage(win),
+		ciscoPage:    pages.NewCiscoPage(win),
 		refPage:      pages.NewReferencePage(win),
 		logbookPage:  pages.NewLogbookPage(win),
 		trackerPage:  pages.NewTrackerPage(win),
@@ -210,6 +213,7 @@ func (m *MainWindow) ToggleTheme() {
 	// Rebuild pages with updated theme objects
 	m.calcPage = pages.NewCalculatorPage(m.Window)
 	m.fileConvPage = pages.NewFileConverterPage(m.Window)
+	m.ciscoPage = pages.NewCiscoPage(m.Window)
 	m.refPage = pages.NewReferencePage(m.Window)
 	m.logbookPage = pages.NewLogbookPage(m.Window)
 	m.trackerPage = pages.NewTrackerPage(m.Window)
@@ -278,6 +282,14 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	secDocs.TextSize = constants.FontSizeLabel
 	secDocs.TextStyle = fyne.TextStyle{Bold: true}
 
+	secNet := canvas.NewText("JARINGAN & SIMULASI", constants.ColorTextPrimary)
+	secNet.TextSize = constants.FontSizeLabel
+	secNet.TextStyle = fyne.TextStyle{Bold: true}
+
+	m.navCisco = NewNavItem(constants.NavCisco, theme.ComputerIcon(), func() {
+		m.showPage(constants.NavCisco)
+	})
+
 	m.navRef = NewNavItem(constants.NavReference, theme.HelpIcon(), func() {
 		m.showPage(constants.NavReference)
 	})
@@ -292,6 +304,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		secCore,
 		m.navToolbox,
 		m.navFileConv,
+		widget.NewSeparator(),
+		secNet,
+		m.navCisco,
 		widget.NewSeparator(),
 		secDocs,
 		m.navRef,
@@ -352,6 +367,7 @@ func (m *MainWindow) updateNavHighlights(active string) {
 
 	m.navToolbox.SetActive(active == constants.NavToolbox)
 	m.navFileConv.SetActive(active == constants.NavFileConverter)
+	m.navCisco.SetActive(active == constants.NavCisco)
 	m.navRef.SetActive(active == constants.NavReference)
 	m.navLogbook.SetActive(active == constants.NavLogbook)
 	m.navTracker.SetActive(active == constants.NavTracker)
@@ -369,6 +385,8 @@ func (m *MainWindow) showPage(name string) {
 		content = m.calcPage.Build()
 	case constants.NavFileConverter:
 		content = m.fileConvPage.Build()
+	case constants.NavCisco:
+		content = m.ciscoPage.Build()
 	case constants.NavReference:
 		content = m.refPage.Build()
 	case constants.NavLogbook:

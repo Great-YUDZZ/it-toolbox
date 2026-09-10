@@ -90,6 +90,7 @@ Jika Anda menggunakan distro Linux non-Debian atau ingin instalasi portabel per-
 | Kategori | Fitur & Fungsi |
 | :--- | :--- |
 | 🌐 **Network Tools** | IP Subnet Calculator, CIDR calculator, Host range finder, Network diagnostics & Tracker |
+| 🖧 **Cisco Packet Tracer** | Panduan lengkap perintah CLI Cisco IOS (Router, Switch, PC), contoh skema IP, tombol 1-klik salin script, dan panduan verifikasi topologi |
 | 🔒 **Security & Hash** | Hash Generator (MD5, SHA-1, SHA-256, SHA-512), JWT Inspector & Decoder, Password Generator |
 | 🔄 **Converter Suite** | Base64 Encoder/Decoder, URL Encoder, JSON ↔ YAML, Timestamp / Epoch Converter, Text Case Converter |
 | 📄 **File & Doc Tools** | PDF Merger & Tools, Image Converter / Optimizer, Optical Character Recognition (OCR), ZIP Packager |
