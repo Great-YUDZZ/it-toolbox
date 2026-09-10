@@ -240,14 +240,28 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	brandBadge := container.NewStack(brandBg, container.NewPadded(brandTitle))
 	verBadge := components.BadgeCyan("v" + constants.AppVersion)
 
+	var fullScreenBtn *widget.Button
+	fullScreenBtn = widget.NewButtonWithIcon("", theme.ViewFullScreenIcon(), func() {
+		isFull := !m.Window.FullScreen()
+		m.Window.SetFullScreen(isFull)
+		if isFull {
+			fullScreenBtn.SetIcon(theme.ViewRestoreIcon())
+		} else {
+			fullScreenBtn.SetIcon(theme.ViewFullScreenIcon())
+		}
+	})
+	fullScreenBtn.Importance = widget.LowImportance
+
 	quickThemeBtn := widget.NewButtonWithIcon("", theme.ColorPaletteIcon(), func() {
 		m.ToggleTheme()
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
+	headerActions := container.NewHBox(fullScreenBtn, quickThemeBtn)
+
 	brandHeader := container.NewBorder(nil, nil,
 		container.NewHBox(brandBadge, verBadge),
-		quickThemeBtn,
+		headerActions,
 	)
 
 	subTitle := canvas.NewText("ENGINEERING WORKBENCH", constants.ColorTextMuted)

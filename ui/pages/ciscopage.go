@@ -51,14 +51,9 @@ func (p *CiscoPage) Build() fyne.CanvasObject {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon(constants.TabCiscoAll, theme.ListIcon(), p.buildCategoryView(cisco.CategoryAll)),
-		container.NewTabItemWithIcon(constants.TabCiscoBasic, theme.SettingsIcon(), p.buildCategoryView(cisco.CategoryBasic)),
-		container.NewTabItemWithIcon(constants.TabCiscoIP, theme.RadioButtonIcon(), p.buildCategoryView(cisco.CategoryInterface)),
-		container.NewTabItemWithIcon(constants.TabCiscoVLAN, theme.FolderIcon(), p.buildCategoryView(cisco.CategoryVLAN)),
+		container.NewTabItemWithIcon(constants.TabCiscoSwitch, theme.FolderIcon(), p.buildCategoryView(cisco.CategoryVLAN)),
 		container.NewTabItemWithIcon(constants.TabCiscoRouting, theme.NavigateNextIcon(), p.buildCategoryView(cisco.CategoryRouting)),
 		container.NewTabItemWithIcon(constants.TabCiscoServices, theme.StorageIcon(), p.buildCategoryView(cisco.CategoryServices)),
-		container.NewTabItemWithIcon(constants.TabCiscoSecurity, theme.VisibilityIcon(), p.buildCategoryView(cisco.CategorySecurity)),
-		container.NewTabItemWithIcon(constants.TabCiscoNAT, theme.ComputerIcon(), p.buildCategoryView(cisco.CategoryNAT)),
-		container.NewTabItemWithIcon(constants.TabCiscoDiag, theme.SearchIcon(), p.buildCategoryView(cisco.CategoryShowDiag)),
 		container.NewTabItemWithIcon(constants.TabCiscoVerify, theme.ConfirmIcon(), p.buildVerificationGuideView()),
 	)
 
@@ -71,6 +66,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	query := p.searchQuery
 	devFilter := p.selectedDevice
 	modeFilter := p.selectedMode
+	activeCat := cat
 
 	renderList := func() {
 		listContainer.Objects = nil
@@ -79,7 +75,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 			Query:    query,
 			Device:   devFilter,
 			Mode:     modeFilter,
-			Category: cat,
+			Category: activeCat,
 		})
 
 		if len(items) == 0 {
@@ -115,7 +111,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	devSelect.SetSelected(string(cisco.DeviceAll))
 
 	devSpacer := canvas.NewRectangle(color.Transparent)
-	devSpacer.SetMinSize(fyne.NewSize(200, 36))
+	devSpacer.SetMinSize(fyne.NewSize(140, 36))
 	devSelectBox := container.NewStack(devSpacer, devSelect)
 
 	// Mode selector with comfortable width
@@ -139,7 +135,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	modeSelect.SetSelected(string(cisco.ModeAll))
 
 	modeSpacer := canvas.NewRectangle(color.Transparent)
-	modeSpacer.SetMinSize(fyne.NewSize(240, 36))
+	modeSpacer.SetMinSize(fyne.NewSize(160, 36))
 	modeSelectBox := container.NewStack(modeSpacer, modeSelect)
 
 	// Search bar
@@ -148,8 +144,8 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		renderList()
 	})
 
-	// Filter Bar with centered badges and proper spacing
-	filterRow := container.NewHBox(
+	// Filter Bar items with centered badges and proper spacing
+	filterRow1 := container.NewHBox(
 		container.NewCenter(components.BadgeCyan("PERANGKAT:")),
 		devSelectBox,
 		widget.NewSeparator(),
@@ -157,9 +153,41 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		modeSelectBox,
 	)
 
+	var filterBox fyne.CanvasObject = filterRow1
+
+	// Add Category selector if in All Commands tab
+	if cat == cisco.CategoryAll {
+		catOptions := []string{
+			string(cisco.CategoryAll),
+			string(cisco.CategoryBasic),
+			string(cisco.CategoryInterface),
+			string(cisco.CategoryVLAN),
+			string(cisco.CategoryRouting),
+			string(cisco.CategoryServices),
+			string(cisco.CategorySecurity),
+			string(cisco.CategoryNAT),
+			string(cisco.CategoryShowDiag),
+		}
+		catSelect := widget.NewSelect(catOptions, func(val string) {
+			activeCat = cisco.Category(val)
+			renderList()
+		})
+		catSelect.SetSelected(string(cisco.CategoryAll))
+
+		catSpacer := canvas.NewRectangle(color.Transparent)
+		catSpacer.SetMinSize(fyne.NewSize(200, 36))
+		catSelectBox := container.NewStack(catSpacer, catSelect)
+
+		filterRow2 := container.NewHBox(
+			container.NewCenter(components.BadgeYellow("KATEGORI:")),
+			catSelectBox,
+		)
+		filterBox = container.NewVBox(filterRow1, filterRow2)
+	}
+
 	headerBox := container.NewVBox(
 		searchBar.Container,
-		filterRow,
+		filterBox,
 		widget.NewSeparator(),
 	)
 
@@ -196,9 +224,9 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	catBadge := components.BadgeMuted(string(cmd.Category))
 
 	// Title
-	titleText := canvas.NewText(cmd.Title, constants.ColorTextPrimary)
-	titleText.TextSize = constants.FontSizeH2
-	titleText.TextStyle = fyne.TextStyle{Bold: true}
+	titleLabel := widget.NewLabel(cmd.Title)
+	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
+	titleLabel.Wrapping = fyne.TextWrapWord
 
 	// Copy Script Button (Centered vertically, not stretched)
 	copyBtn := widget.NewButtonWithIcon("Salin Script CLI", theme.ContentCopyIcon(), func() {
@@ -208,9 +236,9 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 
 	headerLeft := container.NewVBox(
 		container.NewHBox(devBadge, modeBadge, catBadge),
-		titleText,
+		titleLabel,
 	)
-	topHeader := container.NewBorder(nil, nil, headerLeft, container.NewCenter(copyBtn))
+	topHeader := container.NewBorder(nil, nil, nil, container.NewCenter(copyBtn), headerLeft)
 
 	// Description
 	descLabel := widget.NewLabel(cmd.Description)
@@ -225,11 +253,11 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	// IP Example (if available) with clean aligned metadata strip
 	if cmd.IPExample != "" {
 		ipBadge := components.BadgeWarning("SKEMA IP / TOPOLOGI")
-		ipText := canvas.NewText(cmd.IPExample, constants.ColorTextPrimary)
-		ipText.TextSize = constants.FontSizeSmall
-		ipText.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
+		ipLabel := widget.NewLabel(cmd.IPExample)
+		ipLabel.Wrapping = fyne.TextWrapWord
+		ipLabel.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
 
-		ipBox := container.NewHBox(container.NewCenter(ipBadge), container.NewCenter(ipText))
+		ipBox := container.NewBorder(nil, nil, container.NewCenter(ipBadge), nil, ipLabel)
 
 		ipBg := canvas.NewRectangle(constants.ColorBgCardInner)
 		ipBg.StrokeColor = constants.ColorBorderSubtle
@@ -334,18 +362,15 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	sec1Title.TextSize = constants.FontSizeH2
 	sec1Title.TextStyle = fyne.TextStyle{Bold: true}
 
-	lampuHijau := container.NewHBox(
-		container.NewCenter(components.BadgeSuccess("HIJAU (SOLID)")),
-		widget.NewLabel("Link Layer 1 & 2 Normal (Port UP dan Protokol UP). Siap mengirim data."),
-	)
-	lampuOranye := container.NewHBox(
-		container.NewCenter(components.BadgeWarning("ORANYE (BLINK/SOLID)")),
-		widget.NewLabel("Spanning Tree Protocol (STP) sedang Listening/Learning. Tunggu 30-50 detik atau klik tombol 'Fast Forward Time' (Alt + D) 2x di Packet Tracer."),
-	)
-	lampuMerah := container.NewHBox(
-		container.NewCenter(components.BadgeDanger("MERAH (SOLID)")),
-		widget.NewLabel("Port Mati atau Kabel Salah! Cek: (a) Ketik 'no shutdown' di interface router, (b) Cek jenis kabel (Gunakan Straight-Through antar PC ke Switch, Crossover antar PC ke PC / Router ke PC)."),
-	)
+	makeInfoRow := func(badge fyne.CanvasObject, text string) fyne.CanvasObject {
+		lbl := widget.NewLabel(text)
+		lbl.Wrapping = fyne.TextWrapWord
+		return container.NewBorder(nil, nil, container.NewCenter(badge), nil, lbl)
+	}
+
+	lampuHijau := makeInfoRow(components.BadgeSuccess("HIJAU (SOLID)"), "Link Layer 1 & 2 Normal (Port UP dan Protokol UP). Siap mengirim data.")
+	lampuOranye := makeInfoRow(components.BadgeWarning("ORANYE (BLINK/SOLID)"), "Spanning Tree Protocol (STP) sedang Listening/Learning. Tunggu 30-50 detik atau klik tombol 'Fast Forward Time' (Alt + D) 2x di Packet Tracer.")
+	lampuMerah := makeInfoRow(components.BadgeDanger("MERAH (SOLID)"), "Port Mati atau Kabel Salah! Cek: (a) Ketik 'no shutdown' di interface router, (b) Cek jenis kabel (Gunakan Straight-Through antar PC ke Switch, Crossover antar PC ke PC / Router ke PC).")
 
 	card1 := components.NewPlainCardWithAccent(
 		container.NewVBox(sec1Title, widget.NewSeparator(), lampuHijau, lampuOranye, lampuMerah),
@@ -406,18 +431,9 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	sec4Title.TextSize = constants.FontSizeH2
 	sec4Title.TextStyle = fyne.TextStyle{Bold: true}
 
-	rto := container.NewHBox(
-		container.NewCenter(components.BadgeDanger("Request timed out (RTO)")),
-		widget.NewLabel("Paket terkirim tapi tidak ada balasan. Cek: (1) Default Gateway di PC tujuan, (2) Routing balik dari router lawan, (3) Jalur terblokir ACL."),
-	)
-	dhu := container.NewHBox(
-		container.NewCenter(components.BadgeWarning("Destination Host Unreachable")),
-		widget.NewLabel("Router tidak menemukan rute ke subnet tujuan. Cek tabel routing dengan 'show ip route' dan pastikan rute terdaftar."),
-	)
-	firstDrop := container.NewHBox(
-		container.NewCenter(components.BadgeYellow("Ping 1 Gagal, lalu Reply ( . ! ! ! ! )")),
-		widget.NewLabel("Ini NORMAL di Cisco Packet Tracer! Paket pertama dipakai untuk proses broadcast ARP (Address Resolution Protocol) mencari MAC address."),
-	)
+	rto := makeInfoRow(components.BadgeDanger("Request timed out (RTO)"), "Paket terkirim tapi tidak ada balasan. Cek: (1) Default Gateway di PC tujuan, (2) Routing balik dari router lawan, (3) Jalur terblokir ACL.")
+	dhu := makeInfoRow(components.BadgeWarning("Destination Host Unreachable"), "Router tidak menemukan rute ke subnet tujuan. Cek tabel routing dengan 'show ip route' dan pastikan rute terdaftar.")
+	firstDrop := makeInfoRow(components.BadgeYellow("Ping 1 Gagal, lalu Reply ( . ! ! ! ! )"), "Ini NORMAL di Cisco Packet Tracer! Paket pertama dipakai untuk proses broadcast ARP (Address Resolution Protocol) mencari MAC address.")
 
 	card4 := components.NewPlainCardWithAccent(
 		container.NewVBox(sec4Title, widget.NewSeparator(), rto, dhu, firstDrop),

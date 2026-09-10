@@ -15,15 +15,15 @@ func NewHeroHeader(title, description string, tagBadge fyne.CanvasObject) fyne.C
 	titleText.TextSize = constants.FontSizeDisplay // 22px bold statement
 	titleText.TextStyle = fyne.TextStyle{Bold: true}
 
-	descText := canvas.NewText(description, constants.ColorTextSecondary)
-	descText.TextSize = constants.FontSizeSmall
+	descLabel := widget.NewLabel(description)
+	descLabel.Wrapping = fyne.TextWrapWord
 
-	titleBox := container.NewVBox(titleText, descText)
+	titleBox := container.NewVBox(titleText, descLabel)
 	var rightItem fyne.CanvasObject
 	if tagBadge != nil {
 		rightItem = container.NewCenter(tagBadge)
 	}
-	headerBar := container.NewBorder(nil, nil, titleBox, rightItem)
+	headerBar := container.NewBorder(nil, nil, nil, rightItem, titleBox)
 
 	sep := widget.NewSeparator()
 
