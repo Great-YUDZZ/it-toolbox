@@ -61,7 +61,7 @@ func GetAllLogs() ([]ErrorLog, error) {
 		}
 		logs = append(logs, l)
 	}
-	return logs, nil
+	return logs, rows.Err()
 }
 
 func UpdateLog(log ErrorLog) error {
@@ -105,7 +105,7 @@ func SearchLogs(query string) ([]ErrorLog, error) {
 		}
 		logs = append(logs, l)
 	}
-	return logs, nil
+	return logs, rows.Err()
 }
 
 // ----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ func GetAllSnippets() ([]Snippet, error) {
 		}
 		list = append(list, s)
 	}
-	return list, nil
+	return list, rows.Err()
 }
 
 func UpdateSnippet(snippet Snippet) error {
@@ -255,6 +255,9 @@ func GetChecklistsWithItems() ([]Checklist, error) {
 		}
 		lists = append(lists, cl)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	// Fetch items for each checklist
 	for i := range lists {
@@ -270,6 +273,10 @@ func GetChecklistsWithItems() ([]Checklist, error) {
 				return nil, err
 			}
 			items = append(items, it)
+		}
+		if err := itemRows.Err(); err != nil {
+			itemRows.Close()
+			return nil, err
 		}
 		itemRows.Close()
 		lists[i].Items = items
@@ -324,7 +331,7 @@ func GetAllTasks() ([]Task, error) {
 		}
 		tasks = append(tasks, t)
 	}
-	return tasks, nil
+	return tasks, rows.Err()
 }
 
 func UpdateTaskStatus(id int, status string) error {
@@ -398,7 +405,7 @@ func GetAllProjects() ([]Project, error) {
 		}
 		projects = append(projects, p)
 	}
-	return projects, nil
+	return projects, rows.Err()
 }
 
 func UpdateProject(p Project) error {
