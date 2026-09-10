@@ -66,6 +66,7 @@ fi
 mkdir -p "${INSTALL_BIN_DIR}"
 mkdir -p "${INSTALL_APPS_DIR}"
 mkdir -p "${INSTALL_ICON_DIR}"
+mkdir -p "${HOME}/.local/share/icons/hicolor/512x512/apps"
 
 # 2. Salin binary & icon
 cp -f "${SOURCE_BIN}" "${INSTALL_BIN_DIR}/${BIN_NAME}"
@@ -73,6 +74,7 @@ chmod 755 "${INSTALL_BIN_DIR}/${BIN_NAME}"
 
 if [ -f "${ROOT_DIR}/assets/icon.png" ]; then
     cp -f "${ROOT_DIR}/assets/icon.png" "${INSTALL_ICON_DIR}/${BIN_NAME}.png"
+    cp -f "${ROOT_DIR}/assets/icon.png" "${HOME}/.local/share/icons/hicolor/512x512/apps/${BIN_NAME}.png"
 fi
 
 # 3. Buat Desktop Entry

@@ -65,23 +65,23 @@ func (p *ReferencePage) buildCommandsTab() fyne.CanvasObject {
 			}
 
 			// Code box for command
-			cmdTxt := canvas.NewText(c.Command, color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF})
-			cmdTxt.TextSize = 13.5
+			cmdTxt := canvas.NewText(c.Command, constants.ColorTextPrimary)
+			cmdTxt.TextSize = constants.FontSizeBody
 			cmdTxt.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 
 			copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), action)
 			copyBtn.Importance = widget.LowImportance
 
 			header := container.NewBorder(nil, nil,
-				container.NewHBox(components.BadgeIndigo(c.Category), cmdTxt),
+				container.NewHBox(components.BadgeYellow(c.Category), cmdTxt),
 				copyBtn,
 			)
 
 			descLabel := widget.NewLabel(c.Description)
 			descLabel.Wrapping = fyne.TextWrapWord
 
-			exTxt := canvas.NewText("Contoh: "+c.Example, color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF})
-			exTxt.TextSize = 11.5
+			exTxt := canvas.NewText("Contoh: "+c.Example, constants.ColorTextSecondary)
+			exTxt.TextSize = constants.FontSizeSmall
 			exTxt.TextStyle = fyne.TextStyle{Monospace: true}
 
 			cardContent := container.NewVBox(
@@ -90,7 +90,7 @@ func (p *ReferencePage) buildCommandsTab() fyne.CanvasObject {
 				descLabel,
 				exTxt,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorInfo))
 		}
 		listContainer.Refresh()
 	}
@@ -121,11 +121,11 @@ func (p *ReferencePage) buildPortsTab() fyne.CanvasObject {
 				p.copyToClip(fmt.Sprintf("%d", pt.Port))
 			}
 
-			portTxt := canvas.NewText(fmt.Sprintf("Port %d", pt.Port), color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF})
-			portTxt.TextSize = 14
+			portTxt := canvas.NewText(fmt.Sprintf("Port %d", pt.Port), constants.ColorTextPrimary)
+			portTxt.TextSize = constants.FontSizeH2
 			portTxt.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 
-			protoBadge := components.BadgeIndigo(pt.Protocol)
+			protoBadge := components.BadgeYellow(pt.Protocol)
 			serviceBadge := components.BadgeCyan(pt.Service)
 
 			copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), action)
@@ -144,7 +144,7 @@ func (p *ReferencePage) buildPortsTab() fyne.CanvasObject {
 				widget.NewSeparator(),
 				descLabel,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorWarning))
 		}
 		listContainer.Refresh()
 	}
@@ -176,21 +176,27 @@ func (p *ReferencePage) buildHTTPCodesTab() fyne.CanvasObject {
 			}
 
 			var statusBadge fyne.CanvasObject
+			var accentColor color.Color
 			switch {
 			case cd.Code >= 500:
-				statusBadge = components.BadgeError(fmt.Sprintf("%d", cd.Code))
+				statusBadge = components.BadgeDanger(fmt.Sprintf("%d", cd.Code))
+				accentColor = constants.ColorDanger
 			case cd.Code >= 400:
 				statusBadge = components.BadgeWarning(fmt.Sprintf("%d", cd.Code))
+				accentColor = constants.ColorWarning
 			case cd.Code >= 300:
 				statusBadge = components.BadgeIndigo(fmt.Sprintf("%d", cd.Code))
+				accentColor = constants.ColorInfo
 			case cd.Code >= 200:
 				statusBadge = components.BadgeSuccess(fmt.Sprintf("%d", cd.Code))
+				accentColor = constants.ColorSuccess
 			default:
 				statusBadge = components.BadgeCyan(fmt.Sprintf("%d", cd.Code))
+				accentColor = constants.ColorAccentCyan
 			}
 
-			titleTxt := canvas.NewText(cd.Name, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 13.5
+			titleTxt := canvas.NewText(cd.Name, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
 			copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), action)
@@ -213,7 +219,7 @@ func (p *ReferencePage) buildHTTPCodesTab() fyne.CanvasObject {
 				descLabel,
 				causeLabel,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, accentColor))
 		}
 		listContainer.Refresh()
 	}

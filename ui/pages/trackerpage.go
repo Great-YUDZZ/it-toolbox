@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"image/color"
 	"os"
 	"path/filepath"
 
@@ -104,8 +103,8 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 			}
 			actions.Add(delBtn)
 
-			titleTxt := canvas.NewText(task.Title, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 13.5
+			titleTxt := canvas.NewText(task.Title, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
 			cardHeader := container.NewBorder(nil, nil,
@@ -113,7 +112,7 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 				actions,
 			)
 
-			catBadge := components.BadgeIndigo(task.Category)
+			catBadge := components.BadgeMuted(task.Category)
 			var dlBadge fyne.CanvasObject
 			if task.Deadline != "" {
 				dlBadge = components.BadgeWarning("DL: " + task.Deadline)
@@ -132,14 +131,16 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 				metaRow,
 				descLabel,
 			)
-			card := components.NewPlainCard(cardContent)
 
 			switch task.Status {
 			case "inprogress":
+				card := components.NewPlainCardWithAccent(cardContent, constants.ColorWarning)
 				inprogBox.Add(card)
 			case "done":
+				card := components.NewPlainCardWithAccent(cardContent, constants.ColorSuccess)
 				doneBox.Add(card)
 			default:
+				card := components.NewPlainCardWithAccent(cardContent, constants.ColorAccentYellow)
 				todoBox.Add(card)
 			}
 		}
@@ -185,12 +186,16 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 	})
 	addTaskBtn.Importance = widget.HighImportance
 
+	topTitle := canvas.NewText("Papan Pelacak Tugas Kanban", constants.ColorTextPrimary)
+	topTitle.TextSize = constants.FontSizeBody
+	topTitle.TextStyle = fyne.TextStyle{Bold: true}
+
 	topBar := container.NewBorder(nil, nil,
-		canvas.NewText("Papan Pelacak Tugas Kanban", color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
+		topTitle,
 		addTaskBtn,
 	)
 
-	col1Header := container.NewPadded(components.BadgeIndigo("📌 BELUM MULAI"))
+	col1Header := container.NewPadded(components.BadgeMuted("📌 BELUM MULAI"))
 	col2Header := container.NewPadded(components.BadgeWarning("⚡ SEDANG DIKERJAKAN"))
 	col3Header := container.NewPadded(components.BadgeSuccess("✅ SELESAI"))
 
@@ -236,8 +241,8 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 			})
 			delBtn.Importance = widget.LowImportance
 
-			titleTxt := canvas.NewText(proj.Title, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 14
+			titleTxt := canvas.NewText(proj.Title, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
 			header := container.NewBorder(nil, nil,
@@ -245,16 +250,20 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 				delBtn,
 			)
 
-			techBadge := components.BadgeCyan(proj.Technologies)
+			techBadge := components.BadgeMuted(proj.Technologies)
 			descLabel := widget.NewLabel(proj.Description)
 			descLabel.Wrapping = fyne.TextWrapWord
 
 			var links []fyne.CanvasObject
 			if proj.RepoURL != "" {
-				links = append(links, canvas.NewText("🔗 Repo: "+proj.RepoURL, color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF}))
+				repoTxt := canvas.NewText("🔗 Repo: "+proj.RepoURL, constants.ColorTextPrimary)
+				repoTxt.TextSize = constants.FontSizeSmall
+				links = append(links, repoTxt)
 			}
 			if proj.LiveURL != "" {
-				links = append(links, canvas.NewText("🌐 Demo: "+proj.LiveURL, color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF}))
+				liveTxt := canvas.NewText("🌐 Demo: "+proj.LiveURL, constants.ColorTextPrimary)
+				liveTxt.TextSize = constants.FontSizeSmall
+				links = append(links, liveTxt)
 			}
 			linksBox := container.NewVBox(links...)
 
@@ -265,7 +274,7 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 				widget.NewSeparator(),
 				linksBox,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorInfo))
 		}
 		listContainer.Refresh()
 	}
@@ -324,8 +333,12 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 	})
 	exportBtn.Importance = widget.HighImportance
 
+	topTitle := canvas.NewText("Showcase & Profil Portofolio Proyek", constants.ColorTextPrimary)
+	topTitle.TextSize = constants.FontSizeBody
+	topTitle.TextStyle = fyne.TextStyle{Bold: true}
+
 	topBar := container.NewBorder(nil, nil,
-		canvas.NewText("Showcase & Profil Portofolio Proyek", color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
+		topTitle,
 		container.NewHBox(addProjBtn, exportBtn),
 	)
 

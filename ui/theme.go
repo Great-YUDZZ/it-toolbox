@@ -5,80 +5,208 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
+
+	"github.com/yudz/it-toolbox/ui/constants"
 )
 
-// CustomCyanTheme provides a world-class, human-friendly dark theme with Deep Obsidian surfaces and Electric Cyan accents
-type CustomCyanTheme struct{}
+// ============================================================================
+// DESIGN TOKEN SYSTEM — Dynamic Light / Dark Theme Support
+// ============================================================================
+
+// Local mirror variables initialized from constants
+var (
+	ColorBgBase           = constants.ColorBgBase
+	ColorBgSidebar        = constants.ColorBgSidebar
+	ColorBgCard           = constants.ColorBgCard
+	ColorBgCardInner      = constants.ColorBgCardInner
+	ColorBgHover          = constants.ColorBgHover
+	ColorBorderSubtle     = constants.ColorBorderSubtle
+	ColorBorderActive     = constants.ColorBorderActive
+	ColorShadow           = constants.ColorShadow
+	ColorAccentYellow     = constants.ColorAccentYellow
+	ColorAccentCobalt     = constants.ColorAccentCobalt
+	ColorAccentCobaltDark = constants.ColorAccentCobaltDark
+	ColorAccentCobaltDim  = constants.ColorAccentCobaltDim
+	ColorAccentCyan       = constants.ColorAccentCyan
+	ColorAccentCyanDim    = constants.ColorAccentCyanDim
+	ColorSuccess          = constants.ColorSuccess
+	ColorWarning          = constants.ColorWarning
+	ColorWarningTangerine = constants.ColorWarningTangerine
+	ColorDanger           = constants.ColorDanger
+	ColorTechIndigo       = constants.ColorTechIndigo
+	ColorInfo             = constants.ColorInfo
+	ColorTextPrimary      = constants.ColorTextPrimary
+	ColorTextSecondary    = constants.ColorTextSecondary
+	ColorTextMuted        = constants.ColorTextMuted
+	ColorTextDisabled     = constants.ColorTextDisabled
+
+	ColorCardBgCyan   = constants.ColorCardBgCyan
+	ColorCardBgGreen  = constants.ColorCardBgGreen
+	ColorCardBgYellow = constants.ColorCardBgYellow
+	ColorCardBgOrange = constants.ColorCardBgOrange
+	ColorCardBgPurple = constants.ColorCardBgPurple
+	ColorCardBgCoral  = constants.ColorCardBgCoral
+	ColorCardBgBlue   = constants.ColorCardBgBlue
+)
+
+// ApplyTheme synchronizes both constants and ui packages with the chosen mode
+func ApplyTheme(isDark bool) {
+	constants.SetTheme(isDark)
+
+	ColorBgBase = constants.ColorBgBase
+	ColorBgSidebar = constants.ColorBgSidebar
+	ColorBgCard = constants.ColorBgCard
+	ColorBgCardInner = constants.ColorBgCardInner
+	ColorBgHover = constants.ColorBgHover
+	ColorBorderSubtle = constants.ColorBorderSubtle
+	ColorBorderActive = constants.ColorBorderActive
+	ColorShadow = constants.ColorShadow
+	ColorAccentYellow = constants.ColorAccentYellow
+	ColorAccentCobalt = constants.ColorAccentCobalt
+	ColorAccentCobaltDark = constants.ColorAccentCobaltDark
+	ColorAccentCobaltDim = constants.ColorAccentCobaltDim
+	ColorAccentCyan = constants.ColorAccentCyan
+	ColorAccentCyanDim = constants.ColorAccentCyanDim
+	ColorSuccess = constants.ColorSuccess
+	ColorWarning = constants.ColorWarning
+	ColorWarningTangerine = constants.ColorWarningTangerine
+	ColorDanger = constants.ColorDanger
+	ColorTechIndigo = constants.ColorTechIndigo
+	ColorInfo = constants.ColorInfo
+	ColorTextPrimary = constants.ColorTextPrimary
+	ColorTextSecondary = constants.ColorTextSecondary
+	ColorTextMuted = constants.ColorTextMuted
+	ColorTextDisabled = constants.ColorTextDisabled
+
+	ColorCardBgCyan = constants.ColorCardBgCyan
+	ColorCardBgGreen = constants.ColorCardBgGreen
+	ColorCardBgYellow = constants.ColorCardBgYellow
+	ColorCardBgOrange = constants.ColorCardBgOrange
+	ColorCardBgPurple = constants.ColorCardBgPurple
+	ColorCardBgCoral = constants.ColorCardBgCoral
+	ColorCardBgBlue = constants.ColorCardBgBlue
+}
+
+// === TYPOGRAPHY SCALE ===
+const (
+	FontSizeDisplay = constants.FontSizeDisplay
+	FontSizeH1      = constants.FontSizeH1
+	FontSizeH2      = constants.FontSizeH2
+	FontSizeH3      = constants.FontSizeH3
+	FontSizeBody    = constants.FontSizeBody
+	FontSizeSmall   = constants.FontSizeSmall
+	FontSizeLabel   = constants.FontSizeLabel
+)
+
+// === SPACING SYSTEM ===
+const (
+	SpaceXS  = constants.SpaceXS
+	SpaceSM  = constants.SpaceSM
+	SpaceMD  = constants.SpaceMD
+	SpaceLG  = constants.SpaceLG
+	SpaceXL  = constants.SpaceXL
+	SpaceXXL = constants.SpaceXXL
+)
+
+// CustomCyanTheme provides a dynamic engineering workbench theme supporting both light and dark
+type CustomCyanTheme struct {
+	isDark bool
+}
 
 var _ fyne.Theme = (*CustomCyanTheme)(nil)
 
 func NewCustomCyanTheme() fyne.Theme {
-	return &CustomCyanTheme{}
+	return NewCustomTheme(constants.IsDarkTheme)
+}
+
+func NewCustomTheme(isDark bool) fyne.Theme {
+	return &CustomCyanTheme{isDark: isDark}
 }
 
 func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	// ------------------------------------------------------------------------
-	// Peak Modern Cyber-Slate Palette (Raycast & Linear Inspired)
-	// ------------------------------------------------------------------------
-	cyanPrimary := color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF}  // #00D4FF Electric Cyan
-	cyanHover := color.RGBA{R: 0x38, G: 0xDF, B: 0xFF, A: 0xFF}    // #38DFFF Bright Cyan Hover
-	cyanFocus := color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF}    // #00D4FF Focus Ring
-	selection := color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0x30}    // Translucent glowing cyan
+	if m.isDark {
+		switch name {
+		case theme.ColorNamePrimary:
+			return ColorAccentYellow
+		case theme.ColorNameHover:
+			return ColorBgHover
+		case theme.ColorNameFocus:
+			return ColorAccentYellow
+		case theme.ColorNameSelection:
+			return ColorAccentCyanDim
+		case theme.ColorNameHyperlink:
+			return ColorAccentCyan
+		case theme.ColorNameBackground:
+			return ColorBgBase
+		case theme.ColorNameMenuBackground:
+			return ColorBgSidebar
+		case theme.ColorNameOverlayBackground:
+			return ColorBgCard
+		case theme.ColorNameInputBackground:
+			return ColorBgCardInner
+		case theme.ColorNameButton:
+			return ColorBgCard
+		case theme.ColorNameForeground:
+			return ColorTextPrimary
+		case theme.ColorNamePlaceHolder:
+			return ColorTextMuted
+		case theme.ColorNameDisabled:
+			return ColorTextDisabled
+		case theme.ColorNameSeparator:
+			return ColorBorderSubtle
+		case theme.ColorNameSuccess:
+			return ColorSuccess
+		case theme.ColorNameWarning:
+			return ColorWarning
+		case theme.ColorNameError:
+			return ColorDanger
+		case theme.ColorNameShadow:
+			return ColorShadow
+		default:
+			return theme.DefaultTheme().Color(name, theme.VariantDark)
+		}
+	}
 
-	bgCanvas := color.RGBA{R: 0x0B, G: 0x0F, B: 0x17, A: 0xFF}     // #0B0F17 Deep Obsidian Canvas
-	bgSidebar := color.RGBA{R: 0x0F, G: 0x14, B: 0x20, A: 0xFF}    // #0F1420 Elevated Dark Midnight
-	bgCard := color.RGBA{R: 0x15, G: 0x1B, B: 0x28, A: 0xFF}       // #151B28 Crisp Surface Card
-	bgInput := color.RGBA{R: 0x09, G: 0x0D, B: 0x15, A: 0xFF}      // #090D15 Recessed Input / Terminal
-	bgButton := color.RGBA{R: 0x18, G: 0x20, B: 0x30, A: 0xFF}     // #182030 Elevated Pill / Button
-
-	textPrimary := color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}   // #FFFFFF Crisp Pure White
-	textMuted := color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}     // #94A3B8 Slate 400 Readable Subtitle
-	textDisabled := color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF}  // #64748B Slate 500 Placeholder
-	separator := color.RGBA{R: 0x1F, G: 0x29, B: 0x3A, A: 0xFF}     // #1F293A Thin Border Divider
-
-	success := color.RGBA{R: 0x10, G: 0xB9, B: 0x81, A: 0xFF}       // #10B981 Emerald Green
-	warning := color.RGBA{R: 0xF5, G: 0x9E, B: 0x0B, A: 0xFF}       // #F59E0B Amber
-	errorRed := color.RGBA{R: 0xF4, G: 0x3F, B: 0x5E, A: 0xFF}      // #F43F5E Rose Crimson
-
+	// Light mode - Neo-Brutalism
 	switch name {
 	case theme.ColorNamePrimary:
-		return cyanPrimary
+		return color.Black
 	case theme.ColorNameHover:
-		return cyanHover
+		return ColorBgHover
 	case theme.ColorNameFocus:
-		return cyanFocus
+		return ColorAccentYellow
 	case theme.ColorNameSelection:
-		return selection
+		return ColorAccentCyanDim
 	case theme.ColorNameHyperlink:
-		return cyanPrimary
+		return ColorAccentCobalt
 	case theme.ColorNameBackground:
-		return bgCanvas
+		return ColorBgBase
 	case theme.ColorNameMenuBackground:
-		return bgSidebar
+		return ColorBgSidebar
 	case theme.ColorNameOverlayBackground:
-		return bgCard
+		return ColorBgCard
 	case theme.ColorNameInputBackground:
-		return bgInput
+		return ColorBgCard
 	case theme.ColorNameButton:
-		return bgButton
+		return ColorBgCard
 	case theme.ColorNameForeground:
-		return textPrimary
+		return ColorTextPrimary
 	case theme.ColorNamePlaceHolder:
-		return textMuted
+		return ColorTextMuted
 	case theme.ColorNameDisabled:
-		return textDisabled
+		return ColorTextDisabled
 	case theme.ColorNameSeparator:
-		return separator
+		return ColorBorderSubtle
 	case theme.ColorNameSuccess:
-		return success
+		return ColorSuccess
 	case theme.ColorNameWarning:
-		return warning
+		return ColorWarning
 	case theme.ColorNameError:
-		return errorRed
+		return ColorDanger
 	case theme.ColorNameShadow:
-		return color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x60}
+		return ColorShadow
 	default:
-		return theme.DefaultTheme().Color(name, theme.VariantDark)
+		return theme.DefaultTheme().Color(name, theme.VariantLight)
 	}
 }
 
@@ -106,25 +234,25 @@ func (m *CustomCyanTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 func (m *CustomCyanTheme) Size(name fyne.ThemeSizeName) float32 {
 	switch name {
 	case theme.SizeNameText:
-		return 13.5 // Modern crisp UI typography size (not too chunky, not too tiny)
+		return FontSizeBody
 	case theme.SizeNameHeadingText:
-		return 20 // Bold prominent titles
+		return FontSizeH1
 	case theme.SizeNameSubHeadingText:
-		return 15 // Clean subtitles
+		return FontSizeH2
 	case theme.SizeNameCaptionText:
-		return 11 // Refined small labels
+		return FontSizeSmall
 	case theme.SizeNameButtonRadius, theme.SizeNameInputRadius:
-		return 8 // Rounded smooth corners
+		return 4 // Semi-sharp blocky
 	case theme.SizeNameCardRadius:
-		return 12 // Modern spacious card radius
+		return 4 // Semi-sharp blocky
 	case theme.SizeNameSelectionRadius:
-		return 6
+		return 2
 	case theme.SizeNamePadding:
-		return 8 // Comfortable breathing space
+		return SpaceSM
 	case theme.SizeNameInnerPadding:
-		return 8
+		return SpaceSM
 	case theme.SizeNameScrollBar:
-		return 6 // Slim, non-intrusive scrollbar
+		return 6
 	case theme.SizeNameScrollBarSmall:
 		return 4
 	default:

@@ -30,8 +30,8 @@ func NewCalculatorPage(win fyne.Window) *CalculatorPage {
 func (p *CalculatorPage) Build() fyne.CanvasObject {
 	hero := components.NewHeroHeader(
 		constants.NavToolbox,
-		"Alat praktis mahasiswa IT & Network Engineer: Subnet Sizer cerdas, konverter bilangan, hashing, dan formatter teks.",
-		components.BadgeCyan("NETWORK & CORE"),
+		"Alat praktis untuk subnet, konversi bilangan, hashing, dan formatter teks.",
+		components.BadgeCyan("NETWORK & CODE"),
 	)
 
 	tabs := container.NewAppTabs(
@@ -62,14 +62,15 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	baseIPEntry.SetPlaceHolder(constants.BaseIPPlaceholder)
 	baseIPEntry.SetText("192.168.1.0")
 
-	// Stat KPI Cards for modern visual presentation
-	statPrefix := components.NewStatCard("REKOMENDASI PREFIX & NETMASK", "/26", color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF})
-	statRange := components.NewStatCard("RENTANG HOST USABLE", "-", color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF})
-	statCapacity := components.NewStatCard("KAPASITAS & EFISIENSI", "-", color.RGBA{R: 0x81, G: 0x8C, B: 0xF8, A: 0xFF})
-	statBroadcast := components.NewStatCard("BROADCAST & WILDCARD", "-", color.RGBA{R: 0xFB, G: 0xBF, B: 0x24, A: 0xFF})
+	// Stat KPI Cards with colorful Neo-Brutalist backgrounds and solid black fonts
+	statPrefix := components.NewStatCard("REKOMENDASI PREFIX & NETMASK", "/26", constants.ColorInfo)
+	statRange := components.NewStatCard("RENTANG HOST USABLE", "-", constants.ColorSuccess)
+	statCapacity := components.NewStatCard("TOTAL HOST & EFISIENSI", "-", constants.ColorAccentYellow)
+	statBroadcast := components.NewStatCard("BROADCAST & WILDCARD", "-", constants.ColorWarning)
 
-	hintLabel := canvas.NewText("-", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF})
-	hintLabel.TextSize = 11
+	hintLabel := canvas.NewText("-", color.Black)
+	hintLabel.TextSize = constants.FontSizeSmall
+	hintLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	calcRecommendation := func() {
 		hStr := strings.TrimSpace(hostCountEntry.Text)
@@ -78,29 +79,36 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		}
 		needed, err := strconv.Atoi(hStr)
 		if err != nil || needed <= 0 {
-			statPrefix.SetValue("Error: Jumlah host harus bilangan positif")
+			statPrefix.SetValue("Input tidak valid")
+			statPrefix.SetColor(constants.ColorDanger)
 			return
 		}
 
 		rec, err := calculators.FindSubnetForHosts(needed, baseIPEntry.Text)
 		if err != nil {
 			statPrefix.SetValue("Error: " + err.Error())
+			statPrefix.SetColor(constants.ColorDanger)
 			return
 		}
 
-		statPrefix.SetValue(fmt.Sprintf("%s (%s)", rec.CIDR, rec.Netmask))
-		statPrefix.SetSubtext("Subnet Mask Paling Hemat")
+		statPrefix.SetColor(constants.ColorInfo)
+		statPrefix.SetValue(rec.CIDR)
+		statPrefix.SetSubtext(fmt.Sprintf("Netmask: %s (Paling Hemat)", rec.Netmask))
 
-		statRange.SetValue(fmt.Sprintf("%s  ➔  %s", rec.FirstHost, rec.LastHost))
+		statRange.SetColor(constants.ColorSuccess)
+		statRange.SetValue(fmt.Sprintf("%s ➔ %s", rec.FirstHost, rec.LastHost))
 		statRange.SetSubtext(fmt.Sprintf("Tersedia %d IP Usable", rec.AllocatedHosts))
 
-		statCapacity.SetValue(fmt.Sprintf("%.1f%% Efisien", rec.Efficiency))
-		statCapacity.SetSubtext(fmt.Sprintf("%d Host Terpakai | %d Sisa/Wasted", rec.NeededHosts, rec.WastedHosts))
+		statCapacity.SetColor(constants.ColorAccentYellow)
+		statCapacity.SetValue(fmt.Sprintf("%d Host (%.1f%%)", rec.AllocatedHosts, rec.Efficiency))
+		statCapacity.SetSubtext(fmt.Sprintf("%d Terpakai | %d Sisa", rec.NeededHosts, rec.WastedHosts))
 
+		statBroadcast.SetColor(constants.ColorWarning)
 		statBroadcast.SetValue(rec.Broadcast)
 		statBroadcast.SetSubtext(fmt.Sprintf("Wildcard: %s", rec.WildcardMask))
 
 		hintLabel.Text = fmt.Sprintf("💡 Saran Alokasi: %s", rec.ClassHint)
+		hintLabel.Color = color.Black
 		hintLabel.Refresh()
 	}
 
@@ -109,13 +117,15 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 
 	// Preset Quick Chips
 	makeHostChip := func(h int) *widget.Button {
-		return widget.NewButton(fmt.Sprintf("%d Host", h), func() {
+		btn := widget.NewButton(fmt.Sprintf("%d Host", h), func() {
 			hostCountEntry.SetText(strconv.Itoa(h))
 		})
+		btn.Importance = widget.LowImportance
+		return btn
 	}
 
 	hostChips := container.NewHBox(
-		canvas.NewText("Preset Cepat:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
+		canvas.NewText("Preset Cepat:", constants.ColorTextSecondary),
 		makeHostChip(10),
 		makeHostChip(30),
 		makeHostChip(50),
@@ -124,7 +134,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		makeHostChip(500),
 	)
 
-	copyRecBtn := widget.NewButtonWithIcon("Salin Ringkasan Subnet", theme.ContentCopyIcon(), func() {
+	copyRecBtn := widget.NewButtonWithIcon("Salin Ringkasan", theme.ContentCopyIcon(), func() {
 		hStr := strings.TrimSpace(hostCountEntry.Text)
 		needed, _ := strconv.Atoi(hStr)
 		rec, err := calculators.FindSubnetForHosts(needed, baseIPEntry.Text)
@@ -134,7 +144,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 			p.copyToClip(summary)
 		}
 	})
-	copyRecBtn.Importance = widget.HighImportance
+	copyRecBtn.Importance = widget.LowImportance
 
 	statGrid := container.NewGridWithColumns(2,
 		statPrefix.Widget,
@@ -143,14 +153,25 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		statBroadcast.Widget,
 	)
 
+	hostLbl := canvas.NewText("Jumlah Host yang Dibutuhkan:", constants.ColorTextPrimary)
+	hostLbl.TextSize = constants.FontSizeSmall
+	hostLbl.TextStyle = fyne.TextStyle{Bold: true}
+
+	ipLbl := canvas.NewText("IP Jaringan Awal (Opsional):", constants.ColorTextPrimary)
+	ipLbl.TextSize = constants.FontSizeSmall
+	ipLbl.TextStyle = fyne.TextStyle{Bold: true}
+
+	calcHeaderBadge := container.NewHBox(components.BadgeMuted("HASIL KALKULASI OTOMATIS"))
+	calcHeader := container.NewBorder(nil, nil, calcHeaderBadge, copyRecBtn)
+
 	recommenderContent := container.NewVBox(
 		container.NewGridWithColumns(2,
-			container.NewVBox(widget.NewLabelWithStyle("Jumlah Host yang Dibutuhkan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), hostCountEntry),
-			container.NewVBox(widget.NewLabelWithStyle("IP Jaringan Awal (Opsional):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), baseIPEntry),
+			container.NewVBox(hostLbl, hostCountEntry),
+			container.NewVBox(ipLbl, baseIPEntry),
 		),
 		hostChips,
 		widget.NewSeparator(),
-		container.NewBorder(nil, nil, components.BadgeCyan("HASIL KALKULASI OTOMATIS"), copyRecBtn),
+		calcHeader,
 		statGrid,
 		container.NewPadded(hintLabel),
 	)
@@ -164,36 +185,46 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	cidrEntry.SetPlaceHolder("192.168.1.0/24")
 	cidrEntry.SetText("192.168.1.0/24")
 
-	netLabel := widget.NewLabel("-")
-	bcastLabel := widget.NewLabel("-")
-	firstHostLabel := widget.NewLabel("-")
-	lastHostLabel := widget.NewLabel("-")
-	totalHostsLabel := widget.NewLabel("-")
-	maskLabel := widget.NewLabel("-")
+	statNet := components.NewStatCard("NETWORK ADDRESS", "-", constants.ColorInfo)
+	statMask := components.NewStatCard("SUBNET MASK", "-", constants.ColorTechIndigo)
+	statFirstHost := components.NewStatCard("HOST PERTAMA USABLE", "-", constants.ColorSuccess)
+	statLastHost := components.NewStatCard("HOST TERAKHIR USABLE", "-", constants.ColorSuccess)
+	statTotalHosts := components.NewStatCard("TOTAL USABLE HOST", "-", constants.ColorAccentYellow)
+	statBcast := components.NewStatCard("BROADCAST ADDRESS", "-", constants.ColorWarning)
 
 	calcCIDR := func() {
 		info, err := calculators.ParseCIDR(cidrEntry.Text)
 		if err != nil {
+			statNet.SetValue("CIDR Tidak Valid")
+			statNet.SetColor(constants.ColorDanger)
 			return
 		}
-		netLabel.SetText(info.NetworkAddress)
-		bcastLabel.SetText(info.BroadcastAddress)
-		firstHostLabel.SetText(info.FirstHost)
-		lastHostLabel.SetText(info.LastHost)
-		totalHostsLabel.SetText(fmt.Sprintf("%d Host", info.TotalHosts))
-		maskLabel.SetText(info.Netmask)
+		statNet.SetColor(constants.ColorInfo)
+		statNet.SetValue(info.NetworkAddress)
+		statMask.SetColor(constants.ColorTechIndigo)
+		statMask.SetValue(info.Netmask)
+		statFirstHost.SetColor(constants.ColorSuccess)
+		statFirstHost.SetValue(info.FirstHost)
+		statLastHost.SetColor(constants.ColorSuccess)
+		statLastHost.SetValue(info.LastHost)
+		statTotalHosts.SetColor(constants.ColorAccentYellow)
+		statTotalHosts.SetValue(fmt.Sprintf("%d Host", info.TotalHosts))
+		statBcast.SetColor(constants.ColorWarning)
+		statBcast.SetValue(info.BroadcastAddress)
 	}
 
 	cidrEntry.OnChanged = func(string) { calcCIDR() }
 
 	makeCidrChip := func(c string) *widget.Button {
-		return widget.NewButton(c, func() {
+		btn := widget.NewButton(c, func() {
 			cidrEntry.SetText(c)
 		})
+		btn.Importance = widget.LowImportance
+		return btn
 	}
 
 	cidrChips := container.NewHBox(
-		canvas.NewText("Preset CIDR:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
+		canvas.NewText("Preset CIDR:", constants.ColorTextSecondary),
 		makeCidrChip("192.168.1.0/24"),
 		makeCidrChip("192.168.0.0/22"),
 		makeCidrChip("172.16.0.0/20"),
@@ -201,18 +232,24 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		makeCidrChip("10.0.0.0/30"),
 	)
 
+	cidrGrid := container.NewGridWithColumns(2,
+		statNet.Widget,
+		statMask.Widget,
+		statFirstHost.Widget,
+		statLastHost.Widget,
+		statTotalHosts.Widget,
+		statBcast.Widget,
+	)
+
+	cidrInputLbl := canvas.NewText("Alamat CIDR Target:", constants.ColorTextPrimary)
+	cidrInputLbl.TextSize = constants.FontSizeSmall
+	cidrInputLbl.TextStyle = fyne.TextStyle{Bold: true}
+
 	cidrContent := container.NewVBox(
-		container.NewBorder(nil, nil, widget.NewLabelWithStyle("Alamat CIDR:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), nil, cidrEntry),
+		container.NewBorder(nil, nil, cidrInputLbl, nil, cidrEntry),
 		cidrChips,
 		widget.NewSeparator(),
-		container.NewGridWithColumns(2,
-			widget.NewLabelWithStyle("Network Address:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), netLabel,
-			widget.NewLabelWithStyle("Subnet Mask:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), maskLabel,
-			widget.NewLabelWithStyle("Broadcast Address:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), bcastLabel,
-			widget.NewLabelWithStyle("Host Pertama Usable:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), firstHostLabel,
-			widget.NewLabelWithStyle("Host Terakhir Usable:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), lastHostLabel,
-			widget.NewLabelWithStyle("Total Usable Host:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), totalHostsLabel,
-		),
+		cidrGrid,
 	)
 	cidrCard := components.NewPlainCard(cidrContent)
 
@@ -267,11 +304,20 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	vlsmBtn := widget.NewButtonWithIcon("Alokasikan VLSM", theme.ConfirmIcon(), calcVLSM)
 	vlsmBtn.Importance = widget.HighImportance
 
+	makeVlsmChip := func(txt string) *widget.Button {
+		btn := widget.NewButton(txt, func() {
+			vlsmHostsEntry.SetText(txt)
+			calcVLSM()
+		})
+		btn.Importance = widget.LowImportance
+		return btn
+	}
+
 	vlsmChips := container.NewHBox(
-		canvas.NewText("Contoh Tugas Lab:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
-		widget.NewButton("50, 20, 10", func() { vlsmHostsEntry.SetText("50, 20, 10"); calcVLSM() }),
-		widget.NewButton("100, 50, 25, 12", func() { vlsmHostsEntry.SetText("100, 50, 25, 12"); calcVLSM() }),
-		widget.NewButton("30, 15, 6, 2", func() { vlsmHostsEntry.SetText("30, 15, 6, 2"); calcVLSM() }),
+		canvas.NewText("Contoh Tugas Lab:", constants.ColorTextSecondary),
+		makeVlsmChip("50, 20, 10"),
+		makeVlsmChip("100, 50, 25, 12"),
+		makeVlsmChip("30, 15, 6, 2"),
 	)
 
 	vlsmContent := container.NewVBox(
@@ -385,13 +431,15 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 	}
 
 	makeNumChip := func(v int) *widget.Button {
-		return widget.NewButton(strconv.Itoa(v), func() {
+		btn := widget.NewButton(strconv.Itoa(v), func() {
 			setAll(v, "")
 		})
+		btn.Importance = widget.LowImportance
+		return btn
 	}
 
 	numChips := container.NewHBox(
-		canvas.NewText("Angka Populer:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
+		canvas.NewText("Angka Populer:", constants.ColorTextSecondary),
 		makeNumChip(16),
 		makeNumChip(255),
 		makeNumChip(1024),
@@ -421,7 +469,7 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 	toSelect := widget.NewSelect(units, nil)
 	toSelect.SetSelected("GB")
 
-	resultStat := components.NewStatCard("HASIL KONVERSI UKURAN", "1.0000 GB", color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF})
+	resultStat := components.NewStatCard("HASIL KONVERSI UKURAN", "1.0000 GB", constants.ColorSuccess)
 
 	calcData := func() {
 		valStr := strings.TrimSpace(dataValEntry.Text)
@@ -432,8 +480,10 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 		val, err := strconv.ParseFloat(valStr, 64)
 		if err != nil {
 			resultStat.SetValue("Input tidak valid")
+			resultStat.SetColor(constants.ColorDanger)
 			return
 		}
+		resultStat.SetColor(constants.ColorSuccess)
 		res := calculators.ConvertDataSize(val, fromSelect.Selected, toSelect.Selected)
 		resultStat.SetValue(fmt.Sprintf("%.4f %s", res, toSelect.Selected))
 		resultStat.SetSubtext(fmt.Sprintf("%s ➔ %s", fromSelect.Selected, toSelect.Selected))
@@ -443,12 +493,22 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 	fromSelect.OnChanged = func(string) { calcData() }
 	toSelect.OnChanged = func(string) { calcData() }
 
+	makeDataChip := func(label, val, from, to string) *widget.Button {
+		btn := widget.NewButton(label, func() {
+			dataValEntry.SetText(val)
+			fromSelect.SetSelected(from)
+			toSelect.SetSelected(to)
+		})
+		btn.Importance = widget.LowImportance
+		return btn
+	}
+
 	dataChips := container.NewHBox(
-		canvas.NewText("Preset Ukuran:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
-		widget.NewButton("1024 MB ➔ GB", func() { dataValEntry.SetText("1024"); fromSelect.SetSelected("MB"); toSelect.SetSelected("GB") }),
-		widget.NewButton("4096 MB ➔ GB", func() { dataValEntry.SetText("4096"); fromSelect.SetSelected("MB"); toSelect.SetSelected("GB") }),
-		widget.NewButton("1 TB ➔ GB", func() { dataValEntry.SetText("1"); fromSelect.SetSelected("TB"); toSelect.SetSelected("GB") }),
-		widget.NewButton("8 bit ➔ Byte", func() { dataValEntry.SetText("8"); fromSelect.SetSelected("bit"); toSelect.SetSelected("Byte") }),
+		canvas.NewText("Preset Ukuran:", constants.ColorTextSecondary),
+		makeDataChip("1024 MB ➔ GB", "1024", "MB", "GB"),
+		makeDataChip("4096 MB ➔ GB", "4096", "MB", "GB"),
+		makeDataChip("1 TB ➔ GB", "1", "TB", "GB"),
+		makeDataChip("8 bit ➔ Byte", "8", "bit", "Byte"),
 	)
 
 	dataContent := container.NewVBox(
@@ -507,7 +567,7 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 		widget.NewLabelWithStyle("SHA-256 (256-bit Secure Digest):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, nil, widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(sha256Out.Text) }), sha256Out),
 	)
-	hashCard := components.NewPlainCard(hashContent)
+	hashCard := components.NewPlainCardWithAccent(hashContent, constants.ColorTechIndigo)
 
 	// Password Generator
 	pwdLenEntry := widget.NewEntry()
@@ -531,14 +591,16 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 	genPwdBtn.Importance = widget.HighImportance
 
 	makeLenChip := func(l int) *widget.Button {
-		return widget.NewButton(fmt.Sprintf("%d Karakter", l), func() {
+		btn := widget.NewButton(fmt.Sprintf("%d Karakter", l), func() {
 			pwdLenEntry.SetText(strconv.Itoa(l))
 			genPwd()
 		})
+		btn.Importance = widget.LowImportance
+		return btn
 	}
 
 	pwdChips := container.NewHBox(
-		canvas.NewText("Panjang Standar:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
+		canvas.NewText("Panjang Standar:", constants.ColorTextSecondary),
 		makeLenChip(8),
 		makeLenChip(12),
 		makeLenChip(16),
@@ -557,7 +619,7 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 		widget.NewLabelWithStyle("Hasil Password Terenkripsi (High Entropy):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, nil, widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(pwdResult.Text) }), pwdResult),
 	)
-	pwdCard := components.NewPlainCard(pwdContent)
+	pwdCard := components.NewPlainCardWithAccent(pwdContent, constants.ColorTechIndigo)
 
 	// Initialize
 	updateHashes(hashInput.Text)
@@ -672,17 +734,19 @@ func (p *CalculatorPage) buildFormatterTab() fyne.CanvasObject {
 	})
 	testRegexBtn.Importance = widget.HighImportance
 
+	makeSampleChip := func(label, sample string) *widget.Button {
+		btn := widget.NewButton(label, func() {
+			inputArea.SetText(sample)
+		})
+		btn.Importance = widget.LowImportance
+		return btn
+	}
+
 	presetChips := container.NewHBox(
-		canvas.NewText("Contoh Data:", color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}),
-		widget.NewButton("JSON Sample", func() {
-			inputArea.SetText(`{"title":"Subnetting","hosts":50,"vlan":10,"active":true}`)
-		}),
-		widget.NewButton("YAML Sample", func() {
-			inputArea.SetText("version: '3.8'\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - 80:80")
-		}),
-		widget.NewButton("XML Sample", func() {
-			inputArea.SetText("<network><device type=\"router\"><name>Core-R1</name><ip>192.168.1.1</ip></device></network>")
-		}),
+		canvas.NewText("Contoh Data:", constants.ColorTextSecondary),
+		makeSampleChip("JSON Sample", `{"title":"Subnetting","hosts":50,"vlan":10,"active":true}`),
+		makeSampleChip("YAML Sample", "version: '3.8'\nservices:\n  web:\n    image: nginx:alpine\n    ports:\n      - 80:80"),
+		makeSampleChip("XML Sample", "<network><device type=\"router\"><name>Core-R1</name><ip>192.168.1.1</ip></device></network>"),
 	)
 
 	btnGrid := container.NewGridWithColumns(4,
@@ -709,5 +773,5 @@ func (p *CalculatorPage) buildFormatterTab() fyne.CanvasObject {
 		outputArea,
 	)
 
-	return container.NewVScroll(components.NewPlainCard(content))
+	return container.NewVScroll(components.NewPlainCardWithAccent(content, constants.ColorTechIndigo))
 }

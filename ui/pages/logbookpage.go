@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"image/color"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -81,20 +80,20 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 			})
 			delBtn.Importance = widget.LowImportance
 
-			titleTxt := canvas.NewText(item.Title, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 14
+			titleTxt := canvas.NewText(item.Title, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
-			tagBadge := components.BadgeIndigo(item.Tags)
-			dateTxt := canvas.NewText(item.CreatedAt, color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF})
-			dateTxt.TextSize = 10.5
+			tagBadge := components.BadgeYellow(item.Tags)
+			dateTxt := canvas.NewText(item.CreatedAt, constants.ColorTextMuted)
+			dateTxt.TextSize = constants.FontSizeLabel
 
 			header := container.NewBorder(nil, nil,
 				container.NewHBox(titleTxt, tagBadge, dateTxt),
 				delBtn,
 			)
 
-			errTitle := container.NewHBox(components.BadgeError("PESAN ERROR"))
+			errTitle := container.NewHBox(components.BadgeDanger("PESAN ERROR"))
 			errBox := widget.NewLabel(item.ErrorMessage)
 			errBox.Wrapping = fyne.TextWrapWord
 
@@ -111,7 +110,7 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 				solTitle,
 				solBox,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorDanger))
 		}
 		listContainer.Refresh()
 	}
@@ -197,8 +196,8 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 			})
 			delBtn.Importance = widget.LowImportance
 
-			titleTxt := canvas.NewText(snip.Title, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 14
+			titleTxt := canvas.NewText(snip.Title, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
 			langBadge := components.BadgeCyan(strings.ToUpper(snip.Language))
@@ -223,7 +222,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 				widget.NewSeparator(),
 				codeArea,
 			)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorInfo))
 		}
 		listContainer.Refresh()
 	}
@@ -263,8 +262,12 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 	})
 	addBtn.Importance = widget.HighImportance
 
+	titleHdr := canvas.NewText("Koleksi Snippet Kode Siap Pakai", constants.ColorTextPrimary)
+	titleHdr.TextSize = constants.FontSizeBody
+	titleHdr.TextStyle = fyne.TextStyle{Bold: true}
+
 	topBar := container.NewBorder(nil, nil,
-		canvas.NewText("Koleksi Snippet Kode Siap Pakai", color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}),
+		titleHdr,
 		addBtn,
 	)
 	reloadSnippets()
@@ -304,11 +307,11 @@ func (p *LogbookPage) buildChecklistsTab() fyne.CanvasObject {
 			})
 			delCLBtn.Importance = widget.LowImportance
 
-			titleTxt := canvas.NewText(currentCL.Name, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-			titleTxt.TextSize = 14
+			titleTxt := canvas.NewText(currentCL.Name, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
 			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
-			itemBadge := components.BadgeIndigo(fmt.Sprintf("%d Items", len(currentCL.Items)))
+			itemBadge := components.BadgeYellow(fmt.Sprintf("%d Items", len(currentCL.Items)))
 
 			header := container.NewBorder(nil, nil,
 				container.NewHBox(titleTxt, itemBadge),
@@ -347,7 +350,7 @@ func (p *LogbookPage) buildChecklistsTab() fyne.CanvasObject {
 			addRow := container.NewBorder(nil, nil, nil, addItemBtn, newItemEntry)
 
 			cardContent := container.NewVBox(header, widget.NewSeparator(), itemsBox, addRow)
-			listContainer.Add(components.NewPlainCard(cardContent))
+			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorSuccess))
 		}
 		listContainer.Refresh()
 	}

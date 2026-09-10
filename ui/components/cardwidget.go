@@ -1,23 +1,23 @@
 package components
 
 import (
-	"image/color"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/yudz/it-toolbox/ui/constants"
 )
 
-// ItemCard is a reusable modern card container displaying a title, badge/tag, description, and optional action
+// ItemCard is a reusable Neo-Brutalist card container displaying a title, sticker badge, description, and action
 type ItemCard struct {
 	Widget fyne.CanvasObject
 }
 
 func NewItemCard(title, subtitle, description string, onAction func(), actionIcon fyne.Resource) *ItemCard {
-	titleText := canvas.NewText(title, color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF})
-	titleText.TextSize = 13.5
+	titleText := canvas.NewText(title, constants.ColorTextPrimary)
+	titleText.TextSize = 14
 	titleText.TextStyle = fyne.TextStyle{Bold: true}
 
 	var headerRight fyne.CanvasObject
@@ -32,7 +32,7 @@ func NewItemCard(title, subtitle, description string, onAction func(), actionIco
 
 	var tagBadge fyne.CanvasObject
 	if subtitle != "" {
-		tagBadge = BadgeIndigo(subtitle)
+		tagBadge = BadgeYellow(subtitle)
 	}
 
 	headerLeft := container.NewHBox(titleText)
@@ -45,10 +45,10 @@ func NewItemCard(title, subtitle, description string, onAction func(), actionIco
 	descText := widget.NewLabel(description)
 	descText.Wrapping = fyne.TextWrapWord
 
-	bg := canvas.NewRectangle(color.RGBA{R: 0x13, G: 0x18, B: 0x24, A: 0xFF})
-	bg.StrokeColor = color.RGBA{R: 0x21, G: 0x2B, B: 0x3C, A: 0xFF}
-	bg.StrokeWidth = 1
-	bg.CornerRadius = 10
+	bg := canvas.NewRectangle(constants.ColorBgCard)
+	bg.StrokeColor = constants.ColorBorderSubtle
+	bg.StrokeWidth = constants.BorderWidthHeavy
+	bg.CornerRadius = constants.CornerRadiusBrutal
 
 	content := container.NewVBox(
 		header,
@@ -57,5 +57,6 @@ func NewItemCard(title, subtitle, description string, onAction func(), actionIco
 	)
 
 	stack := container.NewStack(bg, container.NewPadded(content))
-	return &ItemCard{Widget: stack}
+	shadowed := WrapHardShadow(stack, constants.ShadowOffsetHeavy, constants.ShadowOffsetHeavy)
+	return &ItemCard{Widget: shadowed}
 }

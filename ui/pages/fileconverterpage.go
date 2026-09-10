@@ -96,12 +96,12 @@ func (p *FileConverterPage) buildDocConverterTab() fyne.CanvasObject {
 				sizeStr = fmt.Sprintf("%.2f KB", float64(fi.Size())/1024.0)
 			}
 
-			extBadge := components.BadgeIndigo(strings.ToUpper(strings.TrimPrefix(filepath.Ext(path), ".")))
+			extBadge := components.BadgeYellow(strings.ToUpper(strings.TrimPrefix(filepath.Ext(path), ".")))
 			row := container.NewBorder(nil, nil,
 				container.NewHBox(extBadge, widget.NewLabelWithStyle(fmt.Sprintf("%s (%s)", filepath.Base(path), sizeStr), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
 				delBtn,
 			)
-			fileListContainer.Add(components.NewPlainCard(row))
+			fileListContainer.Add(components.NewPlainCardWithAccent(row, constants.ColorAccentCyan))
 		}
 		fileListContainer.Refresh()
 		statusLabel.SetText(fmt.Sprintf("%d berkas dipilih.", len(selectedFiles)))
@@ -207,7 +207,7 @@ func (p *FileConverterPage) buildDocConverterTab() fyne.CanvasObject {
 				container.NewHBox(resBadge, widget.NewLabelWithStyle(fmt.Sprintf("%s (%s)", filepath.Base(resItem), sizeStr), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
 				openBtn,
 			)
-			resListContainer.Add(components.NewPlainCard(resCard))
+			resListContainer.Add(components.NewPlainCardWithAccent(resCard, constants.ColorSuccess))
 		}
 
 		progress.Hide()
@@ -221,27 +221,27 @@ func (p *FileConverterPage) buildDocConverterTab() fyne.CanvasObject {
 	})
 	convertBtn.Importance = widget.HighImportance
 
-	inputCard := components.NewPlainCard(container.NewVBox(
+	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("1. Pilih Berkas Dokumen (PDF, DOCX, XLSX, PPTX, TXT):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewHBox(uploadBtn, widget.NewLabel("atau masukkan path berkas:")),
 		container.NewBorder(nil, nil, nil, addFromEntryBtn, uploadBatchEntry),
 		statusLabel,
 		fileListContainer,
-	))
+	), constants.ColorAccentCyan)
 
-	configCard := components.NewPlainCard(container.NewVBox(
+	configCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("2. Konfigurasi Konversi Dokumen:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewGridWithColumns(2,
 			container.NewVBox(widget.NewLabelWithStyle("Format Sasaran:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), targetFormatSelect),
 			container.NewVBox(widget.NewLabelWithStyle("Opsi Kompresi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), compressCheck),
 		),
 		container.NewHBox(convertBtn, zipBtn),
-	))
+	), constants.ColorAccentYellow)
 
-	resCard := components.NewPlainCard(container.NewVBox(
+	resCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("3. Hasil Konversi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		resListContainer,
-	))
+	), constants.ColorSuccess)
 
 	return container.NewVScroll(container.NewVBox(
 		inputCard,
@@ -390,7 +390,7 @@ func (p *FileConverterPage) buildImgConverterTab() fyne.CanvasObject {
 					fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
 				openBtn,
 			)
-			resListContainer.Add(components.NewPlainCard(resRow))
+			resListContainer.Add(components.NewPlainCardWithAccent(resRow, constants.ColorSuccess))
 		}
 
 		dialog.ShowInformation("Selesai", fmt.Sprintf("Konversi gambar selesai di folder:\n%s", outDir), p.window)
@@ -398,27 +398,27 @@ func (p *FileConverterPage) buildImgConverterTab() fyne.CanvasObject {
 	})
 	convertBtn.Importance = widget.HighImportance
 
-	inputCard := components.NewPlainCard(container.NewVBox(
+	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("1. Pilih Gambar (JPG, PNG, WEBP):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewHBox(uploadImgBtn, widget.NewLabel("atau masukkan path:")),
 		container.NewBorder(nil, nil, nil, addPathBtn, pathEntry),
 		statusLabel,
 		imgListContainer,
-	))
+	), constants.ColorAccentCyan)
 
-	configCard := components.NewPlainCard(container.NewVBox(
+	configCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("2. Format Target & Kualitas Kompresi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewGridWithColumns(2,
 			container.NewVBox(widget.NewLabelWithStyle("Format Gambar Sasaran:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), targetFmtSelect),
 			container.NewVBox(qualityLabel, qualitySlider),
 		),
 		container.NewHBox(convertBtn, zipBtn),
-	))
+	), constants.ColorAccentYellow)
 
-	resCard := components.NewPlainCard(container.NewVBox(
+	resCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("3. Hasil Gambar & Penghematan Ukuran:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		resListContainer,
-	))
+	), constants.ColorSuccess)
 
 	return container.NewVScroll(container.NewVBox(
 		inputCard,
@@ -508,22 +508,22 @@ func (p *FileConverterPage) buildOCRTab() fyne.CanvasObject {
 		dialog.ShowInformation("Tersimpan", fmt.Sprintf("Hasil OCR berhasil disimpan ke:\n%s", savePath), p.window)
 	})
 
-	cardTop := components.NewPlainCard(container.NewVBox(
+	cardTop := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabel("Ekstraksi teks dari gambar scan atau PDF menggunakan engine Tesseract OCR:"),
 		container.NewBorder(nil, nil, widget.NewLabelWithStyle("Berkas Input:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), browseBtn, filePathEntry),
 		container.NewGridWithColumns(2,
 			container.NewVBox(widget.NewLabelWithStyle("Pilihan Bahasa:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), langSelect),
 			container.NewVBox(widget.NewLabelWithStyle("Aksi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), ocrBtn),
 		),
-	))
+	), constants.ColorAccentCyan)
 
-	cardResult := components.NewPlainCard(container.NewVBox(
+	cardResult := components.NewPlainCardWithAccent(container.NewVBox(
 		container.NewBorder(nil, nil,
 			widget.NewLabelWithStyle("Teks Hasil Ekstraksi OCR:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			container.NewHBox(copyBtn, saveTxtBtn),
 		),
 		resultArea,
-	))
+	), constants.ColorSuccess)
 
 	return container.NewVScroll(container.NewVBox(
 		cardTop,
@@ -549,12 +549,12 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 			})
 			delBtn.Importance = widget.LowImportance
 
-			numBadge := components.BadgeIndigo(fmt.Sprintf("#%d", idx+1))
+			numBadge := components.BadgeYellow(fmt.Sprintf("#%d", idx+1))
 			row := container.NewBorder(nil, nil,
 				container.NewHBox(numBadge, widget.NewLabelWithStyle(filepath.Base(path), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
 				delBtn,
 			)
-			mergeList.Add(components.NewPlainCard(row))
+			mergeList.Add(components.NewPlainCardWithAccent(row, constants.ColorTechIndigo))
 		}
 		mergeList.Refresh()
 	}
@@ -596,13 +596,13 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 	})
 	runMergeBtn.Importance = widget.HighImportance
 
-	mergeCard := components.NewPlainCard(container.NewVBox(
+	mergeCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("📑 Penggabungan Berkas PDF (Merge):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewHBox(addMergeBtn, widget.NewLabel("atau masukkan path:")),
 		container.NewBorder(nil, nil, nil, addMergePathBtn, mergePathEntry),
 		mergeList,
 		runMergeBtn,
-	))
+	), constants.ColorTechIndigo)
 
 	// B. Split PDF Section
 	splitFileEntry := widget.NewEntry()
@@ -641,7 +641,7 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 	})
 	runSplitBtn.Importance = widget.HighImportance
 
-	splitCard := components.NewPlainCard(container.NewVBox(
+	splitCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("✂️ Pemisahan Halaman PDF (Split):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, widget.NewLabelWithStyle("PDF Sumber:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), browseSplitBtn, splitFileEntry),
 		container.NewGridWithColumns(2,
@@ -649,7 +649,7 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 			container.NewVBox(widget.NewLabelWithStyle("Sampai Halaman:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), pageToEntry),
 		),
 		runSplitBtn,
-	))
+	), constants.ColorWarning)
 
 	// C. Compress PDF Section
 	compFileEntry := widget.NewEntry()
@@ -711,12 +711,12 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 	})
 	runCompBtn.Importance = widget.HighImportance
 
-	compCard := components.NewPlainCard(container.NewVBox(
+	compCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("🗜️ Kompresi Ukuran PDF:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, widget.NewLabelWithStyle("PDF Sumber:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), browseCompBtn, compFileEntry),
 		widget.NewLabelWithStyle("Tingkat Kompresi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), compLevelSelect,
 		runCompBtn,
-	))
+	), constants.ColorDanger)
 
 	return container.NewVScroll(container.NewVBox(
 		mergeCard,

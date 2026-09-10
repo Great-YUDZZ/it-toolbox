@@ -6,70 +6,139 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+
+	"github.com/yudz/it-toolbox/ui/constants"
 )
 
-// Badge renders a refined pill tag with colored background, border, and text
+// Badge renders an authentic Neo-Brutalist sticker badge with solid 2.0px border and bold typography
 func Badge(text string, textColor, bgColor, borderColor color.Color) fyne.CanvasObject {
 	bg := canvas.NewRectangle(bgColor)
 	bg.StrokeColor = borderColor
-	bg.StrokeWidth = 1
-	bg.CornerRadius = 6
+	bg.StrokeWidth = constants.BorderWidthMedium // 2.0px bold outline
+	bg.CornerRadius = constants.CornerRadiusBrutal
 
 	txt := canvas.NewText(text, textColor)
-	txt.TextSize = 10.5
+	txt.TextSize = constants.FontSizeLabel // 9.5px
 	txt.TextStyle = fyne.TextStyle{Bold: true}
 	txt.Alignment = fyne.TextAlignCenter
 
-	// Subtle padding for the pill
 	padded := container.NewPadded(txt)
 	return container.NewStack(bg, padded)
 }
 
-// Preset modern badges
+// BadgeYellow - Iconic Gumroad/Acid Yellow Sticker
+func BadgeYellow(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // Pitch Black text
+			constants.ColorAccentYellow,                     // #FFE600
+			constants.ColorBorderSubtle,                     // #FFFFFF
+		)
+	}
+	return Badge(text,
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // Pitch Black text
+		constants.ColorAccentYellow,                     // #FFE600
+		constants.ColorBorderSubtle,                     // #000000
+	)
+}
+
+// BadgeCyan - Vivid Cyber Cyan Sticker
 func BadgeCyan(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			constants.ColorAccentCyan, // #00E5FF
+			constants.ColorBorderSubtle,
+		)
+	}
 	return Badge(text,
-		color.RGBA{R: 0x00, G: 0xD4, B: 0xFF, A: 0xFF}, // Text #00D4FF
-		color.RGBA{R: 0x00, G: 0x48, B: 0x5C, A: 0x50}, // Bg Tint
-		color.RGBA{R: 0x00, G: 0x8C, B: 0xAA, A: 0x80}, // Border
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		constants.ColorAccentCyan, // #00E5FF
+		constants.ColorBorderSubtle,
 	)
 }
 
-func BadgeIndigo(text string) fyne.CanvasObject {
-	return Badge(text,
-		color.RGBA{R: 0x81, G: 0x8C, B: 0xF8, A: 0xFF}, // Text #818CF8
-		color.RGBA{R: 0x31, G: 0x2E, B: 0x81, A: 0x50}, // Bg Tint
-		color.RGBA{R: 0x4F, G: 0x46, B: 0xE5, A: 0x80}, // Border
-	)
-}
-
+// BadgeSuccess - Vivid Neo Mint Sticker
 func BadgeSuccess(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			constants.ColorSuccess, // #00F0A0
+			constants.ColorBorderSubtle,
+		)
+	}
 	return Badge(text,
-		color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF}, // Text #34D399
-		color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0x50}, // Bg Tint
-		color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0x80}, // Border
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		constants.ColorSuccess, // #00F0A0
+		constants.ColorBorderSubtle,
 	)
 }
 
+// BadgeWarning - Vivid Amber Tangerine Sticker
 func BadgeWarning(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			constants.ColorWarning, // #FFB800
+			constants.ColorBorderSubtle,
+		)
+	}
 	return Badge(text,
-		color.RGBA{R: 0xFB, G: 0xBF, B: 0x24, A: 0xFF}, // Text #FBBF24
-		color.RGBA{R: 0x78, G: 0x35, B: 0x0F, A: 0x50}, // Bg Tint
-		color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0x80}, // Border
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		constants.ColorWarning, // #FF9F1C
+		constants.ColorBorderSubtle,
 	)
 }
 
+// BadgeDanger - Vivid Neo Red Sticker
+func BadgeDanger(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			constants.ColorDanger, // #FF5353
+			constants.ColorBorderSubtle,
+		)
+	}
+	return Badge(text,
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		constants.ColorDanger, // #FF4D4D
+		constants.ColorBorderSubtle,
+	)
+}
+
+// BadgeError is an alias for BadgeDanger
 func BadgeError(text string) fyne.CanvasObject {
+	return BadgeDanger(text)
+}
+
+// BadgeMuted - Neutral Retro Box Tag
+func BadgeMuted(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			constants.ColorTextPrimary,                      // #FFFFFF
+			color.RGBA{R: 0x27, G: 0x27, B: 0x30, A: 0xFF}, // Charcoal
+			constants.ColorBorderSubtle,
+		)
+	}
 	return Badge(text,
-		color.RGBA{R: 0xFB, G: 0x71, B: 0x85, A: 0xFF}, // Text #FB7185
-		color.RGBA{R: 0x88, G: 0x13, B: 0x37, A: 0x50}, // Bg Tint
-		color.RGBA{R: 0xE1, G: 0x1D, B: 0x48, A: 0x80}, // Border
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // #000000
+		color.RGBA{R: 0xEE, G: 0xE8, B: 0xDD, A: 0xFF}, // Warm slate/kraft paper
+		constants.ColorBorderSubtle,
 	)
 }
 
-func BadgeMuted(text string) fyne.CanvasObject {
+// BadgeIndigo - Tech Violet / Purple Sticker
+func BadgeIndigo(text string) fyne.CanvasObject {
+	if constants.IsDarkTheme {
+		return Badge(text,
+			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+			constants.ColorTechIndigo, // #C084FC
+			constants.ColorBorderSubtle,
+		)
+	}
 	return Badge(text,
-		color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}, // Text #94A3B8
-		color.RGBA{R: 0x1E, G: 0x29, B: 0x3B, A: 0x60}, // Bg Tint
-		color.RGBA{R: 0x33, G: 0x41, B: 0x55, A: 0x80}, // Border
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		color.RGBA{R: 0xC0, G: 0x84, B: 0xFC, A: 0xFF}, // Electric Violet
+		constants.ColorBorderSubtle,
 	)
 }
