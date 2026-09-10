@@ -19,7 +19,11 @@ func NewHeroHeader(title, description string, tagBadge fyne.CanvasObject) fyne.C
 	descText.TextSize = constants.FontSizeSmall
 
 	titleBox := container.NewVBox(titleText, descText)
-	headerBar := container.NewBorder(nil, nil, titleBox, tagBadge)
+	var rightItem fyne.CanvasObject
+	if tagBadge != nil {
+		rightItem = container.NewCenter(tagBadge)
+	}
+	headerBar := container.NewBorder(nil, nil, titleBox, rightItem)
 
 	sep := widget.NewSeparator()
 

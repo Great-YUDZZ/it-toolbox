@@ -1,7 +1,9 @@
 package pages
 
 import (
+	"fmt"
 	"image/color"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -98,7 +100,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		listContainer.Refresh()
 	}
 
-	// Device selector
+	// Device selector with comfortable width
 	deviceOptions := []string{
 		string(cisco.DeviceAll),
 		string(cisco.DeviceRouter),
@@ -112,7 +114,11 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	})
 	devSelect.SetSelected(string(cisco.DeviceAll))
 
-	// Mode selector
+	devSpacer := canvas.NewRectangle(color.Transparent)
+	devSpacer.SetMinSize(fyne.NewSize(200, 36))
+	devSelectBox := container.NewStack(devSpacer, devSelect)
+
+	// Mode selector with comfortable width
 	modeOptions := []string{
 		string(cisco.ModeAll),
 		string(cisco.ModeUserExec),
@@ -132,18 +138,23 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	})
 	modeSelect.SetSelected(string(cisco.ModeAll))
 
+	modeSpacer := canvas.NewRectangle(color.Transparent)
+	modeSpacer.SetMinSize(fyne.NewSize(240, 36))
+	modeSelectBox := container.NewStack(modeSpacer, modeSelect)
+
 	// Search bar
 	searchBar := components.NewSearchBar(constants.SearchCiscoPlaceholder, func(q string) {
 		query = q
 		renderList()
 	})
 
-	// Filter Bar with labels
+	// Filter Bar with centered badges and proper spacing
 	filterRow := container.NewHBox(
-		components.BadgeCyan("PERANGKAT:"),
-		devSelect,
-		components.BadgeIndigo("MODE CLI:"),
-		modeSelect,
+		container.NewCenter(components.BadgeCyan("PERANGKAT:")),
+		devSelectBox,
+		widget.NewSeparator(),
+		container.NewCenter(components.BadgeIndigo("MODE CLI:")),
+		modeSelectBox,
 	)
 
 	headerBox := container.NewVBox(
@@ -189,7 +200,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	titleText.TextSize = constants.FontSizeH2
 	titleText.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Copy Script Button
+	// Copy Script Button (Centered vertically, not stretched)
 	copyBtn := widget.NewButtonWithIcon("Salin Script CLI", theme.ContentCopyIcon(), func() {
 		p.copyToClip(cmd.Commands)
 	})
@@ -199,7 +210,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		container.NewHBox(devBadge, modeBadge, catBadge),
 		titleText,
 	)
-	topHeader := container.NewBorder(nil, nil, headerLeft, copyBtn)
+	topHeader := container.NewBorder(nil, nil, headerLeft, container.NewCenter(copyBtn))
 
 	// Description
 	descLabel := widget.NewLabel(cmd.Description)
@@ -211,56 +222,104 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		descLabel,
 	}
 
-	// IP Example (if available)
+	// IP Example (if available) with clean aligned metadata strip
 	if cmd.IPExample != "" {
 		ipBadge := components.BadgeWarning("SKEMA IP / TOPOLOGI")
 		ipText := canvas.NewText(cmd.IPExample, constants.ColorTextPrimary)
 		ipText.TextSize = constants.FontSizeSmall
 		ipText.TextStyle = fyne.TextStyle{Monospace: true, Bold: true}
 
-		ipBox := container.NewHBox(ipBadge, ipText)
-		cardItems = append(cardItems, ipBox)
+		ipBox := container.NewHBox(container.NewCenter(ipBadge), container.NewCenter(ipText))
+
+		ipBg := canvas.NewRectangle(constants.ColorBgCardInner)
+		ipBg.StrokeColor = constants.ColorBorderSubtle
+		ipBg.StrokeWidth = 1
+		ipBg.CornerRadius = constants.CornerRadiusBrutal
+
+		ipCard := container.NewStack(ipBg, container.NewPadded(ipBox))
+		cardItems = append(cardItems, ipCard)
 	}
 
-	// CLI Script Panel
+	// CLI Script Panel - Spacious & comfortable layout
+	lines := strings.Split(cmd.Commands, "\n")
+	lineCount := len(lines)
+	if lineCount < 4 {
+		lineCount = 4
+	}
+	minHeight := float32(lineCount*21 + 28)
+	if minHeight < 120 {
+		minHeight = 120
+	}
+	if minHeight > 360 {
+		minHeight = 360
+	}
+
 	codeEntry := widget.NewMultiLineEntry()
 	codeEntry.SetText(cmd.Commands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	codeEntry.Wrapping = fyne.TextWrapWord
-	codeEntry.Disable() // Read-only
+
+	codeSpacer := canvas.NewRectangle(color.Transparent)
+	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
+	codeStack := container.NewStack(codeSpacer, codeEntry)
 
 	codeLabel := canvas.NewText("⌨ PERINTAH CLI CISCO IOS (SIAP SALIN):", constants.ColorTextPrimary)
 	codeLabel.TextSize = constants.FontSizeLabel
 	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	codeBox := container.NewVBox(
-		codeLabel,
-		codeEntry,
-	)
-	cardItems = append(cardItems, codeBox)
+	lineInfo := canvas.NewText(fmt.Sprintf("%d baris perintah", len(lines)), constants.ColorTextMuted)
+	lineInfo.TextSize = constants.FontSizeLabel
+	lineInfo.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Verification Guide Box
+	codeHeader := container.NewBorder(nil, nil, codeLabel, lineInfo)
+
+	terminalBg := canvas.NewRectangle(constants.ColorBgCardInner)
+	terminalBg.StrokeColor = constants.ColorBorderSubtle
+	terminalBg.StrokeWidth = constants.BorderWidthMedium
+	terminalBg.CornerRadius = constants.CornerRadiusBrutal
+
+	terminalContent := container.NewVBox(
+		container.NewPadded(codeHeader),
+		widget.NewSeparator(),
+		container.NewPadded(codeStack),
+	)
+	terminalPanel := container.NewStack(terminalBg, terminalContent)
+	cardItems = append(cardItems, terminalPanel)
+
+	// Verification Guide Box with clean framed card
 	verifBadge := components.BadgeSuccess("CARA VERIFIKASI / TES BEKERJA")
 	verifLabel := widget.NewLabel(cmd.Verification)
 	verifLabel.Wrapping = fyne.TextWrapWord
+
+	verifBg := canvas.NewRectangle(constants.ColorBgCardInner)
+	verifBg.StrokeColor = constants.ColorSuccess
+	verifBg.StrokeWidth = constants.BorderWidthMedium
+	verifBg.CornerRadius = constants.CornerRadiusBrutal
 
 	verifContent := container.NewVBox(
 		container.NewHBox(verifBadge),
 		verifLabel,
 	)
-	cardItems = append(cardItems, verifContent)
+	verifCard := container.NewStack(verifBg, container.NewPadded(verifContent))
+	cardItems = append(cardItems, verifCard)
 
-	// Troubleshooting Tips Box
+	// Troubleshooting Tips Box with clean framed card
 	if cmd.TroubleshootingTips != "" {
 		tipsBadge := components.BadgeDanger("TIPS & JEBAKAN UMUM")
 		tipsLabel := widget.NewLabel(cmd.TroubleshootingTips)
 		tipsLabel.Wrapping = fyne.TextWrapWord
 
+		tipsBg := canvas.NewRectangle(constants.ColorBgCardInner)
+		tipsBg.StrokeColor = constants.ColorDanger
+		tipsBg.StrokeWidth = constants.BorderWidthMedium
+		tipsBg.CornerRadius = constants.CornerRadiusBrutal
+
 		tipsContent := container.NewVBox(
 			container.NewHBox(tipsBadge),
 			tipsLabel,
 		)
-		cardItems = append(cardItems, tipsContent)
+		tipsCard := container.NewStack(tipsBg, container.NewPadded(tipsContent))
+		cardItems = append(cardItems, tipsCard)
 	}
 
 	fullCardContent := container.NewVBox(cardItems...)
@@ -276,15 +335,15 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	sec1Title.TextStyle = fyne.TextStyle{Bold: true}
 
 	lampuHijau := container.NewHBox(
-		components.BadgeSuccess("HIJAU (SOLID)"),
+		container.NewCenter(components.BadgeSuccess("HIJAU (SOLID)")),
 		widget.NewLabel("Link Layer 1 & 2 Normal (Port UP dan Protokol UP). Siap mengirim data."),
 	)
 	lampuOranye := container.NewHBox(
-		components.BadgeWarning("ORANYE (BLINK/SOLID)"),
+		container.NewCenter(components.BadgeWarning("ORANYE (BLINK/SOLID)")),
 		widget.NewLabel("Spanning Tree Protocol (STP) sedang Listening/Learning. Tunggu 30-50 detik atau klik tombol 'Fast Forward Time' (Alt + D) 2x di Packet Tracer."),
 	)
 	lampuMerah := container.NewHBox(
-		components.BadgeDanger("MERAH (SOLID)"),
+		container.NewCenter(components.BadgeDanger("MERAH (SOLID)")),
 		widget.NewLabel("Port Mati atau Kabel Salah! Cek: (a) Ketik 'no shutdown' di interface router, (b) Cek jenis kabel (Gunakan Straight-Through antar PC ke Switch, Crossover antar PC ke PC / Router ke PC)."),
 	)
 
@@ -348,15 +407,15 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	sec4Title.TextStyle = fyne.TextStyle{Bold: true}
 
 	rto := container.NewHBox(
-		components.BadgeDanger("Request timed out (RTO)"),
+		container.NewCenter(components.BadgeDanger("Request timed out (RTO)")),
 		widget.NewLabel("Paket terkirim tapi tidak ada balasan. Cek: (1) Default Gateway di PC tujuan, (2) Routing balik dari router lawan, (3) Jalur terblokir ACL."),
 	)
 	dhu := container.NewHBox(
-		components.BadgeWarning("Destination Host Unreachable"),
+		container.NewCenter(components.BadgeWarning("Destination Host Unreachable")),
 		widget.NewLabel("Router tidak menemukan rute ke subnet tujuan. Cek tabel routing dengan 'show ip route' dan pastikan rute terdaftar."),
 	)
 	firstDrop := container.NewHBox(
-		components.BadgeYellow("Ping 1 Gagal, lalu Reply ( . ! ! ! ! )"),
+		container.NewCenter(components.BadgeYellow("Ping 1 Gagal, lalu Reply ( . ! ! ! ! )")),
 		widget.NewLabel("Ini NORMAL di Cisco Packet Tracer! Paket pertama dipakai untuk proses broadcast ARP (Address Resolution Protocol) mencari MAC address."),
 	)
 

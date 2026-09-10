@@ -24,16 +24,16 @@ const (
 	TabFormatter   = "Format & Encode"
 
 	// Cisco Packet Tracer Tabs
-	TabCiscoAll        = "Semua Perintah"
-	TabCiscoBasic      = "Dasar & Keamanan"
-	TabCiscoIP         = "IP & Interface"
-	TabCiscoVLAN       = "VLAN & Switching"
-	TabCiscoRouting    = "Routing (OSPF/Static)"
-	TabCiscoServices   = "DHCP & Services"
-	TabCiscoSecurity   = "ACL & Port Security"
-	TabCiscoNAT        = "NAT & PAT"
-	TabCiscoDiag       = "Show & Troubleshoot"
-	TabCiscoVerify     = "Verifikasi Topologi"
+	TabCiscoAll        = "Semua"
+	TabCiscoBasic      = "Dasar"
+	TabCiscoIP         = "IP & Port"
+	TabCiscoVLAN       = "VLAN"
+	TabCiscoRouting    = "Routing"
+	TabCiscoServices   = "DHCP"
+	TabCiscoSecurity   = "ACL & Sec"
+	TabCiscoNAT        = "NAT/PAT"
+	TabCiscoDiag       = "Show Cmd"
+	TabCiscoVerify     = "Verifikasi"
 
 	// File Converter Tabs
 	TabDocConverter = "Konversi Dokumen"
