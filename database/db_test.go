@@ -175,3 +175,102 @@ func TestTaskAndProjectCRUD(t *testing.T) {
 		t.Fatalf("Exported portfolio file is empty or missing: %v", err)
 	}
 }
+
+
+func TestCiscoTopologyCRUD(t *testing.T) {
+	setupTestDB(t)
+
+	// 1. Create Topology
+	topID, err := CreateCiscoTopology("Topologi OSPF Multi-Area", "Praktikum OSPF area 0 dan area 1")
+	if err != nil {
+		t.Fatalf("CreateCiscoTopology error: %v", err)
+	}
+	if topID == 0 {
+		t.Fatalf("Expected valid topID > 0, got 0")
+	}
+
+	// 2. Add Steps
+	err = AddCiscoTopologyStep(topID, "Pasang Kabel Router", "Hubungkan Fa0/0 ke Switch 1")
+	if err != nil {
+		t.Fatalf("AddCiscoTopologyStep 1 error: %v", err)
+	}
+	err = AddCiscoTopologyStep(topID, "Aktifkan OSPF 1", "router ospf 1 -> network 10.0.0.0 0.255.255.255 area 0")
+	if err != nil {
+		t.Fatalf("AddCiscoTopologyStep 2 error: %v", err)
+	}
+
+	// 3. Read All
+	topologies, err := GetAllCiscoTopologies()
+	if err != nil {
+		t.Fatalf("GetAllCiscoTopologies error: %v", err)
+	}
+	if len(topologies) == 0 {
+		t.Fatalf("Expected at least 1 topology, got 0")
+	}
+	top := topologies[0]
+	if top.Title != "Topologi OSPF Multi-Area" {
+		t.Errorf("Expected title 'Topologi OSPF Multi-Area', got %q", top.Title)
+	}
+	if len(top.Steps) != 2 {
+		t.Fatalf("Expected 2 steps, got %d", len(top.Steps))
+	}
+	if top.Steps[0].StepNumber != 1 || top.Steps[1].StepNumber != 2 {
+		t.Errorf("Step numbering incorrect: %+v", top.Steps)
+	}
+
+	// 4. Toggle Step
+	stepID := top.Steps[0].ID
+	if err := ToggleCiscoTopologyStep(stepID); err != nil {
+		t.Fatalf("ToggleCiscoTopologyStep error: %v", err)
+	}
+
+	// 5. Update Step
+	if err := UpdateCiscoTopologyStep(stepID, "Pasang Kabel Router & Switch", "Fa0/0 ke Sw1 Fa0/24"); err != nil {
+		t.Fatalf("UpdateCiscoTopologyStep error: %v", err)
+	}
+
+	// 6. Update Topology
+	if err := UpdateCiscoTopology(topID, "Topologi OSPF Single Area", "Revisi praktikum"); err != nil {
+		t.Fatalf("UpdateCiscoTopology error: %v", err)
+	}
+
+	// Re-verify
+	topologies, _ = GetAllCiscoTopologies()
+	if topologies[0].Title != "Topologi OSPF Single Area" {
+		t.Errorf("Expected updated title, got %q", topologies[0].Title)
+	}
+	if !topologies[0].Steps[0].IsCompleted {
+		t.Errorf("Expected step 1 to be completed after toggle")
+	}
+	if topologies[0].Steps[0].Title != "Pasang Kabel Router & Switch" {
+		t.Errorf("Expected updated step title, got %q", topologies[0].Steps[0].Title)
+	}
+
+	// 7. Delete Step
+	delStepID := topologies[0].Steps[1].ID
+	if err := DeleteCiscoTopologyStep(delStepID); err != nil {
+		t.Fatalf("DeleteCiscoTopologyStep error: %v", err)
+	}
+	topologies, _ = GetAllCiscoTopologies()
+	if len(topologies[0].Steps) != 1 {
+		t.Errorf("Expected 1 step remaining, got %d", len(topologies[0].Steps))
+	}
+
+	// 8. Delete Topology
+	if err := DeleteCiscoTopology(topID); err != nil {
+		t.Fatalf("DeleteCiscoTopology error: %v", err)
+	}
+	topologies, _ = GetAllCiscoTopologies()
+	if len(topologies) != 0 {
+		t.Errorf("Expected 0 topologies after delete, got %d", len(topologies))
+	}
+
+	// 9. Seed Templates
+	if err := SeedDefaultCiscoTopologyTemplates(); err != nil {
+		t.Fatalf("SeedDefaultCiscoTopologyTemplates error: %v", err)
+	}
+	topologies, _ = GetAllCiscoTopologies()
+	if len(topologies) != 2 {
+		t.Errorf("Expected 2 default seeded templates, got %d", len(topologies))
+	}
+}

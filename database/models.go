@@ -461,3 +461,187 @@ func ExportPortfolioMarkdown(filepath string) error {
 
 	return os.WriteFile(filepath, []byte(sb.String()), 0644)
 }
+
+
+// ----------------------------------------------------------------------------
+// 6. Cisco Topology Notes
+// ----------------------------------------------------------------------------
+
+type CiscoTopologyStep struct {
+	ID          int
+	TopologyID  int
+	StepNumber  int
+	Title       string
+	Detail      string
+	IsCompleted bool
+}
+
+type CiscoTopology struct {
+	ID          int
+	Title       string
+	Description string
+	CreatedAt   string
+	Steps       []CiscoTopologyStep
+}
+
+func CreateCiscoTopology(title, description string) (int, error) {
+	db, err := getDB()
+	if err != nil {
+		return 0, err
+	}
+	res, err := db.Exec(`INSERT INTO cisco_topologies (title, description) VALUES (?, ?)`, strings.TrimSpace(title), strings.TrimSpace(description))
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	return int(id), err
+}
+
+func GetAllCiscoTopologies() ([]CiscoTopology, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := db.Query(`SELECT id, title, description, created_at FROM cisco_topologies ORDER BY id DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var topologies []CiscoTopology
+	for rows.Next() {
+		var t CiscoTopology
+		if err := rows.Scan(&t.ID, &t.Title, &t.Description, &t.CreatedAt); err != nil {
+			return nil, err
+		}
+		topologies = append(topologies, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range topologies {
+		stepRows, err := db.Query(`SELECT id, topology_id, step_number, title, detail, is_completed FROM cisco_topology_steps WHERE topology_id = ? ORDER BY step_number ASC, id ASC`, topologies[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		var steps []CiscoTopologyStep
+		for stepRows.Next() {
+			var s CiscoTopologyStep
+			if err := stepRows.Scan(&s.ID, &s.TopologyID, &s.StepNumber, &s.Title, &s.Detail, &s.IsCompleted); err != nil {
+				stepRows.Close()
+				return nil, err
+			}
+			steps = append(steps, s)
+		}
+		if err := stepRows.Err(); err != nil {
+			stepRows.Close()
+			return nil, err
+		}
+		stepRows.Close()
+		topologies[i].Steps = steps
+	}
+
+	return topologies, nil
+}
+
+func UpdateCiscoTopology(id int, title, description string) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`UPDATE cisco_topologies SET title = ?, description = ? WHERE id = ?`, strings.TrimSpace(title), strings.TrimSpace(description), id)
+	return err
+}
+
+func DeleteCiscoTopology(id int) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`DELETE FROM cisco_topologies WHERE id = ?`, id)
+	return err
+}
+
+func AddCiscoTopologyStep(topologyID int, title, detail string) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+
+	var nextNum int
+	err = db.QueryRow(`SELECT COALESCE(MAX(step_number), 0) + 1 FROM cisco_topology_steps WHERE topology_id = ?`, topologyID).Scan(&nextNum)
+	if err != nil {
+		nextNum = 1
+	}
+
+	_, err = db.Exec(`INSERT INTO cisco_topology_steps (topology_id, step_number, title, detail, is_completed) VALUES (?, ?, ?, ?, FALSE)`,
+		topologyID, nextNum, strings.TrimSpace(title), strings.TrimSpace(detail))
+	return err
+}
+
+func UpdateCiscoTopologyStep(stepID int, title, detail string) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`UPDATE cisco_topology_steps SET title = ?, detail = ? WHERE id = ?`, strings.TrimSpace(title), strings.TrimSpace(detail), stepID)
+	return err
+}
+
+func ToggleCiscoTopologyStep(stepID int) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`UPDATE cisco_topology_steps SET is_completed = NOT is_completed WHERE id = ?`, stepID)
+	return err
+}
+
+func DeleteCiscoTopologyStep(stepID int) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`DELETE FROM cisco_topology_steps WHERE id = ?`, stepID)
+	return err
+}
+
+func SeedDefaultCiscoTopologyTemplates() error {
+	topologies, err := GetAllCiscoTopologies()
+	if err != nil {
+		return err
+	}
+	// Only seed if empty
+	if len(topologies) > 0 {
+		return nil
+	}
+
+	// 1. Router-on-a-Stick Template
+	t1ID, err := CreateCiscoTopology(
+		"Desain Topologi Router-on-a-Stick (Inter-VLAN)",
+		"Langkah standar menghubungkan banyak VLAN menggunakan 1 router fisik dan sub-interface 802.1Q.",
+	)
+	if err == nil {
+		_ = AddCiscoTopologyStep(t1ID, "Tarik Perangkat & Pasang Kabel", "1 Router (2811/1941), 1 Switch (2960), dan 2 PC. Hubungkan kabel Straight-Through Router Fa0/0 ke Switch Fa0/24, PC1 ke Fa0/1, PC2 ke Fa0/2.")
+		_ = AddCiscoTopologyStep(t1ID, "Konfigurasi VLAN di Switch", "Buat VLAN 10 & 20, tetapkan port Fa0/1 ke VLAN 10 dan Fa0/2 ke VLAN 20 sebagai access port.")
+		_ = AddCiscoTopologyStep(t1ID, "Aktifkan Mode Trunk ke Router", "Ubah port Fa0/24 switch menjadi mode trunk ('switchport mode trunk').")
+		_ = AddCiscoTopologyStep(t1ID, "Konfigurasi Sub-Interface Router", "Buat Fa0/0.10 (encapsulation dot1Q 10, IP 192.168.10.1) & Fa0/0.20 (encapsulation dot1Q 20, IP 192.168.20.1). Ketik 'no shutdown' di Fa0/0.")
+		_ = AddCiscoTopologyStep(t1ID, "Pengujian & Verifikasi Ping", "Beri IP statis pada PC1 & PC2 dengan default gateway sub-interface masing-masing. Jalankan ping antar PC.")
+	}
+
+	// 2. Static Routing Template
+	t2ID, err := CreateCiscoTopology(
+		"Topologi Static Routing 2 Router (WAN)",
+		"Panduan menghubungkan 2 jaringan LAN yang dipisahkan oleh jalur WAN antar-router.",
+	)
+	if err == nil {
+		_ = AddCiscoTopologyStep(t2ID, "Hubungkan Router & PC", "Router 1 ke LAN 1 (192.168.1.0/24), Router 2 ke LAN 2 (192.168.2.0/24). Sambungkan port Serial/Gigabit antar-router.")
+		_ = AddCiscoTopologyStep(t2ID, "Konfigurasi IP Interface", "Beri IP interface LAN dan interface WAN (misal 10.10.10.1/30 & 10.10.10.2/30) pada kedua router.")
+		_ = AddCiscoTopologyStep(t2ID, "Tambahkan Perintah 'ip route'", "Di R1: 'ip route 192.168.2.0 255.255.255.0 10.10.10.2'. Di R2: 'ip route 192.168.1.0 255.255.255.0 10.10.10.1'.")
+		_ = AddCiscoTopologyStep(t2ID, "Verifikasi Routing & Uji Ping", "Cek 'show ip route' dan pastikan rute berstatus 'S'. Lakukan ping antar PC lintas subnet.")
+	}
+
+	return nil
+}

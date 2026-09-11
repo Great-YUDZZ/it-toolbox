@@ -65,6 +65,23 @@ CREATE TABLE IF NOT EXISTS projects (
     live_url     TEXT,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS cisco_topologies (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    title       TEXT NOT NULL,
+    description TEXT,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cisco_topology_steps (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    topology_id  INTEGER NOT NULL,
+    step_number  INTEGER NOT NULL,
+    title        TEXT NOT NULL,
+    detail       TEXT,
+    is_completed BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (topology_id) REFERENCES cisco_topologies(id) ON DELETE CASCADE
+);
 `
 
 // InitDB initializes SQLite database connection and runs migration schemas

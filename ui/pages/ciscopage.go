@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/yudz/it-toolbox/core/cisco"
+	"github.com/yudz/it-toolbox/database"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
 )
@@ -55,6 +56,7 @@ func (p *CiscoPage) Build() fyne.CanvasObject {
 		container.NewTabItemWithIcon(constants.TabCiscoRouting, theme.NavigateNextIcon(), p.buildCategoryView(cisco.CategoryRouting)),
 		container.NewTabItemWithIcon(constants.TabCiscoServices, theme.StorageIcon(), p.buildCategoryView(cisco.CategoryServices)),
 		container.NewTabItemWithIcon(constants.TabCiscoVerify, theme.ConfirmIcon(), p.buildVerificationGuideView()),
+		container.NewTabItemWithIcon(constants.TabCiscoTopologyNotes, theme.DocumentCreateIcon(), p.buildTopologyNotesView()),
 	)
 
 	return container.NewBorder(hero, nil, nil, nil, tabs)
@@ -546,4 +548,291 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	contentList.Add(card4)
 
 	return container.NewVScroll(container.NewPadded(contentList))
+}
+
+
+func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
+	listContainer := container.NewVBox()
+
+	var reloadTopologies func()
+	reloadTopologies = func() {
+		listContainer.Objects = nil
+
+		topologies, err := database.GetAllCiscoTopologies()
+		if err != nil {
+			listContainer.Add(widget.NewLabel(fmt.Sprintf("Gagal memuat catatan topologi: %v", err)))
+			listContainer.Refresh()
+			return
+		}
+
+		if len(topologies) == 0 {
+			emptyTitle := canvas.NewText("Belum ada catatan langkah topologi.", constants.ColorTextPrimary)
+			emptyTitle.TextSize = constants.FontSizeBody
+			emptyTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+			emptySub := canvas.NewText("Catat langkah-langkah membuat topologi baru atau muat template standar untuk referensi praktikum.", constants.ColorTextMuted)
+			emptySub.TextSize = constants.FontSizeLabel
+
+			loadTemplateBtn := widget.NewButtonWithIcon("Muat Template Standar (ROAS & Routing)", theme.FolderIcon(), func() {
+				_ = database.SeedDefaultCiscoTopologyTemplates()
+				reloadTopologies()
+			})
+			loadTemplateBtn.Importance = widget.HighImportance
+
+			emptyBox := container.NewVBox(
+				emptyTitle,
+				emptySub,
+				widget.NewSeparator(),
+				container.NewHBox(loadTemplateBtn),
+			)
+			listContainer.Add(components.NewPlainCardWithAccent(emptyBox, constants.ColorTechIndigo))
+			listContainer.Refresh()
+			return
+		}
+
+		for _, t := range topologies {
+			currTopo := t
+
+			// Progress badge calculation
+			completedCount := 0
+			for _, st := range currTopo.Steps {
+				if st.IsCompleted {
+					completedCount++
+				}
+			}
+
+			var progBadge fyne.CanvasObject
+			var accentColor color.Color = constants.ColorTechIndigo
+
+			if len(currTopo.Steps) == 0 {
+				progBadge = components.BadgeMuted("Belum ada langkah")
+			} else if completedCount == len(currTopo.Steps) {
+				progBadge = components.BadgeSuccess(fmt.Sprintf("%d/%d Langkah Selesai ✓", completedCount, len(currTopo.Steps)))
+				accentColor = constants.ColorSuccess
+			} else {
+				progBadge = components.BadgeYellow(fmt.Sprintf("%d/%d Selesai", completedCount, len(currTopo.Steps)))
+				accentColor = constants.ColorAccentYellow
+			}
+
+			// Copy checklist to clipboard
+			copyBtn := widget.NewButtonWithIcon("Salin Langkah", theme.ContentCopyIcon(), func() {
+				var sb strings.Builder
+				sb.WriteString(fmt.Sprintf("# %s\n", currTopo.Title))
+				if currTopo.Description != "" {
+					sb.WriteString(fmt.Sprintf("%s\n\n", currTopo.Description))
+				} else {
+					sb.WriteString("\n")
+				}
+				sb.WriteString("Langkah-Langkah Pembuatan Topologi:\n")
+				for _, st := range currTopo.Steps {
+					chkMark := "[ ]"
+					if st.IsCompleted {
+						chkMark = "[x]"
+					}
+					if st.Detail != "" {
+						sb.WriteString(fmt.Sprintf("%d. %s %s - %s\n", st.StepNumber, chkMark, st.Title, st.Detail))
+					} else {
+						sb.WriteString(fmt.Sprintf("%d. %s %s\n", st.StepNumber, chkMark, st.Title))
+					}
+				}
+				p.copyToClip(sb.String())
+			})
+			copyBtn.Importance = widget.LowImportance
+
+			// Edit Topology Button
+			editTopoBtn := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+				titleEntry := widget.NewEntry()
+				titleEntry.SetText(currTopo.Title)
+				descEntry := widget.NewMultiLineEntry()
+				descEntry.SetText(currTopo.Description)
+				descEntry.SetMinRowsVisible(3)
+
+				formItems := []*widget.FormItem{
+					{Text: "Judul Topologi", Widget: titleEntry},
+					{Text: "Deskripsi Topologi", Widget: descEntry},
+				}
+
+				d := dialog.NewForm("Edit Topologi Cisco", "Simpan", "Batal", formItems, func(ok bool) {
+					if !ok || titleEntry.Text == "" {
+						return
+					}
+					_ = database.UpdateCiscoTopology(currTopo.ID, titleEntry.Text, descEntry.Text)
+					reloadTopologies()
+				}, p.window)
+				d.Resize(fyne.NewSize(540, 360))
+				d.Show()
+			})
+			editTopoBtn.Importance = widget.LowImportance
+
+			// Delete Topology Button
+			delTopoBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
+				dialog.ShowConfirm("Hapus Topologi", fmt.Sprintf("Hapus topologi %q beserta semua langkahnya?", currTopo.Title), func(ok bool) {
+					if ok {
+						_ = database.DeleteCiscoTopology(currTopo.ID)
+						reloadTopologies()
+					}
+				}, p.window)
+			})
+			delTopoBtn.Importance = widget.LowImportance
+
+			// Header row
+			titleTxt := canvas.NewText(currTopo.Title, constants.ColorTextPrimary)
+			titleTxt.TextSize = constants.FontSizeBody
+			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
+
+			headerLeft := container.NewHBox(titleTxt, progBadge)
+			headerRight := container.NewHBox(copyBtn, editTopoBtn, delTopoBtn)
+			headerRow := container.NewBorder(nil, nil, headerLeft, headerRight)
+
+			var cardBody []fyne.CanvasObject
+			cardBody = append(cardBody, headerRow)
+
+			if currTopo.Description != "" {
+				descLabel := widget.NewLabel(currTopo.Description)
+				descLabel.Wrapping = fyne.TextWrapWord
+				cardBody = append(cardBody, descLabel)
+			}
+			cardBody = append(cardBody, widget.NewSeparator())
+
+			// Steps container
+			stepsContainer := container.NewVBox()
+			for _, st := range currTopo.Steps {
+				currStep := st
+
+				chk := widget.NewCheck("", func(bool) {
+					_ = database.ToggleCiscoTopologyStep(currStep.ID)
+					reloadTopologies()
+				})
+				chk.SetChecked(currStep.IsCompleted)
+
+				stepBadge := components.BadgeIndigo(fmt.Sprintf("Langkah %d", currStep.StepNumber))
+				stepTitle := widget.NewLabel(currStep.Title)
+				stepTitle.TextStyle = fyne.TextStyle{Bold: true}
+				stepTitle.Wrapping = fyne.TextWrapWord
+
+				editStepBtn := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+					sTitleEntry := widget.NewEntry()
+					sTitleEntry.SetText(currStep.Title)
+					sDetailEntry := widget.NewMultiLineEntry()
+					sDetailEntry.SetText(currStep.Detail)
+					sDetailEntry.SetMinRowsVisible(3)
+
+					fItems := []*widget.FormItem{
+						{Text: "Judul Langkah", Widget: sTitleEntry},
+						{Text: "Detail / Catatan CLI", Widget: sDetailEntry},
+					}
+
+					d := dialog.NewForm(fmt.Sprintf("Edit Langkah %d", currStep.StepNumber), "Simpan", "Batal", fItems, func(ok bool) {
+						if !ok || sTitleEntry.Text == "" {
+							return
+						}
+						_ = database.UpdateCiscoTopologyStep(currStep.ID, sTitleEntry.Text, sDetailEntry.Text)
+						reloadTopologies()
+					}, p.window)
+					d.Resize(fyne.NewSize(520, 360))
+					d.Show()
+				})
+				editStepBtn.Importance = widget.LowImportance
+
+				delStepBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
+					_ = database.DeleteCiscoTopologyStep(currStep.ID)
+					reloadTopologies()
+				})
+				delStepBtn.Importance = widget.LowImportance
+
+				stepTopRight := container.NewHBox(editStepBtn, delStepBtn)
+				stepTopLeft := container.NewHBox(chk, stepBadge)
+				stepRow := container.NewBorder(nil, nil, stepTopLeft, stepTopRight, stepTitle)
+
+				if currStep.Detail != "" {
+					detailBg := canvas.NewRectangle(constants.ColorBgCardInner)
+					detailBg.StrokeColor = constants.ColorBorderSubtle
+					detailBg.StrokeWidth = 1
+					detailBg.CornerRadius = constants.CornerRadiusBrutal
+
+					detailLbl := widget.NewLabel(currStep.Detail)
+					detailLbl.Wrapping = fyne.TextWrapWord
+					detailLbl.TextStyle = fyne.TextStyle{Monospace: true}
+
+					detailBox := container.NewStack(detailBg, container.NewPadded(detailLbl))
+					stepFull := container.NewVBox(stepRow, detailBox)
+					stepsContainer.Add(stepFull)
+				} else {
+					stepsContainer.Add(stepRow)
+				}
+			}
+
+			cardBody = append(cardBody, stepsContainer)
+
+			// Quick Add Step Form
+			newStepTitle := widget.NewEntry()
+			newStepTitle.SetPlaceHolder("Judul langkah baru (misal: Konfigurasi Trunk / OSPF)...")
+
+			newStepDetail := widget.NewEntry()
+			newStepDetail.SetPlaceHolder("Catatan / perintah CLI singkat (opsional)...")
+
+			addStepBtn := widget.NewButtonWithIcon("Tambah Langkah", theme.ContentAddIcon(), func() {
+				if newStepTitle.Text != "" {
+					_ = database.AddCiscoTopologyStep(currTopo.ID, newStepTitle.Text, newStepDetail.Text)
+					newStepTitle.SetText("")
+					newStepDetail.SetText("")
+					reloadTopologies()
+				}
+			})
+			addStepBtn.Importance = widget.MediumImportance
+
+			addStepBox := container.NewBorder(nil, nil, nil, addStepBtn,
+				container.NewGridWithColumns(2, newStepTitle, newStepDetail),
+			)
+
+			cardBody = append(cardBody, widget.NewSeparator(), addStepBox)
+
+			fullCardContent := container.NewVBox(cardBody...)
+			listContainer.Add(components.NewPlainCardWithAccent(fullCardContent, accentColor))
+		}
+
+		listContainer.Refresh()
+	}
+
+	// Top action bar
+	topBarTitle := canvas.NewText("Catatan Langkah-Langkah Pembuatan Topologi Baru", constants.ColorTextPrimary)
+	topBarTitle.TextSize = constants.FontSizeBody
+	topBarTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	createTopoBtn := widget.NewButtonWithIcon("Buat Topologi Baru", theme.ContentAddIcon(), func() {
+		tTitleEntry := widget.NewEntry()
+		tTitleEntry.SetPlaceHolder("cth: Topologi 2 Router 2 Switch dengan DHCP & OSPF")
+		tDescEntry := widget.NewMultiLineEntry()
+		tDescEntry.SetPlaceHolder("cth: Hubungkan LAN Teknik dan Keuangan lintas router...")
+		tDescEntry.SetMinRowsVisible(3)
+
+		fItems := []*widget.FormItem{
+			{Text: "Nama / Judul Topologi", Widget: tTitleEntry},
+			{Text: "Deskripsi / Skenario", Widget: tDescEntry},
+		}
+
+		d := dialog.NewForm("Tambah Catatan Topologi Baru", "Simpan", "Batal", fItems, func(ok bool) {
+			if !ok || tTitleEntry.Text == "" {
+				return
+			}
+			_, _ = database.CreateCiscoTopology(tTitleEntry.Text, tDescEntry.Text)
+			reloadTopologies()
+		}, p.window)
+		d.Resize(fyne.NewSize(560, 380))
+		d.Show()
+	})
+	createTopoBtn.Importance = widget.HighImportance
+
+	templateBtn := widget.NewButtonWithIcon("Muat Template Praktikum", theme.FolderIcon(), func() {
+		_ = database.SeedDefaultCiscoTopologyTemplates()
+		reloadTopologies()
+	})
+	templateBtn.Importance = widget.LowImportance
+
+	topBarRight := container.NewHBox(templateBtn, createTopoBtn)
+	topBar := container.NewBorder(nil, nil, topBarTitle, topBarRight)
+
+	reloadTopologies()
+
+	return container.NewBorder(container.NewPadded(topBar), nil, nil, nil, container.NewVScroll(container.NewPadded(listContainer)))
 }

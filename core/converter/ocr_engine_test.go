@@ -19,6 +19,9 @@ func TestExtractTextFromImage(t *testing.T) {
 
 	text, err := ExtractTextFromImage(testImg, "eng")
 	if err != nil {
+		if strings.Contains(err.Error(), "tesseract OCR engine is not available") {
+			t.Skip("tesseract OCR engine not installed on system")
+		}
 		t.Fatalf("ExtractTextFromImage failed: %v", err)
 	}
 

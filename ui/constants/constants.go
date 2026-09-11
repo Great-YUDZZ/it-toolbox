@@ -29,6 +29,7 @@ const (
 	TabCiscoRouting    = "Routing & WAN"
 	TabCiscoServices   = "Layanan & Security"
 	TabCiscoVerify     = "Panduan Verifikasi"
+	TabCiscoTopologyNotes = "Catatan Topologi"
 
 	// File Converter Tabs
 	TabDocConverter = "Konversi Dokumen"
