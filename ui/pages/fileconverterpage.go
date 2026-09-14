@@ -1,11 +1,15 @@
 package pages
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -14,6 +18,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/yudz/it-toolbox/core/converter"
+	"github.com/yudz/it-toolbox/core/youtube"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
 )
@@ -29,7 +34,7 @@ func NewFileConverterPage(win fyne.Window) *FileConverterPage {
 func (p *FileConverterPage) Build() fyne.CanvasObject {
 	hero := components.NewHeroHeader(
 		constants.NavFileConverter,
-		"Konversi dokumen, gambar, ekstraksi teks OCR, kompresi berkas, serta manipulasi PDF (Merge & Split).",
+		"Konversi dokumen, gambar, ekstraksi teks OCR, kompresi berkas, manipulasi PDF, serta unduh video YouTube dengan resolusi pilihan.",
 		components.BadgeCyan("FILE CONVERTER PRO"),
 	)
 
@@ -38,6 +43,7 @@ func (p *FileConverterPage) Build() fyne.CanvasObject {
 		container.NewTabItemWithIcon(constants.TabImgConverter, theme.FileImageIcon(), p.buildImgConverterTab()),
 		container.NewTabItemWithIcon(constants.TabOCR, theme.VisibilityIcon(), p.buildOCRTab()),
 		container.NewTabItemWithIcon(constants.TabPDFTools, theme.FolderOpenIcon(), p.buildPDFToolsTab()),
+		container.NewTabItemWithIcon(constants.TabYouTube, theme.DownloadIcon(), p.buildYouTubeDownloaderTab()),
 	)
 
 	return container.NewBorder(hero, nil, nil, nil, tabs)
@@ -722,5 +728,242 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 		mergeCard,
 		splitCard,
 		compCard,
+	))
+}
+
+// ----------------------------------------------------------------------------
+// 5. Tab Unduh Video YouTube dengan Pilihan Resolusi
+// ----------------------------------------------------------------------------
+func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
+	ytDownloader := youtube.NewDownloader()
+
+	// 1. Input URL Section
+	urlEntry := widget.NewEntry()
+	urlEntry.SetPlaceHolder("Tempel link YouTube (cth: https://www.youtube.com/watch?v=... atau youtu.be/...)")
+
+	pasteBtn := widget.NewButtonWithIcon("Tempel Link", theme.ContentPasteIcon(), func() {
+		clip := p.window.Clipboard().Content()
+		if clip != "" {
+			urlEntry.SetText(strings.TrimSpace(clip))
+		}
+	})
+	pasteBtn.Importance = widget.MediumImportance
+
+	checkBtn := widget.NewButtonWithIcon(constants.BtnFetchVideo, theme.SearchIcon(), nil)
+	checkBtn.Importance = widget.HighImportance
+
+	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("🔗 Masukkan Tautan Video YouTube:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, container.NewHBox(pasteBtn, checkBtn), urlEntry),
+	), constants.ColorAccentCyan)
+
+	// 2. Video Details & Resolution Selection Section
+	var currentDetails *youtube.VideoDetails
+	var selectedOption *youtube.ResolutionOption
+
+	titleLabel := widget.NewLabelWithStyle("Belum ada video yang dimuat.", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	titleLabel.Wrapping = fyne.TextWrapWord
+
+	badgeRow := container.NewHBox()
+	resolutionSelect := widget.NewSelect([]string{"-- Masukkan URL & Klik 'Periksa Video' --"}, nil)
+
+	destDirEntry := widget.NewEntry()
+	destDirEntry.SetText(p.getDownloadDir())
+
+	chooseDirBtn := widget.NewButtonWithIcon("Pilih Folder", theme.FolderOpenIcon(), func() {
+		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+			if uri != nil && err == nil {
+				destDirEntry.SetText(uri.Path())
+			}
+		}, p.window)
+	})
+
+	destDirRow := container.NewBorder(nil, nil,
+		widget.NewLabelWithStyle("Simpan ke:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		chooseDirBtn,
+		destDirEntry,
+	)
+
+	downloadProgressBar := widget.NewProgressBar()
+	downloadProgressBar.SetValue(0)
+	downloadProgressBar.Hide()
+
+	statusLabel := widget.NewLabel("Tempelkan tautan video YouTube di atas, lalu tekan tombol 'Periksa Video'.")
+	statusLabel.Wrapping = fyne.TextWrapWord
+
+	openFileBtn := widget.NewButtonWithIcon("Buka Berkas", theme.MediaPlayIcon(), nil)
+	openFileBtn.Hide()
+	openFolderBtn := widget.NewButtonWithIcon("Buka Folder", theme.FolderOpenIcon(), nil)
+	openFolderBtn.Hide()
+	actionBtns := container.NewHBox(openFileBtn, openFolderBtn)
+
+	downloadBtn := widget.NewButtonWithIcon(constants.BtnDownloadVideo, theme.DownloadIcon(), nil)
+	downloadBtn.Importance = widget.HighImportance
+	downloadBtn.Disable()
+
+	openTarget := func(path string) {
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("cmd", "/c", "start", "", path)
+		case "darwin":
+			cmd = exec.Command("open", path)
+		default:
+			cmd = exec.Command("xdg-open", path)
+		}
+		_ = cmd.Start()
+	}
+
+	detailsCard := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("📺 Informasi Video & Resolusi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		titleLabel,
+		badgeRow,
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Pilihan Kualitas / Resolusi yang Tersedia:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		resolutionSelect,
+		destDirRow,
+		container.NewHBox(downloadBtn, actionBtns),
+		downloadProgressBar,
+		statusLabel,
+	), constants.ColorTechIndigo)
+
+	// Action: Check video
+	checkBtn.OnTapped = func() {
+		rawURL := strings.TrimSpace(urlEntry.Text)
+		if rawURL == "" {
+			dialog.ShowInformation("Perhatian", "Harap masukkan tautan video YouTube terlebih dahulu.", p.window)
+			return
+		}
+
+		checkBtn.Disable()
+		downloadBtn.Disable()
+		openFileBtn.Hide()
+		openFolderBtn.Hide()
+		titleLabel.SetText("⏳ Sedang memeriksa data video dari YouTube...")
+		badgeRow.Objects = nil
+		badgeRow.Refresh()
+		statusLabel.SetText("Menghubungi server YouTube dan mengekstrak daftar resolusi...")
+
+		go func() {
+			details, err := ytDownloader.FetchVideoDetails(rawURL)
+			if err != nil {
+				fyne.Do(func() {
+					checkBtn.Enable()
+					titleLabel.SetText("❌ Gagal memuat data video.")
+					statusLabel.SetText(fmt.Sprintf("Kesalahan: %v", err))
+					dialog.ShowError(err, p.window)
+				})
+				return
+			}
+
+			fyne.Do(func() {
+				checkBtn.Enable()
+				currentDetails = details
+				titleLabel.SetText(details.Title)
+
+				badgeRow.Objects = nil
+				badgeRow.Add(components.BadgeCyan("📺 " + details.Author))
+				badgeRow.Add(components.BadgeYellow("⏱ " + details.DurationStr))
+				badgeRow.Add(components.BadgeSuccess(fmt.Sprintf("%d Pilihan Kualitas", len(details.Options))))
+				if youtube.HasFFmpeg() {
+					badgeRow.Add(components.BadgeSuccess("FFmpeg Aktif (Auto-Mux)"))
+				} else {
+					badgeRow.Add(components.BadgeWarning("Unduh Direct (Tanpa FFmpeg)"))
+				}
+				badgeRow.Refresh()
+
+				var optLabels []string
+				for _, opt := range details.Options {
+					optLabels = append(optLabels, opt.DisplayLabel)
+				}
+
+				resolutionSelect.Options = optLabels
+				if len(optLabels) > 0 {
+					resolutionSelect.SetSelected(optLabels[0])
+					firstOpt := details.Options[0]
+					selectedOption = &firstOpt
+					downloadBtn.Enable()
+				}
+
+				resolutionSelect.OnChanged = func(selected string) {
+					for _, opt := range currentDetails.Options {
+						if opt.DisplayLabel == selected {
+							copyOpt := opt
+							selectedOption = &copyOpt
+							break
+						}
+					}
+				}
+
+				statusLabel.SetText(fmt.Sprintf("✅ Siap! Ditemukan %d pilihan resolusi sesuai video ini. Pilih kualitas dan klik Unduh.", len(details.Options)))
+			})
+		}()
+	}
+
+	// Action: Download
+	downloadBtn.OnTapped = func() {
+		if currentDetails == nil || selectedOption == nil {
+			dialog.ShowInformation("Perhatian", "Pilih resolusi video terlebih dahulu.", p.window)
+			return
+		}
+
+		destDir := strings.TrimSpace(destDirEntry.Text)
+		if destDir == "" {
+			destDir = p.getDownloadDir()
+		}
+
+		downloadBtn.Disable()
+		checkBtn.Disable()
+		downloadProgressBar.SetValue(0)
+		downloadProgressBar.Show()
+		openFileBtn.Hide()
+		openFolderBtn.Hide()
+		statusLabel.SetText("Memulai streaming unduhan...")
+
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+			defer cancel()
+
+			finalPath, err := ytDownloader.Download(ctx, currentDetails, *selectedOption, destDir,
+				func(downloaded, total int64, pct, speed float64, status string) {
+					fyne.Do(func() {
+						downloadProgressBar.SetValue(pct / 100.0)
+						statusLabel.SetText(fmt.Sprintf("[%s] %.1f%% — %s", selectedOption.QualityLabel, pct, status))
+					})
+				})
+
+			fyne.Do(func() {
+				downloadBtn.Enable()
+				checkBtn.Enable()
+
+				if err != nil {
+					statusLabel.SetText(fmt.Sprintf("❌ Unduhan gagal: %v", err))
+					dialog.ShowError(err, p.window)
+					return
+				}
+
+				downloadProgressBar.SetValue(1.0)
+				statusLabel.SetText(fmt.Sprintf("🎉 Berhasil disimpan ke:\n%s", finalPath))
+
+				openFileBtn.OnTapped = func() {
+					openTarget(finalPath)
+				}
+				openFolderBtn.OnTapped = func() {
+					openTarget(filepath.Dir(finalPath))
+				}
+				openFileBtn.Show()
+				openFolderBtn.Show()
+
+				dialog.ShowInformation("Unduhan Selesai!",
+					fmt.Sprintf("Video YouTube berhasil diunduh:\n\nJudul: %s\nKualitas: %s\nLokasi:\n%s",
+						currentDetails.Title, selectedOption.QualityLabel, finalPath),
+					p.window)
+			})
+		}()
+	}
+
+	return container.NewVScroll(container.NewVBox(
+		inputCard,
+		detailsCard,
 	))
 }

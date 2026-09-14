@@ -36,6 +36,7 @@ const (
 	TabImgConverter = "Konversi Gambar"
 	TabOCR          = "Ekstraksi Teks (OCR)"
 	TabPDFTools     = "Merge & Split PDF"
+	TabYouTube      = "Unduh YouTube"
 
 	// Reference Tabs
 	TabCommands    = "Commands"
@@ -60,6 +61,8 @@ const (
 	BtnSplitPDF     = "Pisahkan PDF"
 	BtnCompressPDF  = "Kompres Ukuran PDF"
 	BtnRunOCR       = "Ekstrak Teks OCR"
+	BtnFetchVideo   = "Periksa Video"
+	BtnDownloadVideo = "Unduh Sekarang"
 
 	// Common Buttons & Labels
 	BtnCalculate   = "Hitung"
