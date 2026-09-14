@@ -15,6 +15,7 @@ const (
 	NavLogbook     = "Catatan & Debugging"
 	NavTracker     = "Pelacak Tugas"
 	NavFileConverter = "Konverter Berkas"
+	NavYouTube       = "Unduh YouTube"
 	NavCisco         = "Cisco Packet Tracer"
 
 	// Calculator Tabs

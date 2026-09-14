@@ -158,6 +158,7 @@ type MainWindow struct {
 
 	navToolbox  *NavItem
 	navFileConv *NavItem
+	navYouTube  *NavItem
 	navCisco    *NavItem
 	navRef      *NavItem
 	navLogbook  *NavItem
@@ -291,6 +292,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	m.navFileConv = NewNavItem(constants.NavFileConverter, theme.FolderOpenIcon(), func() {
 		m.showPage(constants.NavFileConverter)
 	})
+	m.navYouTube = NewNavItem(constants.NavYouTube, theme.DownloadIcon(), func() {
+		m.showPage(constants.NavYouTube)
+	})
 
 	secDocs := canvas.NewText("PENGETAHUAN & LOG", constants.ColorTextPrimary)
 	secDocs.TextSize = constants.FontSizeLabel
@@ -318,6 +322,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		secCore,
 		m.navToolbox,
 		m.navFileConv,
+		m.navYouTube,
 		widget.NewSeparator(),
 		secNet,
 		m.navCisco,
@@ -381,6 +386,7 @@ func (m *MainWindow) updateNavHighlights(active string) {
 
 	m.navToolbox.SetActive(active == constants.NavToolbox)
 	m.navFileConv.SetActive(active == constants.NavFileConverter)
+	m.navYouTube.SetActive(active == constants.NavYouTube)
 	m.navCisco.SetActive(active == constants.NavCisco)
 	m.navRef.SetActive(active == constants.NavReference)
 	m.navLogbook.SetActive(active == constants.NavLogbook)
@@ -399,6 +405,8 @@ func (m *MainWindow) showPage(name string) {
 		content = m.calcPage.Build()
 	case constants.NavFileConverter:
 		content = m.fileConvPage.Build()
+	case constants.NavYouTube:
+		content = m.fileConvPage.BuildYouTubePage()
 	case constants.NavCisco:
 		content = m.ciscoPage.Build()
 	case constants.NavReference:

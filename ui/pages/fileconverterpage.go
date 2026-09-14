@@ -49,6 +49,15 @@ func (p *FileConverterPage) Build() fyne.CanvasObject {
 	return container.NewBorder(hero, nil, nil, nil, tabs)
 }
 
+func (p *FileConverterPage) BuildYouTubePage() fyne.CanvasObject {
+	hero := components.NewHeroHeader(
+		constants.NavYouTube,
+		"Unduh video YouTube dengan resolusi pilihan yang tersedia (4K 2160p, 1080p Full HD, 720p HD, 360p, hingga Audio M4A).",
+		components.BadgeCyan("YOUTUBE ENGINE PRO"),
+	)
+	return container.NewBorder(hero, nil, nil, nil, p.buildYouTubeDownloaderTab())
+}
+
 func (p *FileConverterPage) getDownloadDir() string {
 	home, err := os.UserHomeDir()
 	if err == nil {
