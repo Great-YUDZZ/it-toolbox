@@ -72,10 +72,16 @@ func (n *NavItem) SetActive(active bool) {
 				n.labelTxt.Color = constants.ColorTextPrimary
 				n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
 			} else {
-				// Glassmorphic Neumorphism: Luminous Ice-Blue active glass pill
-				n.bg.FillColor = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
-				n.bg.StrokeColor = color.RGBA{R: 0x93, G: 0xC5, B: 0xFD, A: 0xFF}
-				n.bg.StrokeWidth = constants.CurrentBorderWidth
+				// Glassmorphic Neumorphism: Luminous Frosted Glass pill with soft glow
+				n.bg.FillColor = constants.AlphaPremul(230, 240, 253, 230)
+				n.bg.StrokeColor = constants.AlphaPremul(255, 255, 255, 250)
+				n.bg.StrokeWidth = 1.2
+				n.bg.Shadow = canvas.Shadow{
+					Color:      constants.AlphaPremul(100, 116, 139, 40),
+					BlurRadius: 6,
+					Offset:     fyne.NewPos(1, 2),
+					Variant:    canvas.DropShadow,
+				}
 				n.leftBar.FillColor = constants.ColorAccentCobalt
 				n.labelTxt.Color = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
 				n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
@@ -533,39 +539,43 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 
 	sidebarContent := container.NewBorder(headerCard, footerBox, nil, nil, container.NewPadded(navContainer))
 
-	// Sidebar background
-	var bgSidebar fyne.CanvasObject
+	// Full-bleed background canvas spanning entire window
+	var fullBackdrop fyne.CanvasObject
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
-		grad := canvas.NewVerticalGradient(
-			color.RGBA{R: 0xED, G: 0xF3, B: 0xFB, A: 0xFF},
-			color.RGBA{R: 0xE2, G: 0xEA, B: 0xF5, A: 0xFF},
+		fullBackdrop = canvas.NewLinearGradient(
+			color.RGBA{R: 0xC8, G: 0xDC, B: 0xFB, A: 0xFF}, // Soft Celestial Sky Blue (#C8DCFB)
+			color.RGBA{R: 0xEE, G: 0xDE, B: 0xFA, A: 0xFF}, // Soft Dreamy Lilac (#EEDEFA)
+			45,
 		)
-		grad.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
-		bgSidebar = grad
+	} else {
+		fullBackdrop = canvas.NewRectangle(constants.ColorBgBase)
+	}
+
+	// Sidebar background & divider
+	var bgSidebar fyne.CanvasObject
+	var sidebarDivider fyne.CanvasObject
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		sidebarBg := canvas.NewRectangle(constants.ColorBgSidebar)
+		sidebarBg.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
+		bgSidebar = sidebarBg
+
+		divider := canvas.NewRectangle(constants.AlphaPremul(255, 255, 255, 230))
+		divider.SetMinSize(fyne.NewSize(1.5, 0))
+		sidebarDivider = divider
 	} else {
 		rect := canvas.NewRectangle(constants.ColorBgSidebar)
 		rect.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
 		bgSidebar = rect
+		sidebarDivider = widget.NewSeparator()
 	}
-	sidebarWrapper := container.NewMax(bgSidebar, sidebarContent)
-	sidebarWithSep := container.NewBorder(nil, nil, nil, widget.NewSeparator(), sidebarWrapper)
+	sidebarWrapper := container.NewStack(bgSidebar, sidebarContent)
+	sidebarWithSep := container.NewBorder(nil, nil, nil, sidebarDivider, sidebarWrapper)
 
-	// Content Area with ambient luminous backdrop for Neumorphism Light (Glassmorphic)
-	var contentAreaWrapper fyne.CanvasObject
-	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
-		ambientBg := canvas.NewHorizontalGradient(
-			color.RGBA{R: 0xD6, G: 0xE6, B: 0xFD, A: 0xFF}, // Soft Sky Cyan (#D6E6FD)
-			color.RGBA{R: 0xEE, G: 0xE2, B: 0xFD, A: 0xFF}, // Soft Dreamy Lavender (#EEE2FD)
-		)
-		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
-	} else {
-		bgContent := canvas.NewRectangle(constants.ColorBgBase)
-		contentAreaWrapper = container.NewStack(bgContent, container.NewPadded(m.ContentArea))
-	}
+	contentAreaWrapper := container.NewPadded(m.ContentArea)
 
-	// Main Layout: Sidebar on Left, Content Area in Center
+	// Main Layout: Sidebar on Left, Content Area in Center, over Full-Bleed Backdrop
 	mainLayout := container.NewBorder(nil, nil, sidebarWithSep, nil, contentAreaWrapper)
-	return mainLayout
+	return container.NewStack(fullBackdrop, mainLayout)
 }
 
 func (m *MainWindow) updateNavHighlights(active string) {

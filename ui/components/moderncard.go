@@ -106,9 +106,62 @@ func (l *dualShadowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(cardMin.Width+l.lightOffsetX+l.darkOffsetX, cardMin.Height+l.lightOffsetY+l.darkOffsetY)
 }
 
+// glassNeumorphLayout renders a combined Glassmorphism + Neumorphism tactile extrusion
+// (Top-left pure white light highlight rim + Foreground translucent glass card)
+type glassNeumorphLayout struct {
+	highlightOffset float32
+}
+
+func (l *glassNeumorphLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if len(objects) < 2 {
+		for _, o := range objects {
+			o.Resize(size)
+			o.Move(fyne.NewPos(0, 0))
+		}
+		return
+	}
+	cardW := size.Width - l.highlightOffset
+	cardH := size.Height - l.highlightOffset
+	if cardW < 0 {
+		cardW = 0
+	}
+	if cardH < 0 {
+		cardH = 0
+	}
+	cardSize := fyne.NewSize(cardW, cardH)
+
+	// Layer 0: Top-left glowing pure white highlight
+	objects[0].Resize(cardSize)
+	objects[0].Move(fyne.NewPos(0, 0))
+
+	// Layer 1: Foreground frosted glass card with soft drop shadow
+	objects[1].Resize(cardSize)
+	objects[1].Move(fyne.NewPos(l.highlightOffset, l.highlightOffset))
+}
+
+func (l *glassNeumorphLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if len(objects) < 2 {
+		if len(objects) == 1 {
+			return objects[0].MinSize()
+		}
+		return fyne.NewSize(0, 0)
+	}
+	m := objects[1].MinSize()
+	return fyne.NewSize(m.Width+l.highlightOffset, m.Height+l.highlightOffset)
+}
+
 // WrapHardShadow dynamically renders Neo-Brutalist hard shadow or Neumorphic dual shadow
 func WrapHardShadow(card fyne.CanvasObject, offsetX, offsetY float32) fyne.CanvasObject {
-	if constants.IsNeumorphism {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		whiteHighlight := canvas.NewRectangle(color.Transparent)
+		whiteHighlight.StrokeColor = constants.ColorNeumorphLightShadow
+		whiteHighlight.StrokeWidth = 2.0
+		whiteHighlight.CornerRadius = constants.CurrentCornerRadius
+
+		return container.New(&glassNeumorphLayout{
+			highlightOffset: 2.5,
+		}, whiteHighlight, card)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		lightShadow := canvas.NewRectangle(constants.ColorNeumorphLightShadow)
 		lightShadow.CornerRadius = constants.CurrentCornerRadius
 
@@ -157,6 +210,14 @@ func NewModernCardWithAccent(title, subtitle string, accentColor color.Color, ba
 	bg.StrokeColor = constants.ColorBorderSubtle
 	bg.StrokeWidth = constants.CurrentBorderWidth
 	bg.CornerRadius = constants.CurrentCornerRadius
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		bg.Shadow = canvas.Shadow{
+			Color:      constants.ColorNeumorphDarkShadow,
+			BlurRadius: 12,
+			Offset:     fyne.NewPos(3, 5),
+			Variant:    canvas.DropShadow,
+		}
+	}
 
 	leftAccent := canvas.NewRectangle(accentColor)
 	leftAccent.CornerRadius = constants.CurrentCornerRadius / 2
@@ -216,6 +277,14 @@ func NewPlainCardWithAccent(content fyne.CanvasObject, accentColor color.Color) 
 	bg.StrokeColor = constants.ColorBorderSubtle
 	bg.StrokeWidth = constants.CurrentBorderWidth
 	bg.CornerRadius = constants.CurrentCornerRadius
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		bg.Shadow = canvas.Shadow{
+			Color:      constants.ColorNeumorphDarkShadow,
+			BlurRadius: 12,
+			Offset:     fyne.NewPos(3, 5),
+			Variant:    canvas.DropShadow,
+		}
+	}
 
 	leftAccent := canvas.NewRectangle(accentColor)
 	leftAccent.CornerRadius = constants.CurrentCornerRadius / 2

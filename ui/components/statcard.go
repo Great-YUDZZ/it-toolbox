@@ -93,7 +93,9 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	}
 
 	var cardBg color.Color
-	if constants.IsNeumorphism {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		cardBg = constants.ColorBgCardInner
+	} else if constants.IsNeumorphism {
 		cardBg = constants.ColorBgCard
 	} else {
 		cardBg = ResolveCardBg(accentColor)
@@ -103,6 +105,14 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	bg.StrokeColor = constants.ColorBorderSubtle
 	bg.StrokeWidth = constants.CurrentBorderWidth
 	bg.CornerRadius = constants.CurrentCornerRadius
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		bg.Shadow = canvas.Shadow{
+			Color:      color.RGBA{R: 0x0A, G: 0x0F, B: 0x18, A: 0x22},
+			BlurRadius: 8,
+			Offset:     fyne.NewPos(2, 4),
+			Variant:    canvas.DropShadow,
+		}
+	}
 
 	// Accent Bar (Solid black for Brutalism, accent colored for Neumorphism/Glass)
 	var barColor color.Color
@@ -211,7 +221,13 @@ func (s *StatCard) SetColor(c color.Color) {
 	s.labelTxt.Refresh()
 	s.sublabel.Refresh()
 
-	if constants.IsNeumorphism {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		s.borderRect.FillColor = constants.ColorBgCardInner
+		if s.accentBar != nil {
+			s.accentBar.FillColor = c
+			s.accentBar.Refresh()
+		}
+	} else if constants.IsNeumorphism {
 		s.borderRect.FillColor = constants.ColorBgCard
 		if s.accentBar != nil {
 			s.accentBar.FillColor = c
