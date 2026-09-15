@@ -94,6 +94,7 @@ Jika Anda menggunakan distro Linux non-Debian atau ingin instalasi portabel per-
 | 🔒 **Security & Hash** | Hash Generator (MD5, SHA-1, SHA-256, SHA-512), JWT Inspector & Decoder, Password Generator |
 | 🔄 **Converter Suite** | Base64 Encoder/Decoder, URL Encoder, JSON ↔ YAML, Timestamp / Epoch Converter, Text Case Converter |
 | 📄 **File & Doc Tools** | PDF Merger & Tools, Image Converter / Optimizer, Optical Character Recognition (OCR), ZIP Packager |
+| 🎬 **YouTube Downloader** | Unduh video YouTube dengan deteksi resolusi dinamis (4K, 1080p, 720p, 360p, hingga Audio M4A), kecepatan tinggi, progress bar, & auto-mux FFmpeg |
 | 📚 **Quick Reference** | Database Port Directory, HTTP Status Codes dictionary, Cheat sheet perintah populer CLI/DevOps |
 | 📝 **IT Logbook** | Pencatatan aktivitas harian teknisi IT berbasis SQLite lokal yang aman dan offline |
 
@@ -128,9 +129,9 @@ go run .
 
 ### 2. Membangun Paket Linux (.deb)
 ```bash
-bash build/linux/package-deb.sh 1.0.0
+bash build/linux/package-deb.sh 1.1.0
 ```
-*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.0.0_amd64.deb`.*
+*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.1.0_amd64.deb`.*
 
 ### 3. Membangun Installer Windows (.exe)
 Di komputer Windows (menggunakan Command Prompt atau PowerShell):
