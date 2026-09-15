@@ -29,10 +29,10 @@ Tersedia dua metode instalasi mudah untuk Linux:
 
 ##### Langkah 1: Unduh Paket `.deb`
 Klik link download langsung di bawah ini:
-👉 **[Download it-toolbox_1.1.0_amd64.deb (v1.1.0)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.1.0/it-toolbox_1.1.0_amd64.deb)**
+👉 **[Download it-toolbox_1.2.0_amd64.deb (v1.2.0)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.2.0/it-toolbox_1.2.0_amd64.deb)**
 
 ##### Langkah 2: Install dengan 1 Klik (Klik-Klik Aja)
-1. Buka File Manager Anda dan cari file `it-toolbox_1.1.0_amd64.deb`.
+1. Buka File Manager Anda dan cari file `it-toolbox_1.2.0_amd64.deb`.
 2. **Double-click** file `.deb` tersebut.
 3. Jendela **App Center / Software Center / GDebi** akan terbuka secara otomatis.
 4. Klik tombol **Install** (masukkan password komputer Anda jika diminta).
@@ -43,7 +43,7 @@ Klik link download langsung di bawah ini:
 
 > **Tips Terminal (Opsional):** Jika Anda lebih suka terminal, cukup ketik:
 > ```bash
-> sudo apt install ./it-toolbox_1.1.0_amd64.deb
+> sudo apt install ./it-toolbox_1.2.0_amd64.deb
 > ```
 
 ---
@@ -52,8 +52,8 @@ Klik link download langsung di bawah ini:
 
 #### Langkah 1: Unduh File Windows
 Klik salah satu link download langsung di bawah ini:
-- 👉 **[Download it-toolbox.exe (Aplikasi Langsung Siap Pakai)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.1.0/it-toolbox.exe)**
-- 👉 **[Download IT-Toolbox-Windows-Portable-x64.zip (Paket Zip)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.1.0/IT-Toolbox-Windows-Portable-x64.zip)**
+- 👉 **[Download it-toolbox.exe (Aplikasi Langsung Siap Pakai)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.2.0/it-toolbox.exe)**
+- 👉 **[Download IT-Toolbox-Windows-Portable-x64.zip (Paket Zip)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.2.0/IT-Toolbox-Windows-Portable-x64.zip)**
 
 #### Langkah 2: Cara Menggunakan & Membuat Shortcut Desktop
 1. Simpan file `it-toolbox.exe` di folder yang Anda inginkan (misal di `C:\Program Files\IT Toolbox\` atau folder favorit Anda).
@@ -82,6 +82,12 @@ Jika Anda menggunakan distro Linux non-Debian atau ingin instalasi portabel per-
    ```
 3. Dialog pop-up GUI akan muncul menanyakan konfirmasi instalasi.
 4. Klik **Yes / OK**. Aplikasi akan diinstal ke folder `~/.local/bin/` dan shortcut otomatis diletakkan di **Desktop** Anda.
+
+---
+
+## 📜 Catatan Rilis & Changelog
+
+Untuk melihat riwayat lengkap pembaruan fitur di setiap versi, silakan baca **[CHANGELOG.md](CHANGELOG.md)**.
 
 ---
 
@@ -129,9 +135,9 @@ go run .
 
 ### 2. Membangun Paket Linux (.deb)
 ```bash
-bash build/linux/package-deb.sh 1.1.0
+bash build/linux/package-deb.sh 1.2.0
 ```
-*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.1.0_amd64.deb`.*
+*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.2.0_amd64.deb`.*
 
 ### 3. Membangun Installer Windows (.exe)
 Di komputer Windows (menggunakan Command Prompt atau PowerShell):
