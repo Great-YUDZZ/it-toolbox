@@ -38,13 +38,24 @@ const (
 	CategoryBasic        Category = "Konfigurasi Dasar & Keamanan"
 	CategoryInterface    Category = "IP Address & Interface"
 	CategoryVLAN         Category = "VLAN & Switching"
+	CategorySpanningTree Category = "STP & EtherChannel"
 	CategoryRouting      Category = "Routing Statis & Dinamis"
 	CategoryServices     Category = "DHCP & Layanan Jaringan"
 	CategorySecurity     Category = "Keamanan Port & ACL"
 	CategoryNAT          Category = "NAT & PAT Internet Sharing"
+	CategoryRedundancy   Category = "Redundansi Gateway (HSRP/VRRP)"
+	CategoryWAN          Category = "WAN & Tunneling (PPP/GRE)"
+	CategoryHardening    Category = "Keamanan Sistem & Logging"
+	CategoryRecovery     Category = "Backup, Reset & Recovery"
 	CategoryShowDiag     Category = "Troubleshooting (Show Commands)"
 	CategoryVerification Category = "Panduan Verifikasi Topologi"
 )
+
+// LineExplanation provides a human-readable explanation for a single CLI command
+type LineExplanation struct {
+	Command     string `json:"command"`
+	Explanation string `json:"explanation"`
+}
 
 // Parameter represents a customizable variable in a Cisco command recipe
 type Parameter struct {
@@ -56,17 +67,21 @@ type Parameter struct {
 
 // CiscoCommand represents a comprehensive Cisco Packet Tracer configuration recipe
 type CiscoCommand struct {
-	ID                  string      `json:"id"`
-	Title               string      `json:"title"`
-	Device              DeviceType  `json:"device"`
-	Mode                CLIMode     `json:"mode"`
-	Category            Category    `json:"category"`
-	Description         string      `json:"description"`
-	Parameters          []Parameter `json:"parameters,omitempty"`
-	IPExample           string      `json:"ip_example,omitempty"`
-	Commands            string      `json:"commands"`
-	Verification        string      `json:"verification"`
-	TroubleshootingTips string      `json:"troubleshooting_tips,omitempty"`
+	ID                  string            `json:"id"`
+	Title               string            `json:"title"`
+	Device              DeviceType        `json:"device"`
+	Mode                CLIMode           `json:"mode"`
+	Category            Category          `json:"category"`
+	Description         string            `json:"description"`
+	Parameters          []Parameter       `json:"parameters,omitempty"`
+	IPExample           string            `json:"ip_example,omitempty"`
+	Commands            string            `json:"commands"`
+	Explanation         []LineExplanation `json:"explanation,omitempty"`
+	Verification        string            `json:"verification"`
+	TroubleshootingTips string            `json:"troubleshooting_tips,omitempty"`
+	Tags                []string          `json:"tags,omitempty"`
+	IsCustom            bool              `json:"is_custom,omitempty"`
+	CustomID            int               `json:"custom_id,omitempty"`
 }
 
 // RenderCommands applies custom parameter values to the commands template.

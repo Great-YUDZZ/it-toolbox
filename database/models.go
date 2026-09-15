@@ -645,3 +645,126 @@ func SeedDefaultCiscoTopologyTemplates() error {
 
 	return nil
 }
+
+// ----------------------------------------------------------------------------
+// 7. Cisco Custom Snippets (Perpustakaan Kustom)
+// ----------------------------------------------------------------------------
+
+type CiscoCustomSnippet struct {
+	ID           int
+	Title        string
+	Device       string
+	Category     string
+	Mode         string
+	Description  string
+	Commands     string
+	Verification string
+	CreatedAt    string
+}
+
+func CreateCiscoCustomSnippet(s CiscoCustomSnippet) (int, error) {
+	db, err := getDB()
+	if err != nil {
+		return 0, err
+	}
+	res, err := db.Exec(
+		`INSERT INTO cisco_custom_snippets (title, device, category, mode, description, commands, verification) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		s.Title, s.Device, s.Category, s.Mode, s.Description, s.Commands, s.Verification,
+	)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	return int(id), err
+}
+
+func GetAllCiscoCustomSnippets() ([]CiscoCustomSnippet, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(
+		`SELECT id, title, device, category, mode, description, commands, verification, created_at FROM cisco_custom_snippets ORDER BY id DESC`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var snippets []CiscoCustomSnippet
+	for rows.Next() {
+		var s CiscoCustomSnippet
+		var mode, desc, verif sql.NullString
+		if err := rows.Scan(&s.ID, &s.Title, &s.Device, &s.Category, &mode, &desc, &s.Commands, &verif, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		if mode.Valid {
+			s.Mode = mode.String
+		}
+		if desc.Valid {
+			s.Description = desc.String
+		}
+		if verif.Valid {
+			s.Verification = verif.String
+		}
+		snippets = append(snippets, s)
+	}
+	return snippets, rows.Err()
+}
+
+func UpdateCiscoCustomSnippet(s CiscoCustomSnippet) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	query := `UPDATE cisco_custom_snippets SET title = ?, device = ?, category = ?, mode = ?, description = ?, commands = ?, verification = ? WHERE id = ?`
+	_, err = db.Exec(query, s.Title, s.Device, s.Category, s.Mode, s.Description, s.Commands, s.Verification, s.ID)
+	return err
+}
+
+func DeleteCiscoCustomSnippet(id int) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(`DELETE FROM cisco_custom_snippets WHERE id = ?`, id)
+	return err
+}
+
+func SearchCiscoCustomSnippets(query string) ([]CiscoCustomSnippet, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+	q := "%" + strings.TrimSpace(query) + "%"
+	stmt := `SELECT id, title, device, category, mode, description, commands, verification, created_at 
+	         FROM cisco_custom_snippets 
+	         WHERE title LIKE ? OR description LIKE ? OR commands LIKE ? OR category LIKE ? OR device LIKE ? 
+	         ORDER BY id DESC`
+	rows, err := db.Query(stmt, q, q, q, q, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var snippets []CiscoCustomSnippet
+	for rows.Next() {
+		var s CiscoCustomSnippet
+		var mode, desc, verif sql.NullString
+		if err := rows.Scan(&s.ID, &s.Title, &s.Device, &s.Category, &mode, &desc, &s.Commands, &verif, &s.CreatedAt); err != nil {
+			return nil, err
+		}
+		if mode.Valid {
+			s.Mode = mode.String
+		}
+		if desc.Valid {
+			s.Description = desc.String
+		}
+		if verif.Valid {
+			s.Verification = verif.String
+		}
+		snippets = append(snippets, s)
+	}
+	return snippets, rows.Err()
+}
+

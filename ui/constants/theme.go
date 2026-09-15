@@ -79,17 +79,6 @@ var (
 	ColorCardBgBlue   = color.RGBA{R: 0x38, G: 0x82, B: 0xF6, A: 0xFF} // Vivid Electric Royal Blue (#3882F6)
 )
 
-// AlphaPremul converts standard R, G, B (0-255) and Alpha (0-255) into a valid Go premultiplied color.RGBA
-func AlphaPremul(r, g, b, a uint8) color.RGBA {
-	alpha := float32(a) / 255.0
-	return color.RGBA{
-		R: uint8(float32(r)*alpha + 0.5),
-		G: uint8(float32(g)*alpha + 0.5),
-		B: uint8(float32(b)*alpha + 0.5),
-		A: a,
-	}
-}
-
 // SetTheme switches all design tokens between Neo-Brutalism and Neumorphism/Glassmorphism (Light / Dark)
 func SetTheme(themeName string) {
 	ActiveTheme = themeName
@@ -101,19 +90,19 @@ func SetTheme(themeName string) {
 		CurrentBorderWidth = BorderWidthNeumorph
 		CurrentBadgeRadius = CornerRadiusPill
 
-		// Glassmorphic Neumorphism (Soft Glass UI) — Luminous Frosted Glass over Cool Ambient Aurora
-		ColorBgBase = color.RGBA{R: 0xB6, G: 0xD6, B: 0xFA, A: 0xFF}       // Richer celestial sky blue backdrop
-		ColorBgSidebar = AlphaPremul(255, 255, 255, 145)                   // 57% Frosted white glass sidebar
-		ColorBgCard = AlphaPremul(255, 255, 255, 145)                      // 57% Translucent frosted glass card
-		ColorBgCardInner = AlphaPremul(255, 255, 255, 115)                 // 45% Inset frosted glass container
-		ColorBgHover = AlphaPremul(219, 234, 254, 180)                     // Frosted hover tint
+		// Glassmorphic Neumorphism (Soft Glass UI) — Luminous Frosted Glass over Cool Ambient Ice
+		ColorBgBase = color.RGBA{R: 0xEF, G: 0xF4, B: 0xFA, A: 0xFF}      // Ethereal ice/pearl canvas
+		ColorBgSidebar = color.RGBA{R: 0xE8, G: 0xEE, B: 0xF7, A: 0xFF}   // Soft frosted sidebar
+		ColorBgCard = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}      // Luminous frosted white glass card
+		ColorBgCardInner = color.RGBA{R: 0xF4, G: 0xF7, B: 0xFB, A: 0xFF} // Inset frosted container
+		ColorBgHover = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}     // Frosted hover tint
 
-		ColorBorderSubtle = AlphaPremul(255, 255, 255, 250)                // 98% Crystalline specular white rim
+		ColorBorderSubtle = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Crystalline specular white rim
 		ColorBorderActive = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF} // Luminous Cyan-Blue focus
-		ColorShadow = AlphaPremul(71, 85, 105, 45)                         // Soft diffused slate shadow
+		ColorShadow = color.RGBA{R: 0xC2, G: 0xD0, B: 0xE2, A: 0xFF}       // Soft airy ambient shadow
 
-		ColorNeumorphLightShadow = AlphaPremul(255, 255, 255, 240)         // 94% Top-left pure white light highlight
-		ColorNeumorphDarkShadow = AlphaPremul(71, 85, 105, 45)             // Bottom-right soft slate shadow
+		ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Top-left brilliant white highlight
+		ColorNeumorphDarkShadow = color.RGBA{R: 0xC2, G: 0xD0, B: 0xE2, A: 0xFF}  // Bottom-right soft cool depth
 
 		ColorAccentYellow = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}     // Warm Amber
 		ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF}     // Royal Cobalt

@@ -274,3 +274,64 @@ func TestCiscoTopologyCRUD(t *testing.T) {
 		t.Errorf("Expected 2 default seeded templates, got %d", len(topologies))
 	}
 }
+
+func TestCiscoCustomSnippetCRUD(t *testing.T) {
+	setupTestDB(t)
+
+	// 1. Create
+	id, err := CreateCiscoCustomSnippet(CiscoCustomSnippet{
+		Title:        "Konfigurasi OSPF Area 0 Sederhana",
+		Device:       "Router Cisco",
+		Category:     "Routing Statis & Dinamis",
+		Mode:         "Global Config (config)#",
+		Description:  "Setup OSPF single-area di Router Lab",
+		Commands:     "router ospf 1\nnetwork 192.168.1.0 0.0.0.255 area 0\nexit",
+		Verification: "show ip ospf neighbor",
+	})
+	if err != nil {
+		t.Fatalf("CreateCiscoCustomSnippet error: %v", err)
+	}
+	if id <= 0 {
+		t.Fatalf("Expected positive ID, got %d", id)
+	}
+
+	// 2. Read All
+	snippets, err := GetAllCiscoCustomSnippets()
+	if err != nil {
+		t.Fatalf("GetAllCiscoCustomSnippets error: %v", err)
+	}
+	if len(snippets) != 1 {
+		t.Fatalf("Expected 1 snippet, got %d", len(snippets))
+	}
+	if snippets[0].Title != "Konfigurasi OSPF Area 0 Sederhana" {
+		t.Errorf("Expected title match, got %q", snippets[0].Title)
+	}
+
+	// 3. Update
+	snippets[0].Title = "Konfigurasi OSPF Single-Area Terupdate"
+	if err := UpdateCiscoCustomSnippet(snippets[0]); err != nil {
+		t.Fatalf("UpdateCiscoCustomSnippet error: %v", err)
+	}
+
+	// 4. Search
+	results, err := SearchCiscoCustomSnippets("Terupdate")
+	if err != nil || len(results) == 0 {
+		t.Fatalf("SearchCiscoCustomSnippets error: %v, len: %d", err, len(results))
+	}
+	if results[0].Title != "Konfigurasi OSPF Single-Area Terupdate" {
+		t.Errorf("Expected searched title match, got %q", results[0].Title)
+	}
+
+	// 5. Delete
+	if err := DeleteCiscoCustomSnippet(id); err != nil {
+		t.Fatalf("DeleteCiscoCustomSnippet error: %v", err)
+	}
+	snippets, err = GetAllCiscoCustomSnippets()
+	if err != nil {
+		t.Fatalf("GetAllCiscoCustomSnippets error: %v", err)
+	}
+	if len(snippets) != 0 {
+		t.Errorf("Expected 0 snippets after delete, got %d", len(snippets))
+	}
+}
+

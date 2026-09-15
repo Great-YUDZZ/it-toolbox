@@ -6,6 +6,11 @@ import (
 
 // GetAllCommands returns the comprehensive Cisco Packet Tracer command catalog
 func GetAllCommands() []CiscoCommand {
+	return append(getBaseCommands(), getAdvancedCommands()...)
+}
+
+// getBaseCommands returns the standard catalog of Cisco commands
+func getBaseCommands() []CiscoCommand {
 	return []CiscoCommand{
 		// ====================================================================
 		// 1. KONFIGURASI DASAR & KEAMANAN
@@ -786,7 +791,23 @@ func SearchCommands(criteria FilterCriteria) []CiscoCommand {
 			matchVerif := strings.Contains(strings.ToLower(cmd.Verification), q)
 			matchTips := strings.Contains(strings.ToLower(cmd.TroubleshootingTips), q)
 
-			if !matchTitle && !matchDesc && !matchCmds && !matchIP && !matchVerif && !matchTips {
+			matchTags := false
+			for _, tg := range cmd.Tags {
+				if strings.Contains(strings.ToLower(tg), q) {
+					matchTags = true
+					break
+				}
+			}
+
+			matchExpl := false
+			for _, ex := range cmd.Explanation {
+				if strings.Contains(strings.ToLower(ex.Command), q) || strings.Contains(strings.ToLower(ex.Explanation), q) {
+					matchExpl = true
+					break
+				}
+			}
+
+			if !matchTitle && !matchDesc && !matchCmds && !matchIP && !matchVerif && !matchTips && !matchTags && !matchExpl {
 				continue
 			}
 		}
