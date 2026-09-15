@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -40,7 +41,7 @@ func NewNavItem(title string, iconRes fyne.Resource, onTap func()) *NavItem {
 	n.ExtendBaseWidget(n)
 
 	n.bg = canvas.NewRectangle(color.Transparent)
-	n.bg.CornerRadius = 4
+	n.bg.CornerRadius = constants.CurrentCornerRadius
 
 	n.leftBar = canvas.NewRectangle(color.Transparent)
 	n.leftBar.SetMinSize(fyne.NewSize(3, 30))
@@ -60,15 +61,17 @@ func NewNavItem(title string, iconRes fyne.Resource, onTap func()) *NavItem {
 
 func (n *NavItem) SetActive(active bool) {
 	n.active = active
+	n.bg.CornerRadius = constants.CurrentCornerRadius
 	if active {
-		if constants.IsDarkTheme {
-			n.bg.FillColor = constants.ColorAccentCyan
-			n.bg.StrokeColor = constants.ColorBorderSubtle
-			n.bg.StrokeWidth = constants.BorderWidthMedium
-			n.leftBar.FillColor = constants.ColorAccentYellow
-			n.labelTxt.Color = color.Black
+		if constants.IsNeumorphism {
+			n.bg.FillColor = constants.ColorBgCardInner
+			n.bg.StrokeColor = constants.ColorBorderActive
+			n.bg.StrokeWidth = constants.CurrentBorderWidth
+			n.leftBar.FillColor = constants.ColorAccentCobalt
+			n.labelTxt.Color = constants.ColorTextPrimary
 			n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
 		} else {
+			// Neo-Brutalism (Signature)
 			n.bg.FillColor = constants.ColorAccentYellow
 			n.bg.StrokeColor = constants.ColorBorderSubtle
 			n.bg.StrokeWidth = constants.BorderWidthMedium
@@ -99,7 +102,8 @@ func (n *NavItem) MouseIn(_ *desktop.MouseEvent) {
 	if !n.active {
 		n.bg.FillColor = constants.ColorBgHover
 		n.bg.StrokeColor = constants.ColorBorderSubtle
-		n.bg.StrokeWidth = 1
+		n.bg.StrokeWidth = constants.CurrentBorderWidth
+		n.bg.CornerRadius = constants.CurrentCornerRadius
 		n.bg.Refresh()
 	}
 }
@@ -154,6 +158,7 @@ type MainWindow struct {
 	ContentArea   *fyne.Container
 	StatusLabel   *canvas.Text
 	ActiveMenu    string
+	CurrentTheme  string
 	IsDark        bool
 
 	navToolbox  *NavItem
@@ -177,9 +182,12 @@ func NewMainWindow(app fyne.App) *MainWindow {
 	win.Resize(fyne.NewSize(constants.DefaultWinW, constants.DefaultWinH))
 	win.CenterOnScreen()
 
-	isDark := app.Preferences().BoolWithFallback("theme_dark", false)
-	ApplyTheme(isDark)
-	app.Settings().SetTheme(NewCustomTheme(isDark))
+	themeName := app.Preferences().StringWithFallback("active_theme", constants.ThemeNeoBrutalism)
+	if themeName == "" {
+		themeName = constants.ThemeNeoBrutalism
+	}
+	ApplyTheme(themeName)
+	app.Settings().SetTheme(NewCustomTheme(themeName))
 
 	statusTxt := canvas.NewText("● Sistem Siap", constants.ColorSuccess)
 	statusTxt.TextSize = constants.FontSizeSmall
@@ -190,7 +198,8 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		Window:       win,
 		ContentArea:  container.NewStack(),
 		StatusLabel:  statusTxt,
-		IsDark:       isDark,
+		CurrentTheme: themeName,
+		IsDark:       constants.IsDarkTheme,
 		calcPage:     pages.NewCalculatorPage(win),
 		fileConvPage: pages.NewFileConverterPage(win),
 		ciscoPage:    pages.NewCiscoPage(win),
@@ -205,11 +214,14 @@ func NewMainWindow(app fyne.App) *MainWindow {
 	return mw
 }
 
-func (m *MainWindow) ToggleTheme() {
-	m.IsDark = !m.IsDark
+// SwitchTheme changes the active application theme and reloads all pages
+func (m *MainWindow) SwitchTheme(themeName string) {
+	m.CurrentTheme = themeName
+	m.IsDark = constants.IsDarkTheme
+	m.App.Preferences().SetString("active_theme", themeName)
 	m.App.Preferences().SetBool("theme_dark", m.IsDark)
-	ApplyTheme(m.IsDark)
-	m.App.Settings().SetTheme(NewCustomTheme(m.IsDark))
+	ApplyTheme(themeName)
+	m.App.Settings().SetTheme(NewCustomTheme(themeName))
 
 	// Rebuild pages with updated theme objects
 	m.calcPage = pages.NewCalculatorPage(m.Window)
@@ -219,10 +231,128 @@ func (m *MainWindow) ToggleTheme() {
 	m.logbookPage = pages.NewLogbookPage(m.Window)
 	m.trackerPage = pages.NewTrackerPage(m.Window)
 
-	// Rebuild window layout in place without resetting window geometry/maximize state
+	// Rebuild window layout in place without resetting window geometry
 	m.RootContainer.Objects = []fyne.CanvasObject{m.buildLayout()}
 	m.RootContainer.Refresh()
 	m.showPage(m.ActiveMenu)
+}
+
+// CycleTheme cycles through the 3 available theme options
+func (m *MainWindow) CycleTheme() {
+	var nextTheme string
+	switch m.CurrentTheme {
+	case constants.ThemeNeoBrutalism:
+		nextTheme = constants.ThemeNeumorphismLight
+	case constants.ThemeNeumorphismLight:
+		nextTheme = constants.ThemeNeumorphismDark
+	case constants.ThemeNeumorphismDark:
+		nextTheme = constants.ThemeNeoBrutalism
+	default:
+		nextTheme = constants.ThemeNeoBrutalism
+	}
+	m.SwitchTheme(nextTheme)
+}
+
+// ToggleTheme provides backward compatibility
+func (m *MainWindow) ToggleTheme() {
+	m.CycleTheme()
+}
+
+// ShowThemeDialog opens a modal for choosing between Neo-Brutalism and Neumorphism Light/Dark
+func (m *MainWindow) ShowThemeDialog() {
+	var d dialog.Dialog
+
+	title := canvas.NewText("🎨 PILIH TEMA TAMPILAN", constants.ColorTextPrimary)
+	title.TextSize = constants.FontSizeH2
+	title.TextStyle = fyne.TextStyle{Bold: true}
+
+	sub := canvas.NewText("Pilih gaya visual antarmuka IT-Toolbox yang Anda inginkan:", constants.ColorTextMuted)
+	sub.TextSize = constants.FontSizeSmall
+
+	makeOptionCard := func(themeKey, name, desc, badgeLabel string, badgeFn func(string) fyne.CanvasObject) fyne.CanvasObject {
+		optTitle := canvas.NewText(name, constants.ColorTextPrimary)
+		optTitle.TextSize = constants.FontSizeH3
+		optTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+		badge := badgeFn(badgeLabel)
+		headerRow := container.NewHBox(optTitle, badge)
+		if m.CurrentTheme == themeKey {
+			activeBadge := components.BadgeSuccess("AKTIF ✓")
+			headerRow.Add(activeBadge)
+		}
+
+		descText := widget.NewLabel(desc)
+		descText.Wrapping = fyne.TextWrapWord
+
+		selectBtn := widget.NewButton("Pilih Tema Ini", func() {
+			if d != nil {
+				d.Hide()
+			}
+			m.SwitchTheme(themeKey)
+		})
+		if m.CurrentTheme == themeKey {
+			selectBtn.Importance = widget.HighImportance
+			selectBtn.SetText("Tema Sedang Aktif ✓")
+			selectBtn.Disable()
+		} else {
+			selectBtn.Importance = widget.MediumImportance
+		}
+
+		cardInner := container.NewVBox(
+			headerRow,
+			descText,
+			selectBtn,
+		)
+		return components.NewPlainCard(cardInner)
+	}
+
+	optBrutal := makeOptionCard(
+		constants.ThemeNeoBrutalism,
+		"⚡ Neo-Brutalism (Signature)",
+		"Gaya retro retro paper, border tegas 2.5px solid hitam, font pitch-black, & bayangan tajam (zero blur).",
+		"SIGNATURE",
+		components.BadgeYellow,
+	)
+
+	optNeumorphLight := makeOptionCard(
+		constants.ThemeNeumorphismLight,
+		"🫧 Neumorphism — Mode Terang",
+		"Soft UI monokromatik abu-abu lembut dengan bayangan ganda (dual-tone shadow: highlight putih + bayangan halus) dan sudut melengkung 14px.",
+		"SOFT UI",
+		components.BadgeCyan,
+	)
+
+	optNeumorphDark := makeOptionCard(
+		constants.ThemeNeumorphismDark,
+		"🌙 Neumorphism — Mode Gelap",
+		"Dark Soft UI monokromatik slate gelap, sudut lembut, bayangan ganda emboss, & teks lembut yang nyaman di mata.",
+		"DARK SOFT",
+		components.BadgeIndigo,
+	)
+
+	closeBtn := widget.NewButton("Tutup", func() {
+		if d != nil {
+			d.Hide()
+		}
+	})
+	closeBtn.Importance = widget.LowImportance
+
+	content := container.NewVBox(
+		title,
+		sub,
+		widget.NewSeparator(),
+		optBrutal,
+		optNeumorphLight,
+		optNeumorphDark,
+		widget.NewSeparator(),
+		container.NewCenter(closeBtn),
+	)
+
+	scrollContent := container.NewVScroll(container.NewPadded(content))
+	scrollContent.SetMinSize(fyne.NewSize(480, 420))
+
+	d = dialog.NewCustomWithoutButtons("Ganti Tema", scrollContent, m.Window)
+	d.Show()
 }
 
 func (m *MainWindow) buildLayout() fyne.CanvasObject {
@@ -231,8 +361,8 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	// ------------------------------------------------------------------------
 	brandBg := canvas.NewRectangle(constants.ColorAccentYellow)
 	brandBg.StrokeColor = constants.ColorBorderSubtle
-	brandBg.StrokeWidth = constants.BorderWidthMedium
-	brandBg.CornerRadius = constants.CornerRadiusBrutal
+	brandBg.StrokeWidth = constants.CurrentBorderWidth
+	brandBg.CornerRadius = constants.CurrentCornerRadius
 
 	brandTitle := canvas.NewText("⚡ IT TOOLBOX", color.Black)
 	brandTitle.TextSize = constants.FontSizeH2
@@ -254,7 +384,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	fullScreenBtn.Importance = widget.LowImportance
 
 	quickThemeBtn := widget.NewButtonWithIcon("", theme.ColorPaletteIcon(), func() {
-		m.ToggleTheme()
+		m.ShowThemeDialog()
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
@@ -300,21 +430,16 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	secDocs.TextSize = constants.FontSizeLabel
 	secDocs.TextStyle = fyne.TextStyle{Bold: true}
 
-	secNet := canvas.NewText("JARINGAN & SIMULASI", constants.ColorTextPrimary)
-	secNet.TextSize = constants.FontSizeLabel
-	secNet.TextStyle = fyne.TextStyle{Bold: true}
-
 	m.navCisco = NewNavItem(constants.NavCisco, theme.ComputerIcon(), func() {
 		m.showPage(constants.NavCisco)
 	})
-
-	m.navRef = NewNavItem(constants.NavReference, theme.HelpIcon(), func() {
+	m.navRef = NewNavItem(constants.NavReference, theme.InfoIcon(), func() {
 		m.showPage(constants.NavReference)
 	})
-	m.navLogbook = NewNavItem(constants.NavLogbook, theme.DocumentIcon(), func() {
+	m.navLogbook = NewNavItem(constants.NavLogbook, theme.DocumentCreateIcon(), func() {
 		m.showPage(constants.NavLogbook)
 	})
-	m.navTracker = NewNavItem(constants.NavTracker, theme.ConfirmIcon(), func() {
+	m.navTracker = NewNavItem(constants.NavTracker, theme.ListIcon(), func() {
 		m.showPage(constants.NavTracker)
 	})
 
@@ -324,10 +449,8 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		m.navFileConv,
 		m.navYouTube,
 		widget.NewSeparator(),
-		secNet,
-		m.navCisco,
-		widget.NewSeparator(),
 		secDocs,
+		m.navCisco,
 		m.navRef,
 		m.navLogbook,
 		m.navTracker,
@@ -337,22 +460,33 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	// 3. Sidebar Footer (Theme Switcher, Status Pill & Environment Info)
 	// ------------------------------------------------------------------------
 	var themeBtnText string
-	if m.IsDark {
-		themeBtnText = "☀️ Mode Terang"
-	} else {
-		themeBtnText = "🌙 Mode Gelap"
+	switch m.CurrentTheme {
+	case constants.ThemeNeumorphismLight:
+		themeBtnText = "🫧 Neumorph (Terang)"
+	case constants.ThemeNeumorphismDark:
+		themeBtnText = "🌙 Neumorph (Gelap)"
+	default:
+		themeBtnText = "⚡ Neo-Brutalism"
 	}
 	themeBtn := widget.NewButtonWithIcon(themeBtnText, theme.ColorPaletteIcon(), func() {
-		m.ToggleTheme()
+		m.ShowThemeDialog()
 	})
 	themeBtn.Importance = widget.LowImportance
 
 	statusPillBg := canvas.NewRectangle(constants.ColorSuccess)
 	statusPillBg.StrokeColor = constants.ColorBorderSubtle
-	statusPillBg.StrokeWidth = constants.BorderWidthMedium
-	statusPillBg.CornerRadius = constants.CornerRadiusBrutal
+	statusPillBg.StrokeWidth = constants.CurrentBorderWidth
+	statusPillBg.CornerRadius = constants.CurrentBadgeRadius
 
-	m.StatusLabel.Color = color.Black
+	if constants.IsNeumorphism {
+		if constants.IsDarkTheme {
+			m.StatusLabel.Color = color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xFF}
+		} else {
+			m.StatusLabel.Color = color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF}
+		}
+	} else {
+		m.StatusLabel.Color = color.Black
+	}
 	m.StatusLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 	statusPill := container.NewStack(statusPillBg, container.NewPadded(m.StatusLabel))
 

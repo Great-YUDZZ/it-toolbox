@@ -75,7 +75,7 @@ func ResolveCardBg(c color.Color) color.Color {
 	return constants.ColorCardBgCyan
 }
 
-// StatCard displays a bold metric stat box for KPIs with Neo-Brutalist styling
+// StatCard displays a bold metric stat box for KPIs adapted to the active theme
 type StatCard struct {
 	Widget     fyne.CanvasObject
 	valueText  *canvas.Text
@@ -85,26 +85,36 @@ type StatCard struct {
 	borderRect *canvas.Rectangle
 }
 
-// NewStatCard builds a Neo-Brutalist KPI widget with vivid background, 2.5px border, and solid black fonts
+// NewStatCard builds a themed KPI widget
 func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard {
 	if accentColor == nil {
 		accentColor = constants.ColorCardBgCyan
 	}
 
-	cardBg := ResolveCardBg(accentColor)
+	var cardBg color.Color
+	if constants.IsNeumorphism {
+		cardBg = constants.ColorBgCard
+	} else {
+		cardBg = ResolveCardBg(accentColor)
+	}
+
 	bg := canvas.NewRectangle(cardBg)
 	bg.StrokeColor = constants.ColorBorderSubtle
-	bg.StrokeWidth = constants.BorderWidthHeavy
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentCornerRadius
 
-	// 4px Left Accent Bar
-	accentBar := canvas.NewRectangle(color.Black)
+	// Accent Bar (Solid black for Brutalism, accent colored for Neumorphism)
+	var barColor color.Color
+	if constants.IsNeumorphism {
+		barColor = accentColor
+	} else {
+		barColor = color.Black
+	}
+	accentBar := canvas.NewRectangle(barColor)
+	accentBar.CornerRadius = constants.CurrentCornerRadius / 2
 	accentBar.SetMinSize(fyne.NewSize(4, 38))
 
-	textColor := color.Black
-	if constants.IsDarkTheme {
-		textColor = color.White
-	}
+	textColor := constants.ColorTextPrimary
 
 	lbl := canvas.NewText(strings.ToUpper(label), textColor)
 	lbl.TextSize = constants.FontSizeLabel // 9.5px
@@ -125,17 +135,8 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	cardBody := container.NewBorder(nil, nil, accentBar, nil, paddedContent)
 	cardFace := container.NewStack(bg, cardBody)
 
-	// Wrap in Neo-Brutalist hard offset shadow (+3px, +3px)
-	shadow := canvas.NewRectangle(constants.ColorShadow)
-	shadow.CornerRadius = constants.CornerRadiusBrutal
-	if constants.IsDarkTheme {
-		shadow.StrokeColor = constants.ColorBorderSubtle
-		shadow.StrokeWidth = 1
-	}
-	shadowedWidget := container.New(&hardShadowLayout{
-		offsetX: constants.ShadowOffsetMedium,
-		offsetY: constants.ShadowOffsetMedium,
-	}, shadow, cardFace)
+	// Wrap in theme shadow
+	shadowedWidget := WrapHardShadow(cardFace, constants.ShadowOffsetMedium, constants.ShadowOffsetMedium)
 
 	// Wrap in boundedLayout so MinSize().Width never forces window to balloon beyond screen
 	boundedWidget := container.New(&boundedLayout{minWidth: 140}, shadowedWidget)
@@ -152,11 +153,7 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 
 func (s *StatCard) SetValue(val string) {
 	s.valueText.Text = val
-	textColor := color.Black
-	if constants.IsDarkTheme {
-		textColor = color.White
-	}
-	s.valueText.Color = textColor
+	s.valueText.Color = constants.ColorTextPrimary
 
 	// Dynamically adjust font size so long values fit comfortably
 	if len(val) > 24 {
@@ -171,48 +168,38 @@ func (s *StatCard) SetValue(val string) {
 
 func (s *StatCard) SetSubtext(txt string) {
 	s.sublabel.Text = txt
-	textColor := color.Black
-	if constants.IsDarkTheme {
-		textColor = color.White
-	}
-	s.sublabel.Color = textColor
+	s.sublabel.Color = constants.ColorTextPrimary
 	s.sublabel.Refresh()
 }
 
 func (s *StatCard) SetLabel(lbl string) {
 	s.labelTxt.Text = strings.ToUpper(lbl)
-	textColor := color.Black
-	if constants.IsDarkTheme {
-		textColor = color.White
-	}
-	s.labelTxt.Color = textColor
+	s.labelTxt.Color = constants.ColorTextPrimary
 	s.labelTxt.Refresh()
 }
 
 func (s *StatCard) SetColor(c color.Color) {
-	textColor := color.Black
-	if constants.IsDarkTheme {
-		textColor = color.White
-	}
-	s.valueText.Color = textColor
-	s.labelTxt.Color = textColor
-	s.sublabel.Color = textColor
+	s.valueText.Color = constants.ColorTextPrimary
+	s.labelTxt.Color = constants.ColorTextPrimary
+	s.sublabel.Color = constants.ColorTextPrimary
 	s.valueText.Refresh()
 	s.labelTxt.Refresh()
 	s.sublabel.Refresh()
 
-	// Update card background with matching vivid color
-	s.borderRect.FillColor = ResolveCardBg(c)
-	s.borderRect.Refresh()
-
-	if s.accentBar != nil {
-		if constants.IsDarkTheme {
+	if constants.IsNeumorphism {
+		s.borderRect.FillColor = constants.ColorBgCard
+		if s.accentBar != nil {
 			s.accentBar.FillColor = c
-		} else {
-			s.accentBar.FillColor = color.Black
+			s.accentBar.Refresh()
 		}
-		s.accentBar.Refresh()
+	} else {
+		s.borderRect.FillColor = ResolveCardBg(c)
+		if s.accentBar != nil {
+			s.accentBar.FillColor = color.Black
+			s.accentBar.Refresh()
+		}
 	}
+	s.borderRect.Refresh()
 }
 
 func (s *StatCard) SetAccentColor(c color.Color) {

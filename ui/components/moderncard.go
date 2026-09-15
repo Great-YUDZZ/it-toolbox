@@ -55,10 +55,76 @@ func (l *hardShadowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(cardMin.Width+l.offsetX, cardMin.Height+l.offsetY)
 }
 
-// WrapHardShadow places an object over a brutalist hard offset shadow
+// dualShadowLayout renders an authentic Neumorphism dual-tone extruded shadow
+// (Top-left light highlight + Bottom-right soft dark shadow)
+type dualShadowLayout struct {
+	lightOffsetX float32
+	lightOffsetY float32
+	darkOffsetX  float32
+	darkOffsetY  float32
+}
+
+func (l *dualShadowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if len(objects) < 3 {
+		for _, o := range objects {
+			o.Resize(size)
+			o.Move(fyne.NewPos(0, 0))
+		}
+		return
+	}
+	cardW := size.Width - (l.lightOffsetX + l.darkOffsetX)
+	cardH := size.Height - (l.lightOffsetY + l.darkOffsetY)
+	if cardW < 0 {
+		cardW = 0
+	}
+	if cardH < 0 {
+		cardH = 0
+	}
+	cardSize := fyne.NewSize(cardW, cardH)
+
+	// Layer 0: Top-left light highlight at (0, 0)
+	objects[0].Resize(cardSize)
+	objects[0].Move(fyne.NewPos(0, 0))
+
+	// Layer 1: Bottom-right dark shadow at (lightOffsetX + darkOffsetX, lightOffsetY + darkOffsetY)
+	objects[1].Resize(cardSize)
+	objects[1].Move(fyne.NewPos(l.lightOffsetX+l.darkOffsetX, l.lightOffsetY+l.darkOffsetY))
+
+	// Layer 2: Foreground card face at (lightOffsetX, lightOffsetY)
+	objects[2].Resize(cardSize)
+	objects[2].Move(fyne.NewPos(l.lightOffsetX, l.lightOffsetY))
+}
+
+func (l *dualShadowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if len(objects) < 3 {
+		if len(objects) > 0 {
+			return objects[len(objects)-1].MinSize()
+		}
+		return fyne.NewSize(0, 0)
+	}
+	cardMin := objects[2].MinSize()
+	return fyne.NewSize(cardMin.Width+l.lightOffsetX+l.darkOffsetX, cardMin.Height+l.lightOffsetY+l.darkOffsetY)
+}
+
+// WrapHardShadow dynamically renders Neo-Brutalist hard shadow or Neumorphic dual shadow
 func WrapHardShadow(card fyne.CanvasObject, offsetX, offsetY float32) fyne.CanvasObject {
+	if constants.IsNeumorphism {
+		lightShadow := canvas.NewRectangle(constants.ColorNeumorphLightShadow)
+		lightShadow.CornerRadius = constants.CurrentCornerRadius
+
+		darkShadow := canvas.NewRectangle(constants.ColorNeumorphDarkShadow)
+		darkShadow.CornerRadius = constants.CurrentCornerRadius
+
+		return container.New(&dualShadowLayout{
+			lightOffsetX: 3,
+			lightOffsetY: 3,
+			darkOffsetX:  4,
+			darkOffsetY:  4,
+		}, lightShadow, darkShadow, card)
+	}
+
 	shadow := canvas.NewRectangle(constants.ColorShadow)
-	shadow.CornerRadius = constants.CornerRadiusBrutal
+	shadow.CornerRadius = constants.CurrentCornerRadius
 	if constants.IsDarkTheme {
 		shadow.StrokeColor = constants.ColorBorderSubtle
 		shadow.StrokeWidth = 1
@@ -66,17 +132,22 @@ func WrapHardShadow(card fyne.CanvasObject, offsetX, offsetY float32) fyne.Canva
 	return container.New(&hardShadowLayout{offsetX: offsetX, offsetY: offsetY}, shadow, card)
 }
 
-// ModernCard wraps canvas objects inside a Neo-Brutalist card with 2.5px solid border and hard offset shadow
+// WrapCardShadow is an alias for WrapHardShadow
+func WrapCardShadow(card fyne.CanvasObject, offsetX, offsetY float32) fyne.CanvasObject {
+	return WrapHardShadow(card, offsetX, offsetY)
+}
+
+// ModernCard wraps canvas objects inside a themed card container
 type ModernCard struct {
 	Widget fyne.CanvasObject
 }
 
-// NewModernCard creates a brutalist card with optional header, badge, and actions
+// NewModernCard creates a card with optional header, badge, and actions
 func NewModernCard(title string, badge fyne.CanvasObject, content fyne.CanvasObject, action fyne.CanvasObject) *ModernCard {
 	return NewModernCardWithAccent(title, "", constants.ColorBorderSubtle, badge, content, action)
 }
 
-// NewModernCardWithAccent creates a card with 4px left semantic accent and hard shadow
+// NewModernCardWithAccent creates a card with semantic left accent and shadow
 func NewModernCardWithAccent(title, subtitle string, accentColor color.Color, badge fyne.CanvasObject, content fyne.CanvasObject, action fyne.CanvasObject) *ModernCard {
 	if accentColor == nil {
 		accentColor = constants.ColorBorderSubtle
@@ -84,10 +155,11 @@ func NewModernCardWithAccent(title, subtitle string, accentColor color.Color, ba
 
 	bg := canvas.NewRectangle(constants.ColorBgCard)
 	bg.StrokeColor = constants.ColorBorderSubtle
-	bg.StrokeWidth = constants.BorderWidthHeavy
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentCornerRadius
 
 	leftAccent := canvas.NewRectangle(accentColor)
+	leftAccent.CornerRadius = constants.CurrentCornerRadius / 2
 	leftAccent.SetMinSize(fyne.NewSize(4, 0))
 
 	var cardContent *fyne.Container
@@ -129,12 +201,12 @@ func NewModernCardWithAccent(title, subtitle string, accentColor color.Color, ba
 	return &ModernCard{Widget: shadowedCard}
 }
 
-// NewPlainCard creates a Neo-Brutalist card with 2.5px border and hard offset shadow
+// NewPlainCard creates a plain card adapted to the active theme
 func NewPlainCard(content fyne.CanvasObject) fyne.CanvasObject {
 	return NewPlainCardWithAccent(content, constants.ColorBorderSubtle)
 }
 
-// NewPlainCardWithAccent creates a card with a 4px semantic left accent border and hard offset shadow
+// NewPlainCardWithAccent creates a card with semantic left accent border and shadow
 func NewPlainCardWithAccent(content fyne.CanvasObject, accentColor color.Color) fyne.CanvasObject {
 	if accentColor == nil {
 		accentColor = constants.ColorBorderSubtle
@@ -142,10 +214,11 @@ func NewPlainCardWithAccent(content fyne.CanvasObject, accentColor color.Color) 
 
 	bg := canvas.NewRectangle(constants.ColorBgCard)
 	bg.StrokeColor = constants.ColorBorderSubtle
-	bg.StrokeWidth = constants.BorderWidthHeavy
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentCornerRadius
 
 	leftAccent := canvas.NewRectangle(accentColor)
+	leftAccent.CornerRadius = constants.CurrentCornerRadius / 2
 	leftAccent.SetMinSize(fyne.NewSize(4, 0))
 
 	paddedContent := container.NewPadded(content)

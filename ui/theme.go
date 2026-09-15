@@ -10,7 +10,7 @@ import (
 )
 
 // ============================================================================
-// DESIGN TOKEN SYSTEM — Dynamic Light / Dark Theme Support
+// DESIGN TOKEN SYSTEM — Dynamic Theme Support (Neo-Brutalism & Neumorphism)
 // ============================================================================
 
 // Local mirror variables initialized from constants
@@ -50,8 +50,8 @@ var (
 )
 
 // ApplyTheme synchronizes both constants and ui packages with the chosen mode
-func ApplyTheme(isDark bool) {
-	constants.SetTheme(isDark)
+func ApplyTheme(themeName string) {
+	constants.SetTheme(themeName)
 
 	ColorBgBase = constants.ColorBgBase
 	ColorBgSidebar = constants.ColorBgSidebar
@@ -87,6 +87,15 @@ func ApplyTheme(isDark bool) {
 	ColorCardBgBlue = constants.ColorCardBgBlue
 }
 
+// ApplyThemeBool provides backward compatibility for boolean toggling
+func ApplyThemeBool(isDark bool) {
+	if isDark {
+		ApplyTheme(constants.ThemeNeumorphismDark)
+	} else {
+		ApplyTheme(constants.ThemeNeoBrutalism)
+	}
+}
+
 // === TYPOGRAPHY SCALE ===
 const (
 	FontSizeDisplay = constants.FontSizeDisplay
@@ -108,32 +117,82 @@ const (
 	SpaceXXL = constants.SpaceXXL
 )
 
-// CustomCyanTheme provides a dynamic engineering workbench theme supporting both light and dark
+// CustomCyanTheme provides a dynamic engineering workbench theme
 type CustomCyanTheme struct {
-	isDark bool
+	themeName string
 }
 
 var _ fyne.Theme = (*CustomCyanTheme)(nil)
 
 func NewCustomCyanTheme() fyne.Theme {
-	return NewCustomTheme(constants.IsDarkTheme)
+	return NewCustomTheme(constants.ActiveTheme)
 }
 
-func NewCustomTheme(isDark bool) fyne.Theme {
-	return &CustomCyanTheme{isDark: isDark}
+func NewCustomTheme(themeName string) fyne.Theme {
+	return &CustomCyanTheme{themeName: themeName}
+}
+
+func NewCustomThemeBool(isDark bool) fyne.Theme {
+	if isDark {
+		return NewCustomTheme(constants.ThemeNeumorphismDark)
+	}
+	return NewCustomTheme(constants.ThemeNeoBrutalism)
 }
 
 func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	if m.isDark {
+	switch m.themeName {
+	case constants.ThemeNeumorphismLight:
 		switch name {
 		case theme.ColorNamePrimary:
-			return ColorAccentYellow
+			return ColorAccentCobalt
 		case theme.ColorNameHover:
 			return ColorBgHover
 		case theme.ColorNameFocus:
-			return ColorAccentYellow
+			return ColorBorderActive
 		case theme.ColorNameSelection:
 			return ColorAccentCyanDim
+		case theme.ColorNameHyperlink:
+			return ColorAccentCobalt
+		case theme.ColorNameBackground:
+			return ColorBgBase
+		case theme.ColorNameMenuBackground:
+			return ColorBgSidebar
+		case theme.ColorNameOverlayBackground:
+			return ColorBgCard
+		case theme.ColorNameInputBackground:
+			return ColorBgCardInner
+		case theme.ColorNameButton:
+			return ColorBgCard
+		case theme.ColorNameForeground:
+			return ColorTextPrimary
+		case theme.ColorNamePlaceHolder:
+			return ColorTextMuted
+		case theme.ColorNameDisabled:
+			return ColorTextDisabled
+		case theme.ColorNameSeparator:
+			return ColorBorderSubtle
+		case theme.ColorNameSuccess:
+			return ColorSuccess
+		case theme.ColorNameWarning:
+			return ColorWarning
+		case theme.ColorNameError:
+			return ColorDanger
+		case theme.ColorNameShadow:
+			return ColorShadow
+		default:
+			return theme.DefaultTheme().Color(name, theme.VariantLight)
+		}
+
+	case constants.ThemeNeumorphismDark:
+		switch name {
+		case theme.ColorNamePrimary:
+			return ColorAccentCobalt
+		case theme.ColorNameHover:
+			return ColorBgHover
+		case theme.ColorNameFocus:
+			return ColorBorderActive
+		case theme.ColorNameSelection:
+			return ColorAccentCobaltDim
 		case theme.ColorNameHyperlink:
 			return ColorAccentCyan
 		case theme.ColorNameBackground:
@@ -165,48 +224,48 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 		default:
 			return theme.DefaultTheme().Color(name, theme.VariantDark)
 		}
-	}
 
-	// Light mode - Neo-Brutalism
-	switch name {
-	case theme.ColorNamePrimary:
-		return color.Black
-	case theme.ColorNameHover:
-		return ColorBgHover
-	case theme.ColorNameFocus:
-		return ColorAccentYellow
-	case theme.ColorNameSelection:
-		return ColorAccentCyanDim
-	case theme.ColorNameHyperlink:
-		return ColorAccentCobalt
-	case theme.ColorNameBackground:
-		return ColorBgBase
-	case theme.ColorNameMenuBackground:
-		return ColorBgSidebar
-	case theme.ColorNameOverlayBackground:
-		return ColorBgCard
-	case theme.ColorNameInputBackground:
-		return ColorBgCard
-	case theme.ColorNameButton:
-		return ColorBgCard
-	case theme.ColorNameForeground:
-		return ColorTextPrimary
-	case theme.ColorNamePlaceHolder:
-		return ColorTextMuted
-	case theme.ColorNameDisabled:
-		return ColorTextDisabled
-	case theme.ColorNameSeparator:
-		return ColorBorderSubtle
-	case theme.ColorNameSuccess:
-		return ColorSuccess
-	case theme.ColorNameWarning:
-		return ColorWarning
-	case theme.ColorNameError:
-		return ColorDanger
-	case theme.ColorNameShadow:
-		return ColorShadow
-	default:
-		return theme.DefaultTheme().Color(name, theme.VariantLight)
+	default: // Neo-Brutalism (Signature Single Mode)
+		switch name {
+		case theme.ColorNamePrimary:
+			return color.Black
+		case theme.ColorNameHover:
+			return ColorBgHover
+		case theme.ColorNameFocus:
+			return ColorAccentYellow
+		case theme.ColorNameSelection:
+			return ColorAccentCyanDim
+		case theme.ColorNameHyperlink:
+			return ColorAccentCobalt
+		case theme.ColorNameBackground:
+			return ColorBgBase
+		case theme.ColorNameMenuBackground:
+			return ColorBgSidebar
+		case theme.ColorNameOverlayBackground:
+			return ColorBgCard
+		case theme.ColorNameInputBackground:
+			return ColorBgCard
+		case theme.ColorNameButton:
+			return ColorBgCard
+		case theme.ColorNameForeground:
+			return ColorTextPrimary
+		case theme.ColorNamePlaceHolder:
+			return ColorTextMuted
+		case theme.ColorNameDisabled:
+			return ColorTextDisabled
+		case theme.ColorNameSeparator:
+			return ColorBorderSubtle
+		case theme.ColorNameSuccess:
+			return ColorSuccess
+		case theme.ColorNameWarning:
+			return ColorWarning
+		case theme.ColorNameError:
+			return ColorDanger
+		case theme.ColorNameShadow:
+			return ColorShadow
+		default:
+			return theme.DefaultTheme().Color(name, theme.VariantLight)
+		}
 	}
 }
 
@@ -242,10 +301,19 @@ func (m *CustomCyanTheme) Size(name fyne.ThemeSizeName) float32 {
 	case theme.SizeNameCaptionText:
 		return FontSizeSmall
 	case theme.SizeNameButtonRadius, theme.SizeNameInputRadius:
+		if constants.IsNeumorphism {
+			return 10
+		}
 		return 4 // Semi-sharp blocky
 	case theme.SizeNameCardRadius:
+		if constants.IsNeumorphism {
+			return 14
+		}
 		return 4 // Semi-sharp blocky
 	case theme.SizeNameSelectionRadius:
+		if constants.IsNeumorphism {
+			return 6
+		}
 		return 2
 	case theme.SizeNamePadding:
 		return SpaceSM

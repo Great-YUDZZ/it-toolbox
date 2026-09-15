@@ -38,8 +38,8 @@ func NewCodePanel(title string, initialContent string, win fyne.Window) *CodePan
 
 	bg := canvas.NewRectangle(constants.ColorBgCardInner)
 	bg.StrokeColor = constants.ColorBorderSubtle
-	bg.StrokeWidth = constants.BorderWidthHeavy
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentCornerRadius
 
 	panelContent := container.NewVBox(
 		container.NewPadded(topBar),

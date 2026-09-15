@@ -3,19 +3,38 @@ package constants
 import "image/color"
 
 // ============================================================================
-// DESIGN TOKEN SYSTEM — Neo-Brutalism Design System (Light & Dark)
+// DESIGN TOKEN SYSTEM — Neo-Brutalism & Neumorphism (Soft UI) Multi-Theme
 // ============================================================================
 
-var IsDarkTheme = false
-
-// === NEO-BRUTALISM GEOMETRY CONSTANTS ===
 const (
-	BorderWidthHeavy   = float32(2.5) // Bold prominent strokes (cards, panels)
-	BorderWidthMedium  = float32(2.0) // Buttons, badges, inputs
-	BorderWidthThin    = float32(1.5) // Separators, sub-elements
-	ShadowOffsetHeavy  = float32(4.0) // Hard offset drop shadow for cards (+4px, +4px)
-	ShadowOffsetMedium = float32(3.0) // Hard offset drop shadow for badges & KPIs
-	CornerRadiusBrutal = float32(4.0) // Semi-sharp blocky corner radius
+	ThemeNeoBrutalism     = "neobrutalism"
+	ThemeNeumorphismLight = "neumorphism_light"
+	ThemeNeumorphismDark  = "neumorphism_dark"
+)
+
+var (
+	ActiveTheme         = ThemeNeoBrutalism
+	IsNeumorphism       = false
+	IsDarkTheme         = false
+	CurrentCornerRadius = CornerRadiusBrutal
+	CurrentBorderWidth  = BorderWidthHeavy
+	CurrentBadgeRadius  = CornerRadiusBrutal
+
+	ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xE6} // Top-left highlight
+	ColorNeumorphDarkShadow  = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99} // Bottom-right shadow
+)
+
+// === GEOMETRY CONSTANTS ===
+const (
+	BorderWidthHeavy     = float32(2.5)  // Bold prominent strokes for Neo-Brutalism
+	BorderWidthMedium    = float32(2.0)  // Buttons, badges, inputs
+	BorderWidthThin      = float32(1.5)  // Separators, sub-elements
+	BorderWidthNeumorph  = float32(0.8)  // Subtle soft outline for Neumorphism
+	ShadowOffsetHeavy    = float32(4.0)  // Hard offset drop shadow for cards (+4px, +4px)
+	ShadowOffsetMedium   = float32(3.0)  // Hard offset drop shadow for badges & KPIs
+	CornerRadiusBrutal   = float32(4.0)  // Semi-sharp blocky corner radius
+	CornerRadiusNeumorph = float32(14.0) // Smooth soft UI rounded corners
+	CornerRadiusPill     = float32(12.0) // Rounded pill for tags & badges
 )
 
 // === ACTIVE TOKENS (Dynamically Swapped via SetTheme) ===
@@ -30,8 +49,8 @@ var (
 	ColorBorderActive = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Solid Jet Black active border
 	ColorShadow       = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Solid 100% black hard offset shadow
 
-	ColorAccentYellow = color.RGBA{R: 0xFF, G: 0xE6, B: 0x00, A: 0xFF} // Iconic Electric Acid / Gumroad Yellow
-	ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF} // Electric Cobalt Blue
+	ColorAccentYellow     = color.RGBA{R: 0xFF, G: 0xE6, B: 0x00, A: 0xFF} // Iconic Electric Acid / Gumroad Yellow
+	ColorAccentCobalt     = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF} // Electric Cobalt Blue
 	ColorAccentCobaltDark = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
 	ColorAccentCobaltDim  = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
 
@@ -50,67 +69,134 @@ var (
 	ColorTextMuted     = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Pitch Black
 	ColorTextDisabled  = color.RGBA{R: 0x44, G: 0x44, B: 0x44, A: 0xFF} // Dark Slate
 
-	// === NEO-BRUTALISM VIBRANT CARD BACKGROUNDS ===
+	// === VIBRANT CARD BACKGROUNDS ===
 	ColorCardBgCyan   = color.RGBA{R: 0x00, G: 0xE0, B: 0xFF, A: 0xFF} // Vivid Electric Cyan (#00E0FF)
 	ColorCardBgGreen  = color.RGBA{R: 0x22, G: 0xE5, B: 0x65, A: 0xFF} // Vivid Electric Kelly Green (#22E565)
-	ColorCardBgYellow = color.RGBA{R: 0xFF, G: 0xE6, B: 0x00, A: 0xFF} // Vivid Electric Acid Yellow (#FFE600)
+	ColorCardBgYellow = color.RGBA{R: 0xFF, G: 0xE6, B: 0xFF, A: 0xFF} // Vivid Electric Acid Yellow (#FFE600)
 	ColorCardBgOrange = color.RGBA{R: 0xFF, G: 0x90, B: 0x00, A: 0xFF} // Vivid Electric Tangerine (#FF9000)
 	ColorCardBgPurple = color.RGBA{R: 0xB8, G: 0x7C, B: 0xF8, A: 0xFF} // Vivid Electric Purple (#B87CF8)
 	ColorCardBgCoral  = color.RGBA{R: 0xFF, G: 0x38, B: 0x5C, A: 0xFF} // Vivid Electric Coral Red (#FF385C)
 	ColorCardBgBlue   = color.RGBA{R: 0x38, G: 0x82, B: 0xF6, A: 0xFF} // Vivid Electric Royal Blue (#3882F6)
 )
 
-// SetTheme switches all token values between Light and Dark mode
-func SetTheme(isDark bool) {
-	IsDarkTheme = isDark
-	if isDark {
-		// Cyber-Brutalism Dark Mode (Deep Obsidian Canvas, Stark White Outlines, Saturated Neon)
-		ColorBgBase = color.RGBA{R: 0x12, G: 0x12, B: 0x14, A: 0xFF}      // Deep Obsidian Canvas
-		ColorBgSidebar = color.RGBA{R: 0x18, G: 0x18, B: 0x1B, A: 0xFF}   // Zinc 900 Sidebar
-		ColorBgCard = color.RGBA{R: 0x1E, G: 0x1E, B: 0x24, A: 0xFF}      // Dark brutalist card face
-		ColorBgCardInner = color.RGBA{R: 0x27, G: 0x27, B: 0x30, A: 0xFF} // Inner panel
-		ColorBgHover = color.RGBA{R: 0x2E, G: 0x2E, B: 0x3A, A: 0xFF}     // Hover state
+// SetTheme switches all design tokens between Neo-Brutalism and Neumorphism (Light / Dark)
+func SetTheme(themeName string) {
+	ActiveTheme = themeName
+	switch themeName {
+	case ThemeNeumorphismLight:
+		IsNeumorphism = true
+		IsDarkTheme = false
+		CurrentCornerRadius = CornerRadiusNeumorph
+		CurrentBorderWidth = BorderWidthNeumorph
+		CurrentBadgeRadius = CornerRadiusPill
 
-		ColorBorderSubtle = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Stark White 2.5px border
-		ColorBorderActive = color.RGBA{R: 0xFF, G: 0xE6, B: 0x00, A: 0xFF} // Electric Yellow Active Border
-		ColorShadow = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}       // Solid Pitch Black Hard Shadow
+		// Neumorphism Light Monochromatic palette (#E0E5EC)
+		ColorBgBase = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}      // Soft extruded canvas
+		ColorBgSidebar = color.RGBA{R: 0xD6, G: 0xDC, B: 0xE5, A: 0xFF}   // Inset sidebar
+		ColorBgCard = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}      // Monochromatic card face
+		ColorBgCardInner = color.RGBA{R: 0xD9, G: 0xDF, B: 0xE8, A: 0xFF} // Inset container
+		ColorBgHover = color.RGBA{R: 0xD0, G: 0xD7, B: 0xE2, A: 0xFF}     // Hover tint
 
-		ColorAccentYellow = color.RGBA{R: 0xFF, G: 0xE6, B: 0x00, A: 0xFF}     // Electric Acid Yellow
-		ColorAccentCobalt = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF}     // Bright Blue
-		ColorAccentCobaltDark = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0xFF} // Blue
-		ColorAccentCobaltDim = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0x40}  // Blue tint
+		ColorBorderSubtle = color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF} // Subtle 0.8px hairline border
+		ColorBorderActive = color.RGBA{R: 0x63, G: 0x66, B: 0xF1, A: 0xFF} // Soft Indigo focus
+		ColorShadow = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99}
 
-		ColorAccentCyan = color.RGBA{R: 0x00, G: 0xE5, B: 0xFF, A: 0xFF}    // Vivid Cyan
-		ColorAccentCyanDim = color.RGBA{R: 0x00, G: 0xE5, B: 0xFF, A: 0x30} // Cyan tint
+		ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xE6} // Top-left crisp white highlight
+		ColorNeumorphDarkShadow = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99}  // Bottom-right soft depth
 
-		ColorSuccess = color.RGBA{R: 0x00, G: 0xF0, B: 0xA0, A: 0xFF}          // Vivid Neo Mint
-		ColorWarning = color.RGBA{R: 0xFF, G: 0xB8, B: 0x00, A: 0xFF}          // Vivid Amber
-		ColorWarningTangerine = color.RGBA{R: 0xFF, G: 0x8C, B: 0x32, A: 0xFF} // Tangerine
-		ColorDanger = color.RGBA{R: 0xFF, G: 0x53, B: 0x53, A: 0xFF}           // Neon Red
-		ColorTechIndigo = color.RGBA{R: 0xC0, G: 0x84, B: 0xFC, A: 0xFF}       // Neon Violet
-		ColorInfo = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF}             // Sky Blue
+		ColorAccentYellow = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}     // Warm Amber
+		ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF}     // Soft Blue
+		ColorAccentCobaltDark = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
+		ColorAccentCobaltDim = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
 
-		ColorTextPrimary = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}   // Pure White
-		ColorTextSecondary = color.RGBA{R: 0xE4, G: 0xE4, B: 0xE7, A: 0xFF} // Zinc 200
-		ColorTextMuted = color.RGBA{R: 0xA1, G: 0xA1, B: 0xAA, A: 0xFF}     // Zinc 400
-		ColorTextDisabled = color.RGBA{R: 0x71, G: 0x71, B: 0x7A, A: 0xFF}  // Zinc 500
+		ColorAccentCyan = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0xFF}    // Deep Sky Cyan
+		ColorAccentCyanDim = color.RGBA{R: 0xBA, G: 0xE6, B: 0xFD, A: 0x80}
 
-		ColorCardBgCyan = color.RGBA{R: 0x0E, G: 0x2A, B: 0x38, A: 0xFF}
-		ColorCardBgGreen = color.RGBA{R: 0x0C, G: 0x2E, B: 0x22, A: 0xFF}
-		ColorCardBgYellow = color.RGBA{R: 0x2E, G: 0x26, B: 0x0C, A: 0xFF}
-		ColorCardBgOrange = color.RGBA{R: 0x33, G: 0x1D, B: 0x0C, A: 0xFF}
-		ColorCardBgPurple = color.RGBA{R: 0x24, G: 0x18, B: 0x36, A: 0xFF}
-		ColorCardBgCoral = color.RGBA{R: 0x33, G: 0x12, B: 0x16, A: 0xFF}
-		ColorCardBgBlue = color.RGBA{R: 0x1A, G: 0x2B, B: 0x4C, A: 0xFF}
-	} else {
-		// Classic Neo-Brutalism Light Mode (Warm Retro Paper, Solid 2.5px Jet Black Borders & Hard Shadows)
+		ColorSuccess = color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xFF}          // Emerald Green
+		ColorWarning = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}          // Amber
+		ColorWarningTangerine = color.RGBA{R: 0xEA, G: 0x58, B: 0x0C, A: 0xFF} // Burnt Orange
+		ColorDanger = color.RGBA{R: 0xDC, G: 0x26, B: 0x26, A: 0xFF}           // Coral Red
+		ColorTechIndigo = color.RGBA{R: 0x7C, G: 0x3A, B: 0xED, A: 0xFF}       // Soft Violet
+		ColorInfo = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0xFF}             // Sky Blue
+
+		ColorTextPrimary = color.RGBA{R: 0x2D, G: 0x37, B: 0x48, A: 0xFF}   // Slate Charcoal
+		ColorTextSecondary = color.RGBA{R: 0x4A, G: 0x55, B: 0x68, A: 0xFF} // Slate
+		ColorTextMuted = color.RGBA{R: 0x71, G: 0x80, B: 0x96, A: 0xFF}     // Muted Slate
+		ColorTextDisabled = color.RGBA{R: 0xA0, G: 0xAE, B: 0xC0, A: 0xFF}
+
+		ColorCardBgCyan = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgGreen = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgYellow = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgOrange = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgPurple = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgCoral = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgBlue = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+
+	case ThemeNeumorphismDark:
+		IsNeumorphism = true
+		IsDarkTheme = true
+		CurrentCornerRadius = CornerRadiusNeumorph
+		CurrentBorderWidth = BorderWidthNeumorph
+		CurrentBadgeRadius = CornerRadiusPill
+
+		// Neumorphism Dark Monochromatic palette (#21242B)
+		ColorBgBase = color.RGBA{R: 0x1A, G: 0x1C, B: 0x22, A: 0xFF}      // Deep dark base
+		ColorBgSidebar = color.RGBA{R: 0x16, G: 0x18, B: 0x1D, A: 0xFF}   // Inset sidebar
+		ColorBgCard = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}      // Monochromatic dark card
+		ColorBgCardInner = color.RGBA{R: 0x18, G: 0x1A, B: 0x20, A: 0xFF} // Inner container
+		ColorBgHover = color.RGBA{R: 0x28, G: 0x2C, B: 0x35, A: 0xFF}     // Hover tint
+
+		ColorBorderSubtle = color.RGBA{R: 0x2D, G: 0x32, B: 0x3C, A: 0xFF} // 0.8px subtle border
+		ColorBorderActive = color.RGBA{R: 0x81, G: 0x8C, B: 0xF8, A: 0xFF} // Soft Indigo focus
+		ColorShadow = color.RGBA{R: 0x10, G: 0x12, B: 0x16, A: 0xFF}
+
+		ColorNeumorphLightShadow = color.RGBA{R: 0x2E, G: 0x33, B: 0x3E, A: 0xDD} // Top-left glow
+		ColorNeumorphDarkShadow = color.RGBA{R: 0x10, G: 0x12, B: 0x16, A: 0xF0}  // Bottom-right deep shadow
+
+		ColorAccentYellow = color.RGBA{R: 0xFC, G: 0xD3, B: 0x4D, A: 0xFF}     // Pastel Amber
+		ColorAccentCobalt = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF}     // Pastel Blue
+		ColorAccentCobaltDark = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0xFF}
+		ColorAccentCobaltDim = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0x33}
+
+		ColorAccentCyan = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}    // Vivid Cyan
+		ColorAccentCyanDim = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0x33}
+
+		ColorSuccess = color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF}          // Mint Emerald
+		ColorWarning = color.RGBA{R: 0xFB, G: 0xBF, B: 0x24, A: 0xFF}          // Soft Amber
+		ColorWarningTangerine = color.RGBA{R: 0xFB, G: 0x92, B: 0x3C, A: 0xFF} // Orange
+		ColorDanger = color.RGBA{R: 0xF8, G: 0x71, B: 0x71, A: 0xFF}           // Soft Coral
+		ColorTechIndigo = color.RGBA{R: 0xA7, G: 0x8B, B: 0xFA, A: 0xFF}       // Soft Violet
+		ColorInfo = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}             // Sky Blue
+
+		ColorTextPrimary = color.RGBA{R: 0xF1, G: 0xF5, B: 0xF9, A: 0xFF}   // Crisp Soft White
+		ColorTextSecondary = color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF} // Zinc Light
+		ColorTextMuted = color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}     // Slate Muted
+		ColorTextDisabled = color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF}
+
+		ColorCardBgCyan = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgGreen = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgYellow = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgOrange = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgPurple = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgCoral = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgBlue = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+
+	default: // ThemeNeoBrutalism (Signature Single Mode)
+		ActiveTheme = ThemeNeoBrutalism
+		IsNeumorphism = false
+		IsDarkTheme = false
+		CurrentCornerRadius = CornerRadiusBrutal
+		CurrentBorderWidth = BorderWidthHeavy
+		CurrentBadgeRadius = CornerRadiusBrutal
+
+		// Classic Neo-Brutalism (Warm Retro Paper, Solid 2.5px Jet Black Borders & Hard Shadows)
 		ColorBgBase = color.RGBA{R: 0xFF, G: 0xFD, B: 0xF8, A: 0xFF}      // Warm Retro Paper Canvas
 		ColorBgSidebar = color.RGBA{R: 0xF4, G: 0xEF, B: 0xE6, A: 0xFF}   // Tinted Brutalist Sidebar
 		ColorBgCard = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}      // Solid White Card Surface
 		ColorBgCardInner = color.RGBA{R: 0xFF, G: 0xFD, B: 0xF0, A: 0xFF} // Warm Cream Inner Container
 		ColorBgHover = color.RGBA{R: 0xEE, G: 0xE8, B: 0xDD, A: 0xFF}     // Hover tint
 
-		ColorBorderSubtle = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Solid Jet Black
+		ColorBorderSubtle = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Solid Jet Black 2.5px border
 		ColorBorderActive = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Solid Jet Black
 		ColorShadow = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}       // Solid 100% Black Hard Shadow
 
@@ -129,11 +215,11 @@ func SetTheme(isDark bool) {
 		ColorTechIndigo = color.RGBA{R: 0xA8, G: 0x55, B: 0xF7, A: 0xFF}       // Electric Violet
 		ColorInfo = color.RGBA{R: 0x00, G: 0xE0, B: 0xFF, A: 0xFF}             // Electric Sky Cyan
 
-		// All fonts in light mode: 100% PITCH BLACK
-		ColorTextPrimary = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}   // Pitch Black
-		ColorTextSecondary = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF} // Pitch Black
-		ColorTextMuted = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}     // Pitch Black
-		ColorTextDisabled = color.RGBA{R: 0x44, G: 0x44, B: 0x44, A: 0xFF}  // Dark Slate
+		// All fonts in Neo-Brutalism: 100% PITCH BLACK
+		ColorTextPrimary = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
+		ColorTextSecondary = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
+		ColorTextMuted = color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}
+		ColorTextDisabled = color.RGBA{R: 0x44, G: 0x44, B: 0x44, A: 0xFF}
 
 		ColorCardBgCyan = color.RGBA{R: 0x00, G: 0xE0, B: 0xFF, A: 0xFF}
 		ColorCardBgGreen = color.RGBA{R: 0x22, G: 0xE5, B: 0x65, A: 0xFF}
@@ -142,6 +228,15 @@ func SetTheme(isDark bool) {
 		ColorCardBgPurple = color.RGBA{R: 0xB8, G: 0x7C, B: 0xF8, A: 0xFF}
 		ColorCardBgCoral = color.RGBA{R: 0xFF, G: 0x38, B: 0x5C, A: 0xFF}
 		ColorCardBgBlue = color.RGBA{R: 0x38, G: 0x82, B: 0xF6, A: 0xFF}
+	}
+}
+
+// SetThemeBool provides backward compatibility for boolean toggling
+func SetThemeBool(isDark bool) {
+	if isDark {
+		SetTheme(ThemeNeumorphismDark)
+	} else {
+		SetTheme(ThemeNeoBrutalism)
 	}
 }
 

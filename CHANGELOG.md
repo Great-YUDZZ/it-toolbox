@@ -6,6 +6,19 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.3.0] - 2026-09-15
+
+### 🎨 Desain & Fitur Baru (Multi-Theme Support: Neumorphism)
+- **Tema Neumorphism (Soft UI) — Terang & Gelap**:
+  - Penambahan fitur penggantian tema multi-mode fleksibel melalui **Modal Dialog Pemilih Tema** dan **Quick Cycle Button** di sidebar.
+  - **⚡ Neo-Brutalism (Signature)**: Mode ikonik tunggal tanpa pemisahan gelap/terang, mempertahankan estetika kontras tinggi retro paper (`#FFFDF8`), border tebal solid hitam 2.5px, bayangan tajam (*hard offset shadow +4px*), font 100% *pitch black*, dan *sticker badges* warna-warni.
+  - **🫧 Neumorphism — Mode Terang (Light Soft UI)**: Estetika minimalis monokromatik lembut (`#E0E5EC`) bergaya *extruded plastic* dengan pencahayaan bayangan ganda (*dual-tone shadow*: *white highlight* atas-kiri + *soft slate shadow* bawah-kanan), border halus 0.8px, dan sudut melengkung 14px.
+  - **🌙 Neumorphism — Mode Gelap (Dark Soft UI)**: Estetika modern slate gelap (`#21242B`) yang sangat nyaman di mata, dilengkapi *embossed dual shadow*, border halus 0.8px, sudut lengkung 14px, dan tipografi *crisp soft white* (`#F1F5F9`).
+  - Adaptasi otomatis seluruh komponen (*cards, badges, KPI stat cards, nav items, search bars, dividers, and dialogs*) secara instan tanpa perlu memuat ulang aplikasi.
+  - Penyimpanan preferensi tema secara persisten (`active_theme`).
+
+---
+
 ## [1.2.0] - 2026-09-15
 
 ### 🚀 Fitur Baru

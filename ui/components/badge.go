@@ -10,12 +10,12 @@ import (
 	"github.com/yudz/it-toolbox/ui/constants"
 )
 
-// Badge renders an authentic Neo-Brutalist sticker badge with solid 2.0px border and bold typography
+// Badge renders a theme-adaptive sticker badge (Blocky sticker for Neo-Brutalism, Pill for Neumorphism)
 func Badge(text string, textColor, bgColor, borderColor color.Color) fyne.CanvasObject {
 	bg := canvas.NewRectangle(bgColor)
 	bg.StrokeColor = borderColor
-	bg.StrokeWidth = constants.BorderWidthMedium // 2.0px bold outline
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentBadgeRadius
 
 	txt := canvas.NewText(text, textColor)
 	txt.TextSize = constants.FontSizeLabel // 9.5px
@@ -26,82 +26,117 @@ func Badge(text string, textColor, bgColor, borderColor color.Color) fyne.Canvas
 	return container.NewStack(bg, padded)
 }
 
-// BadgeYellow - Iconic Gumroad/Acid Yellow Sticker
+// BadgeYellow - Amber / Yellow Badge
 func BadgeYellow(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // Pitch Black text
-			constants.ColorAccentYellow,                     // #FFE600
-			constants.ColorBorderSubtle,                     // #FFFFFF
+			color.RGBA{R: 0x92, G: 0x40, B: 0x0E, A: 0xFF},
+			color.RGBA{R: 0xFE, G: 0xF3, B: 0xC7, A: 0xFF},
+			color.RGBA{R: 0xFD, G: 0xE6, B: 0x8A, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0xFD, G: 0xE6, B: 0x8A, A: 0xFF},
+			color.RGBA{R: 0x78, G: 0x35, B: 0x0F, A: 0xFF},
+			color.RGBA{R: 0x92, G: 0x40, B: 0x0E, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Signature Sticker
 	return Badge(text,
-		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // Pitch Black text
-		constants.ColorAccentYellow,                     // #FFE600
-		constants.ColorBorderSubtle,                     // #000000
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		constants.ColorAccentYellow,
+		constants.ColorBorderSubtle,
 	)
 }
 
-// BadgeCyan - Vivid Cyber Cyan Sticker
+// BadgeCyan - Cyber Sky Cyan Badge
 func BadgeCyan(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			constants.ColorAccentCyan, // #00E5FF
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x03, G: 0x69, B: 0xA1, A: 0xFF},
+			color.RGBA{R: 0xE0, G: 0xF2, B: 0xFE, A: 0xFF},
+			color.RGBA{R: 0xBA, G: 0xE6, B: 0xFD, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0x7D, G: 0xD3, B: 0xFC, A: 0xFF},
+			color.RGBA{R: 0x0C, G: 0x4A, B: 0x6E, A: 0xFF},
+			color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Signature Sticker
 	return Badge(text,
 		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		constants.ColorAccentCyan, // #00E5FF
+		constants.ColorAccentCyan,
 		constants.ColorBorderSubtle,
 	)
 }
 
-// BadgeSuccess - Vivid Neo Mint Sticker
+// BadgeSuccess - Vivid Mint / Emerald Badge
 func BadgeSuccess(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			constants.ColorSuccess, // #00F0A0
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF},
+			color.RGBA{R: 0xD1, G: 0xFA, B: 0xE5, A: 0xFF},
+			color.RGBA{R: 0xA7, G: 0xF3, B: 0xD0, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF},
+			color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xFF},
+			color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Signature Sticker
 	return Badge(text,
 		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		constants.ColorSuccess, // #00F0A0
+		constants.ColorSuccess,
 		constants.ColorBorderSubtle,
 	)
 }
 
-// BadgeWarning - Vivid Amber Tangerine Sticker
+// BadgeWarning - Tangerine / Orange Badge
 func BadgeWarning(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			constants.ColorWarning, // #FFB800
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x9A, G: 0x34, B: 0x12, A: 0xFF},
+			color.RGBA{R: 0xFF, G: 0xED, B: 0xD5, A: 0xFF},
+			color.RGBA{R: 0xFE, G: 0xD7, B: 0xAA, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0xFD, G: 0xBA, B: 0x74, A: 0xFF},
+			color.RGBA{R: 0x43, G: 0x14, B: 0x07, A: 0xFF},
+			color.RGBA{R: 0x9A, G: 0x34, B: 0x12, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Signature Sticker
 	return Badge(text,
 		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		constants.ColorWarning, // #FF9F1C
+		constants.ColorWarning,
 		constants.ColorBorderSubtle,
 	)
 }
 
-// BadgeDanger - Vivid Neo Red Sticker
+// BadgeDanger - Neo Coral Red Badge
 func BadgeDanger(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			constants.ColorDanger, // #FF5353
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x9F, G: 0x12, B: 0x39, A: 0xFF},
+			color.RGBA{R: 0xFF, G: 0xE4, B: 0xE6, A: 0xFF},
+			color.RGBA{R: 0xFE, G: 0xCD, B: 0xD3, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0xFD, G: 0xA4, B: 0xAF, A: 0xFF},
+			color.RGBA{R: 0x4C, G: 0x05, B: 0x19, A: 0xFF},
+			color.RGBA{R: 0x9F, G: 0x12, B: 0x39, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Signature Sticker
 	return Badge(text,
 		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		constants.ColorDanger, // #FF4D4D
+		constants.ColorDanger,
 		constants.ColorBorderSubtle,
 	)
 }
@@ -111,34 +146,48 @@ func BadgeError(text string) fyne.CanvasObject {
 	return BadgeDanger(text)
 }
 
-// BadgeMuted - Neutral Retro Box Tag
+// BadgeMuted - Neutral Soft Slate / Kraft Paper Tag
 func BadgeMuted(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			constants.ColorTextPrimary,                      // #FFFFFF
-			color.RGBA{R: 0x27, G: 0x27, B: 0x30, A: 0xFF}, // Charcoal
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x33, G: 0x41, B: 0x55, A: 0xFF},
+			color.RGBA{R: 0xF1, G: 0xF5, B: 0xF9, A: 0xFF},
+			color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0xE2, G: 0xE8, B: 0xF0, A: 0xFF},
+			color.RGBA{R: 0x1E, G: 0x29, B: 0x3B, A: 0xFF},
+			color.RGBA{R: 0x33, G: 0x41, B: 0x55, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Warm Kraft Tag
 	return Badge(text,
-		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF}, // #000000
-		color.RGBA{R: 0xEE, G: 0xE8, B: 0xDD, A: 0xFF}, // Warm slate/kraft paper
+		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
+		color.RGBA{R: 0xEE, G: 0xE8, B: 0xDD, A: 0xFF},
 		constants.ColorBorderSubtle,
 	)
 }
 
-// BadgeIndigo - Tech Violet / Purple Sticker
+// BadgeIndigo - Tech Violet / Purple Badge
 func BadgeIndigo(text string) fyne.CanvasObject {
-	if constants.IsDarkTheme {
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
-			color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-			constants.ColorTechIndigo, // #C084FC
-			constants.ColorBorderSubtle,
+			color.RGBA{R: 0x37, G: 0x30, B: 0xA3, A: 0xFF},
+			color.RGBA{R: 0xE0, G: 0xE7, B: 0xFF, A: 0xFF},
+			color.RGBA{R: 0xC7, G: 0xD2, B: 0xFE, A: 0xFF},
+		)
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		return Badge(text,
+			color.RGBA{R: 0xC4, G: 0xB5, B: 0xFD, A: 0xFF},
+			color.RGBA{R: 0x31, G: 0x2E, B: 0x81, A: 0xFF},
+			color.RGBA{R: 0x43, G: 0x38, B: 0xCA, A: 0xFF},
 		)
 	}
+	// Neo-Brutalism Electric Violet
 	return Badge(text,
 		color.RGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xFF},
-		color.RGBA{R: 0xC0, G: 0x84, B: 0xFC, A: 0xFF}, // Electric Violet
+		color.RGBA{R: 0xC0, G: 0x84, B: 0xFC, A: 0xFF},
 		constants.ColorBorderSubtle,
 	)
 }

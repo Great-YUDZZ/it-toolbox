@@ -47,8 +47,8 @@ func NewItemCard(title, subtitle, description string, onAction func(), actionIco
 
 	bg := canvas.NewRectangle(constants.ColorBgCard)
 	bg.StrokeColor = constants.ColorBorderSubtle
-	bg.StrokeWidth = constants.BorderWidthHeavy
-	bg.CornerRadius = constants.CornerRadiusBrutal
+	bg.StrokeWidth = constants.CurrentBorderWidth
+	bg.CornerRadius = constants.CurrentCornerRadius
 
 	content := container.NewVBox(
 		header,
