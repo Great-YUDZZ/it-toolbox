@@ -140,47 +140,50 @@ func SetTheme(themeName string) {
 		CurrentBorderWidth = BorderWidthNeumorph
 		CurrentBadgeRadius = CornerRadiusPill
 
-		// Neumorphism Dark Monochromatic palette (#21242B)
-		ColorBgBase = color.RGBA{R: 0x1A, G: 0x1C, B: 0x22, A: 0xFF}      // Deep dark base
-		ColorBgSidebar = color.RGBA{R: 0x16, G: 0x18, B: 0x1D, A: 0xFF}   // Inset sidebar
-		ColorBgCard = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}      // Monochromatic dark card
-		ColorBgCardInner = color.RGBA{R: 0x18, G: 0x1A, B: 0x20, A: 0xFF} // Inner container
-		ColorBgHover = color.RGBA{R: 0x28, G: 0x2C, B: 0x35, A: 0xFF}     // Hover tint
+		// Glassmorphic Neumorphism Dark (Dark Frosted Glass & Ambient Midnight Aurora)
+		ColorBgBase = color.RGBA{R: 0x0A, G: 0x0E, B: 0x17, A: 0xFF}      // Deep space obsidian canvas (#0A0E17)
+		ColorBgSidebar = color.RGBA{R: 0x0F, G: 0x14, B: 0x22, A: 0xFF}   // Inset dark frosted glass sidebar (#0F1422)
+		ColorBgCard = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xF2}      // Smoked obsidian frosted glass (#161E2E)
+		ColorBgCardInner = color.RGBA{R: 0x0F, G: 0x15, B: 0x22, A: 0xFF} // Deep frosted container well (#0F1522)
+		ColorBgHover = color.RGBA{R: 0x24, G: 0x30, B: 0x48, A: 0xFF}     // Translucent frosted glass hover
 
-		ColorBorderSubtle = color.RGBA{R: 0x2D, G: 0x32, B: 0x3C, A: 0xFF} // 1.0px subtle border
-		ColorBorderActive = color.RGBA{R: 0x81, G: 0x8C, B: 0xF8, A: 0xFF} // Soft Indigo focus
-		ColorShadow = color.RGBA{R: 0x10, G: 0x12, B: 0x16, A: 0xFF}
+		// Crystalline Specular Rim Light (Ice-slate reflection on dark glass bevel)
+		ColorBorderSubtle = color.RGBA{R: 0x38, G: 0x47, B: 0x66, A: 0xDD} // Translucent ice-slate specular rim
+		ColorBorderActive = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF} // Vivid Electric Cobalt glow
+		ColorShadow = color.RGBA{R: 0x04, G: 0x06, B: 0x0A, A: 0xFF}       // Deep void shadow
 
-		ColorNeumorphLightShadow = color.RGBA{R: 0x2E, G: 0x33, B: 0x3E, A: 0xDD} // Top-left glow
-		ColorNeumorphDarkShadow = color.RGBA{R: 0x10, G: 0x12, B: 0x16, A: 0xF0}  // Bottom-right deep shadow
+		// Neumorphic dual shadows for dark glass
+		ColorNeumorphLightShadow = color.RGBA{R: 0x28, G: 0x34, B: 0x4A, A: 0x77} // Top-left specular sheen
+		ColorNeumorphDarkShadow = color.RGBA{R: 0x04, G: 0x06, B: 0x0A, A: 0xF8}  // Bottom-right deep drop shadow
 
 		ColorAccentYellow = color.RGBA{R: 0xFC, G: 0xD3, B: 0x4D, A: 0xFF}     // Pastel Amber
-		ColorAccentCobalt = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF}     // Pastel Blue
+		ColorAccentCobalt = color.RGBA{R: 0x60, G: 0xA5, B: 0xFA, A: 0xFF}     // Vivid Cobalt
 		ColorAccentCobaltDark = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0xFF}
 		ColorAccentCobaltDim = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0x33}
 
-		ColorAccentCyan = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}    // Vivid Cyan
+		ColorAccentCyan = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}    // Electric Sky Cyan
 		ColorAccentCyanDim = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0x33}
 
 		ColorSuccess = color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF}          // Mint Emerald
 		ColorWarning = color.RGBA{R: 0xFB, G: 0xBF, B: 0x24, A: 0xFF}          // Soft Amber
-		ColorWarningTangerine = color.RGBA{R: 0xFB, G: 0x92, B: 0x3C, A: 0xFF} // Orange
-		ColorDanger = color.RGBA{R: 0xF8, G: 0x71, B: 0xF8, A: 0xFF}           // Soft Coral
-		ColorTechIndigo = color.RGBA{R: 0xA7, G: 0x8B, B: 0xFA, A: 0xFF}       // Soft Violet
+		ColorWarningTangerine = color.RGBA{R: 0xFB, G: 0x92, B: 0x3C, A: 0xFF} // Punchy Orange
+		ColorDanger = color.RGBA{R: 0xF8, G: 0x71, B: 0x71, A: 0xFF}           // Coral Red
+		ColorTechIndigo = color.RGBA{R: 0xA7, G: 0x8B, B: 0xFA, A: 0xFF}       // Electric Violet
 		ColorInfo = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}             // Sky Blue
 
-		ColorTextPrimary = color.RGBA{R: 0xF1, G: 0xF5, B: 0xF9, A: 0xFF}   // Crisp Soft White
-		ColorTextSecondary = color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF} // Zinc Light
-		ColorTextMuted = color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}     // Slate Muted
-		ColorTextDisabled = color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF}
+		// High-contrast sharp Slate typography for crystal clear legibility on dark glass
+		ColorTextPrimary = color.RGBA{R: 0xF8, G: 0xFA, B: 0xFC, A: 0xFF}   // Slate 50 100% Crisp Pure White
+		ColorTextSecondary = color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF} // Slate 300 Bright Silver
+		ColorTextMuted = color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}     // Slate 400 Clean Legible Muted
+		ColorTextDisabled = color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF}  // Slate 500
 
-		ColorCardBgCyan = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgGreen = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgYellow = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgOrange = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgPurple = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgCoral = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
-		ColorCardBgBlue = color.RGBA{R: 0x21, G: 0x24, B: 0x2B, A: 0xFF}
+		ColorCardBgCyan = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgGreen = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgYellow = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgOrange = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgPurple = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgCoral = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		ColorCardBgBlue = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
 
 	default: // ThemeNeoBrutalism (Signature Single Mode)
 		ActiveTheme = ThemeNeoBrutalism

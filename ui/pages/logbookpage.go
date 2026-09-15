@@ -127,11 +127,11 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 				eTags.SetText(item.Tags)
 				eErr := widget.NewMultiLineEntry()
 				eErr.SetText(item.ErrorMessage)
-				eErr.SetMinRowsVisible(3)
+				eErr.SetMinRowsVisible(5)
 				eErr.TextStyle = fyne.TextStyle{Monospace: true}
 				eSol := widget.NewMultiLineEntry()
 				eSol.SetText(item.Solution)
-				eSol.SetMinRowsVisible(3)
+				eSol.SetMinRowsVisible(5)
 
 				lblT := canvas.NewText("JUDUL MASALAH", constants.ColorTextPrimary)
 				lblT.TextSize = constants.FontSizeLabel
@@ -417,7 +417,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 				eDesc.SetText(snip.Description)
 				eCode := widget.NewMultiLineEntry()
 				eCode.SetText(snip.Content)
-				eCode.SetMinRowsVisible(6)
+				eCode.SetMinRowsVisible(10)
 				eCode.TextStyle = fyne.TextStyle{Monospace: true}
 
 				lblT := canvas.NewText("JUDUL SNIPPET", constants.ColorTextPrimary)

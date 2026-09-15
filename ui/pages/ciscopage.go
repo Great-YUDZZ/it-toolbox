@@ -554,6 +554,7 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 
 func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 	listContainer := container.NewVBox()
+	editingStepIDs := make(map[int]bool)
 
 	// Form inputs for inline Create Topology Card
 	tTitleEntry := widget.NewEntry()
@@ -658,7 +659,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 				eTitleEntry.SetText(currTopo.Title)
 				eDescEntry := widget.NewMultiLineEntry()
 				eDescEntry.SetText(currTopo.Description)
-				eDescEntry.SetMinRowsVisible(3)
+				eDescEntry.SetMinRowsVisible(5)
 
 				lbl1 := canvas.NewText("NAMA / JUDUL TOPOLOGI", constants.ColorTextPrimary)
 				lbl1.TextSize = constants.FontSizeLabel
@@ -757,83 +758,110 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 					stepBadge = components.BadgeIndigo(fmt.Sprintf("Langkah %d", currStep.StepNumber))
 				}
 
-				stepTitle := widget.NewLabel(currStep.Title)
-				stepTitle.TextStyle = fyne.TextStyle{Bold: true}
-				stepTitle.Wrapping = fyne.TextWrapWord
+				isEditing := editingStepIDs[currStep.ID]
 
-				editStepBtn := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+				if isEditing {
+					// --- INLINE EDIT MODE LANGSUNG DI KARTU LANGKAH ---
 					sTitleEntry := widget.NewEntry()
 					sTitleEntry.SetText(currStep.Title)
+					sTitleEntry.SetPlaceHolder("Judul langkah...")
+
 					sDetailEntry := widget.NewMultiLineEntry()
 					sDetailEntry.SetText(currStep.Detail)
-					sDetailEntry.SetMinRowsVisible(3)
+					sDetailEntry.TextStyle = fyne.TextStyle{Monospace: true}
+					sDetailEntry.SetMinRowsVisible(6)
+					sDetailEntry.SetPlaceHolder("Perintah CLI / catatan konfigurasi langkah ini...")
 
-					lbl1 := canvas.NewText("JUDUL LANGKAH", constants.ColorTextPrimary)
-					lbl1.TextSize = constants.FontSizeLabel
-					lbl1.TextStyle = fyne.TextStyle{Bold: true}
+					saveBtn := widget.NewButtonWithIcon("Simpan", theme.ConfirmIcon(), func() {
+						if sTitleEntry.Text != "" {
+							_ = database.UpdateCiscoTopologyStep(currStep.ID, sTitleEntry.Text, sDetailEntry.Text)
+							delete(editingStepIDs, currStep.ID)
+							reloadTopologies()
+						}
+					})
+					saveBtn.Importance = widget.HighImportance
 
-					lbl2 := canvas.NewText("CATATAN / PERINTAH CLI (OPSIONAL)", constants.ColorTextPrimary)
-					lbl2.TextSize = constants.FontSizeLabel
-					lbl2.TextStyle = fyne.TextStyle{Bold: true}
+					cancelBtn := widget.NewButtonWithIcon("Batal", theme.CancelIcon(), func() {
+						delete(editingStepIDs, currStep.ID)
+						reloadTopologies()
+					})
+					cancelBtn.Importance = widget.LowImportance
 
-					fContent := container.NewVBox(
-						lbl1, sTitleEntry,
-						lbl2, sDetailEntry,
+					editHdrLeft := container.NewHBox(stepBadge, components.BadgeYellow("SEDANG MENGEDIT LANGSUNG"))
+					editHdrRight := container.NewHBox(cancelBtn, saveBtn)
+					editTop := container.NewBorder(nil, nil, editHdrLeft, editHdrRight)
+
+					lblTitle := canvas.NewText("JUDUL LANGKAH", constants.ColorTextPrimary)
+					lblTitle.TextSize = constants.FontSizeLabel
+					lblTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+					lblDetail := canvas.NewText("CATATAN / PERINTAH CLI (OPSIONAL)", constants.ColorTextPrimary)
+					lblDetail.TextSize = constants.FontSizeLabel
+					lblDetail.TextStyle = fyne.TextStyle{Bold: true}
+
+					editBox := container.NewVBox(
+						editTop,
+						lblTitle,
+						sTitleEntry,
+						lblDetail,
+						sDetailEntry,
 					)
 
-					components.ShowBrutalistFormDialog(
-						p.window,
-						fmt.Sprintf("LANGKAH %d", currStep.StepNumber),
-						constants.ColorAccentYellow,
-						fmt.Sprintf("Edit Langkah %d", currStep.StepNumber),
-						"Sesuaikan judul atau perintah CLI untuk langkah ini",
-						fContent,
-						"Simpan Langkah",
-						func() {
-							if sTitleEntry.Text != "" {
-								_ = database.UpdateCiscoTopologyStep(currStep.ID, sTitleEntry.Text, sDetailEntry.Text)
-								reloadTopologies()
-							}
-						},
-					)
-				})
-				editStepBtn.Importance = widget.LowImportance
+					editBg := canvas.NewRectangle(constants.ColorBgCardInner)
+					editBg.StrokeColor = constants.ColorAccentYellow
+					editBg.StrokeWidth = 2
+					editBg.CornerRadius = constants.CornerRadiusBrutal
 
-				delStepBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
-					_ = database.DeleteCiscoTopologyStep(currStep.ID)
-					reloadTopologies()
-				})
-				delStepBtn.Importance = widget.LowImportance
+					stepFull := container.NewStack(editBg, container.NewPadded(editBox))
+					stepsContainer.Add(stepFull)
+				} else {
+					// --- NORMAL VIEW MODE ---
+					stepTitle := widget.NewLabel(currStep.Title)
+					stepTitle.TextStyle = fyne.TextStyle{Bold: true}
+					stepTitle.Wrapping = fyne.TextWrapWord
 
-				stepTopRight := container.NewHBox(editStepBtn, delStepBtn)
-				stepTopLeft := container.NewHBox(chk, stepBadge)
-				stepRow := container.NewBorder(nil, nil, stepTopLeft, stepTopRight, stepTitle)
+					editStepBtn := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+						editingStepIDs[currStep.ID] = true
+						reloadTopologies()
+					})
+					editStepBtn.Importance = widget.LowImportance
 
-				if currStep.Detail != "" {
-					detailBg := canvas.NewRectangle(constants.ColorBgCardInner)
+					delStepBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
+						_ = database.DeleteCiscoTopologyStep(currStep.ID)
+						reloadTopologies()
+					})
+					delStepBtn.Importance = widget.LowImportance
+
+					stepTopRight := container.NewHBox(editStepBtn, delStepBtn)
+					stepTopLeft := container.NewHBox(chk, stepBadge)
+					stepRow := container.NewBorder(nil, nil, stepTopLeft, stepTopRight, stepTitle)
+
+					if currStep.Detail != "" {
+						detailBg := canvas.NewRectangle(constants.ColorBgCardInner)
 					detailBg.StrokeColor = constants.ColorBorderSubtle
 					detailBg.StrokeWidth = 1
 					detailBg.CornerRadius = constants.CornerRadiusBrutal
 
-					detailLbl := widget.NewLabel(currStep.Detail)
-					detailLbl.Wrapping = fyne.TextWrapWord
-					detailLbl.TextStyle = fyne.TextStyle{Monospace: true}
+						detailLbl := widget.NewLabel(currStep.Detail)
+						detailLbl.Wrapping = fyne.TextWrapWord
+						detailLbl.TextStyle = fyne.TextStyle{Monospace: true}
 
-					copyDetailBtn := widget.NewButtonWithIcon("Salin CLI", theme.ContentCopyIcon(), func() {
-						p.copyToClip(currStep.Detail)
-					})
-					copyDetailBtn.Importance = widget.LowImportance
+						copyDetailBtn := widget.NewButtonWithIcon("Salin CLI", theme.ContentCopyIcon(), func() {
+							p.copyToClip(currStep.Detail)
+						})
+						copyDetailBtn.Importance = widget.LowImportance
 
-					detailHdr := container.NewBorder(nil, nil,
-						components.BadgeMuted("DETAIL / PERINTAH CLI:"),
-						copyDetailBtn,
-					)
+						detailHdr := container.NewBorder(nil, nil,
+							components.BadgeMuted("DETAIL / PERINTAH CLI:"),
+							copyDetailBtn,
+						)
 
-					detailBox := container.NewStack(detailBg, container.NewPadded(container.NewVBox(detailHdr, detailLbl)))
-					stepFull := container.NewVBox(stepRow, detailBox)
-					stepsContainer.Add(stepFull)
-				} else {
-					stepsContainer.Add(stepRow)
+						detailBox := container.NewStack(detailBg, container.NewPadded(container.NewVBox(detailHdr, detailLbl)))
+						stepFull := container.NewVBox(stepRow, detailBox)
+						stepsContainer.Add(stepFull)
+					} else {
+						stepsContainer.Add(stepRow)
+					}
 				}
 			}
 
@@ -1551,16 +1579,16 @@ func (p *CiscoPage) showAddCustomSnippetDialog(refreshFn func()) {
 
 	tDescEntry := widget.NewMultiLineEntry()
 	tDescEntry.SetPlaceHolder("cth: Skrip konfigurasi untuk menggabungkan port trunk antar switch...")
-	tDescEntry.SetMinRowsVisible(2)
+	tDescEntry.SetMinRowsVisible(3)
 
 	tCmdsEntry := widget.NewMultiLineEntry()
 	tCmdsEntry.SetPlaceHolder("Ketik kode konfigurasi Cisco IOS di sini (tiap baris perintah)...")
 	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	tCmdsEntry.SetMinRowsVisible(5)
+	tCmdsEntry.SetMinRowsVisible(8)
 
 	tVerifEntry := widget.NewMultiLineEntry()
 	tVerifEntry.SetPlaceHolder("cth: show etherchannel summary / show running-config")
-	tVerifEntry.SetMinRowsVisible(2)
+	tVerifEntry.SetMinRowsVisible(3)
 
 	makeLbl := func(txt string) *canvas.Text {
 		t := canvas.NewText(txt, constants.ColorTextPrimary)
@@ -1664,16 +1692,16 @@ func (p *CiscoPage) showEditCustomSnippetDialog(cmd cisco.CiscoCommand, refreshF
 
 	tDescEntry := widget.NewMultiLineEntry()
 	tDescEntry.SetText(cmd.Description)
-	tDescEntry.SetMinRowsVisible(2)
+	tDescEntry.SetMinRowsVisible(3)
 
 	tCmdsEntry := widget.NewMultiLineEntry()
 	tCmdsEntry.SetText(cmd.Commands)
 	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	tCmdsEntry.SetMinRowsVisible(5)
+	tCmdsEntry.SetMinRowsVisible(8)
 
 	tVerifEntry := widget.NewMultiLineEntry()
 	tVerifEntry.SetText(cmd.Verification)
-	tVerifEntry.SetMinRowsVisible(2)
+	tVerifEntry.SetMinRowsVisible(3)
 
 	makeLbl := func(txt string) *canvas.Text {
 		t := canvas.NewText(txt, constants.ColorTextPrimary)

@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/app"
 
 	"github.com/yudz/it-toolbox/database"
+	"github.com/yudz/it-toolbox/core/shortcut"
 	"github.com/yudz/it-toolbox/ui"
 )
 
@@ -15,6 +16,9 @@ import (
 var appIconBytes []byte
 
 func main() {
+	// Auto-create desktop shortcut on first run / extract if missing
+	shortcut.EnsureDesktopShortcut()
+
 	// Initialize local SQLite database
 	if _, err := database.InitDB(); err != nil {
 		log.Printf("Warning: failed to initialize database: %v\n", err)

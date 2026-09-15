@@ -64,8 +64,9 @@ func (n *NavItem) SetActive(active bool) {
 	if active {
 		if constants.IsNeumorphism {
 			if constants.IsDarkTheme {
-				n.bg.FillColor = constants.ColorBgCardInner
-				n.bg.StrokeColor = constants.ColorBorderActive
+				// Glassmorphic Neumorphism Dark: Frosted dark indigo-blue glass pill with specular rim
+				n.bg.FillColor = color.RGBA{R: 0x1A, G: 0x24, B: 0x38, A: 0xEE}
+				n.bg.StrokeColor = color.RGBA{R: 0x3E, G: 0x54, B: 0x7A, A: 0xDD}
 				n.bg.StrokeWidth = constants.CurrentBorderWidth
 				n.leftBar.FillColor = constants.ColorAccentCobalt
 				n.labelTxt.Color = constants.ColorTextPrimary
@@ -112,6 +113,9 @@ func (n *NavItem) MouseIn(_ *desktop.MouseEvent) {
 		if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 			n.bg.FillColor = color.RGBA{R: 0xEE, G: 0xF4, B: 0xFC, A: 0xFF}
 			n.bg.StrokeColor = color.RGBA{R: 0xBF, G: 0xDB, B: 0xFE, A: 0xFF}
+		} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+			n.bg.FillColor = color.RGBA{R: 0x16, G: 0x20, B: 0x32, A: 0xBB}
+			n.bg.StrokeColor = color.RGBA{R: 0x2D, G: 0x3C, B: 0x58, A: 0xAA}
 		} else {
 			n.bg.FillColor = constants.ColorBgHover
 			n.bg.StrokeColor = constants.ColorBorderSubtle
@@ -313,7 +317,7 @@ func (m *MainWindow) ShowThemeMenu(anchor fyne.CanvasObject) {
 
 	rowBrutal := makeThemeRow(constants.ThemeNeoBrutalism, "Neo-Brutalism", "Gaya retro paper & hard shadow", theme.SettingsIcon())
 	rowLight := makeThemeRow(constants.ThemeNeumorphismLight, "Neumorphism Glass", "Soft glass & ambient aurora", theme.ColorPaletteIcon())
-	rowDark := makeThemeRow(constants.ThemeNeumorphismDark, "Neumorph Gelap", "Monokromatik slate & soft shadow", theme.HomeIcon())
+	rowDark := makeThemeRow(constants.ThemeNeumorphismDark, "Neumorphism Glass (Gelap)", "Frosted obsidian glass & ambient midnight", theme.HomeIcon())
 
 	popInner := container.NewVBox(
 		container.NewPadded(headerTxt),
@@ -377,8 +381,8 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		brandFill = constants.ColorAccentCobalt
 		brandTextColor = color.White
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
-		brandFill = color.RGBA{R: 0x1E, G: 0x29, B: 0x3B, A: 0xFF}
-		brandTextColor = color.White
+		brandFill = color.RGBA{R: 0x16, G: 0x1E, B: 0x2E, A: 0xFF}
+		brandTextColor = color.RGBA{R: 0xF8, G: 0xFA, B: 0xFC, A: 0xFF}
 	}
 
 	brandBg := canvas.NewRectangle(brandFill)
@@ -487,7 +491,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	case constants.ThemeNeumorphismLight:
 		themeBtnText = "🫧 Neumorph Glass"
 	case constants.ThemeNeumorphismDark:
-		themeBtnText = "🌙 Neumorph Gelap"
+		themeBtnText = "🌙 Dark Glass Neumorph"
 	default:
 		themeBtnText = "⚡ Neo-Brutalism"
 	}
@@ -505,9 +509,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		pillBorder = color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF}
 		pillTextColor = color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF}
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
-		pillFill = color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xFF}
-		pillBorder = color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xFF}
-		pillTextColor = color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF}
+		pillFill = color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xEE}
+		pillBorder = color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xEE}
+		pillTextColor = color.RGBA{R: 0x6E, G: 0xEE, B: 0xB7, A: 0xFF}
 	}
 
 	statusPillBg := canvas.NewRectangle(pillFill)
@@ -541,6 +545,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		)
 		grad.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
 		bgSidebar = grad
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		grad := canvas.NewVerticalGradient(
+			color.RGBA{R: 0x11, G: 0x16, B: 0x24, A: 0xFF}, // Dark frosted glass top
+			color.RGBA{R: 0x0A, G: 0x0E, B: 0x17, A: 0xFF}, // Deep space midnight bottom
+		)
+		grad.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
+		bgSidebar = grad
 	} else {
 		rect := canvas.NewRectangle(constants.ColorBgSidebar)
 		rect.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
@@ -555,6 +566,12 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		ambientBg := canvas.NewHorizontalGradient(
 			color.RGBA{R: 0xD6, G: 0xE6, B: 0xFD, A: 0xFF}, // Soft Sky Cyan (#D6E6FD)
 			color.RGBA{R: 0xEE, G: 0xE2, B: 0xFD, A: 0xFF}, // Soft Dreamy Lavender (#EEE2FD)
+		)
+		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		ambientBg := canvas.NewHorizontalGradient(
+			color.RGBA{R: 0x0A, G: 0x0E, B: 0x18, A: 0xFF}, // Deep space midnight navy (#0A0E18)
+			color.RGBA{R: 0x14, G: 0x1A, B: 0x2D, A: 0xFF}, // Ambient Midnight Indigo Glass (#141A2D)
 		)
 		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
 	} else {
@@ -580,6 +597,11 @@ func (m *MainWindow) updateNavHighlights(active string) {
 
 	m.StatusLabel.Text = fmt.Sprintf("● %s", active)
 	m.StatusLabel.Refresh()
+}
+
+// ShowPage switches the active page
+func (m *MainWindow) ShowPage(name string) {
+	m.showPage(name)
 }
 
 func (m *MainWindow) showPage(name string) {

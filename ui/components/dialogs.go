@@ -76,17 +76,23 @@ func ShowBrutalistFormDialog(
 
 	actionBar := container.NewBorder(nil, nil, nil, container.NewHBox(btnCancel, btnSubmit))
 
-	dialogBody := container.NewVBox(
+	// Use a scrollable container with comfortable default dimensions for expansive form editing
+	scrollContent := container.NewVScroll(container.NewPadded(formContent))
+	scrollContent.SetMinSize(fyne.NewSize(620, 250))
+
+	dialogBody := container.NewBorder(
 		headerBox,
-		formContent,
-		widget.NewSeparator(),
-		actionBar,
+		container.NewVBox(widget.NewSeparator(), actionBar),
+		nil,
+		nil,
+		scrollContent,
 	)
 
-	// Wrap in signature Neo-Brutalist card with accent
+	// Wrap in signature card with theme-aware accent and shadow
 	card := NewPlainCardWithAccent(dialogBody, accentColor)
 
 	d = dialog.NewCustomWithoutButtons("", card, win)
+	d.Resize(fyne.NewSize(660, 430))
 	d.Show()
 	return d
 }

@@ -2,7 +2,6 @@ package pages
 
 import (
 	"fmt"
-	"image/color"
 	"strconv"
 	"strings"
 
@@ -68,9 +67,15 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	statCapacity := components.NewStatCard("TOTAL HOST & EFISIENSI", "-", constants.ColorAccentYellow)
 	statBroadcast := components.NewStatCard("BROADCAST & WILDCARD", "-", constants.ColorWarning)
 
-	hintLabel := canvas.NewText("-", color.Black)
+	hintLabel := canvas.NewText("-", constants.ColorTextPrimary)
 	hintLabel.TextSize = constants.FontSizeSmall
 	hintLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	hintBg := canvas.NewRectangle(constants.ColorBgCardInner)
+	hintBg.CornerRadius = constants.CurrentBadgeRadius
+	hintBg.StrokeColor = constants.ColorBorderSubtle
+	hintBg.StrokeWidth = constants.CurrentBorderWidth
+	hintCallout := container.NewStack(hintBg, container.NewPadded(hintLabel))
 
 	calcRecommendation := func() {
 		hStr := strings.TrimSpace(hostCountEntry.Text)
@@ -108,7 +113,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		statBroadcast.SetSubtext(fmt.Sprintf("Wildcard: %s", rec.WildcardMask))
 
 		hintLabel.Text = fmt.Sprintf("💡 Saran Alokasi: %s", rec.ClassHint)
-		hintLabel.Color = color.Black
+		hintLabel.Color = constants.ColorTextPrimary
 		hintLabel.Refresh()
 	}
 
@@ -173,7 +178,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		widget.NewSeparator(),
 		calcHeader,
 		statGrid,
-		container.NewPadded(hintLabel),
+		container.NewPadded(hintCallout),
 	)
 
 	recommenderCard := components.NewPlainCard(recommenderContent)
