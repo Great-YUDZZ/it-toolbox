@@ -31,8 +31,8 @@ func BadgeYellow(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x92, G: 0x40, B: 0x0E, A: 0xFF},
-			color.RGBA{R: 0xFE, G: 0xF3, B: 0xC7, A: 0xF5},
-			color.RGBA{R: 0xFC, G: 0xD3, B: 0x4D, A: 0xCC},
+			color.RGBA{R: 0xFE, G: 0xF3, B: 0xC7, A: 0xFF},
+			color.RGBA{R: 0xFC, G: 0xD3, B: 0x4D, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -54,8 +54,8 @@ func BadgeCyan(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x03, G: 0x69, B: 0xA1, A: 0xFF},
-			color.RGBA{R: 0xE0, G: 0xF2, B: 0xFE, A: 0xF5},
-			color.RGBA{R: 0x7D, G: 0xD3, B: 0xFC, A: 0xCC},
+			color.RGBA{R: 0xE0, G: 0xF2, B: 0xFE, A: 0xFF},
+			color.RGBA{R: 0x7D, G: 0xD3, B: 0xFC, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -77,8 +77,8 @@ func BadgeSuccess(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF},
-			color.RGBA{R: 0xD1, G: 0xFA, B: 0xE5, A: 0xF5},
-			color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xCC},
+			color.RGBA{R: 0xD1, G: 0xFA, B: 0xE5, A: 0xFF},
+			color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -100,8 +100,8 @@ func BadgeWarning(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x9A, G: 0x34, B: 0x12, A: 0xFF},
-			color.RGBA{R: 0xFF, G: 0xED, B: 0xD5, A: 0xF5},
-			color.RGBA{R: 0xFD, G: 0xBA, B: 0x74, A: 0xCC},
+			color.RGBA{R: 0xFF, G: 0xED, B: 0xD5, A: 0xFF},
+			color.RGBA{R: 0xFD, G: 0xBA, B: 0x74, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -123,8 +123,8 @@ func BadgeDanger(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x9F, G: 0x12, B: 0x39, A: 0xFF},
-			color.RGBA{R: 0xFF, G: 0xE4, B: 0xE6, A: 0xF5},
-			color.RGBA{R: 0xFD, G: 0xA4, B: 0xAF, A: 0xCC},
+			color.RGBA{R: 0xFF, G: 0xE4, B: 0xE6, A: 0xFF},
+			color.RGBA{R: 0xFD, G: 0xA4, B: 0xAF, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -151,8 +151,8 @@ func BadgeMuted(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x33, G: 0x41, B: 0x55, A: 0xFF},
-			color.RGBA{R: 0xF1, G: 0xF5, B: 0xF9, A: 0xF5},
-			color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xCC},
+			color.RGBA{R: 0xF1, G: 0xF5, B: 0xF9, A: 0xFF},
+			color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,
@@ -174,8 +174,8 @@ func BadgeIndigo(text string) fyne.CanvasObject {
 	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
 		return Badge(text,
 			color.RGBA{R: 0x37, G: 0x30, B: 0xA3, A: 0xFF},
-			color.RGBA{R: 0xEE, G: 0xF2, B: 0xFF, A: 0xF5},
-			color.RGBA{R: 0xA5, G: 0xB4, B: 0xFC, A: 0xCC},
+			color.RGBA{R: 0xEE, G: 0xF2, B: 0xFF, A: 0xFF},
+			color.RGBA{R: 0xA5, G: 0xB4, B: 0xFC, A: 0xFF},
 		)
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		return Badge(text,

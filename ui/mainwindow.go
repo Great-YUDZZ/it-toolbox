@@ -72,9 +72,9 @@ func (n *NavItem) SetActive(active bool) {
 				n.labelTxt.Color = constants.ColorTextPrimary
 				n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
 			} else {
-				// Glassmorphic Neumorphism: Translucent Ice-Blue active glass pill
-				n.bg.FillColor = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xD0}
-				n.bg.StrokeColor = color.RGBA{R: 0x93, G: 0xC5, B: 0xFD, A: 0xA0}
+				// Glassmorphic Neumorphism: Luminous Ice-Blue active glass pill
+				n.bg.FillColor = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
+				n.bg.StrokeColor = color.RGBA{R: 0x93, G: 0xC5, B: 0xFD, A: 0xFF}
 				n.bg.StrokeWidth = constants.CurrentBorderWidth
 				n.leftBar.FillColor = constants.ColorAccentCobalt
 				n.labelTxt.Color = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
@@ -111,8 +111,8 @@ func (n *NavItem) Tapped(_ *fyne.PointEvent) {
 func (n *NavItem) MouseIn(_ *desktop.MouseEvent) {
 	if !n.active {
 		if constants.ActiveTheme == constants.ThemeNeumorphismLight {
-			n.bg.FillColor = color.RGBA{R: 0xEE, G: 0xF3, B: 0xFA, A: 0xDD}
-			n.bg.StrokeColor = color.RGBA{R: 0xE2, G: 0xE8, B: 0xF0, A: 0xAA}
+			n.bg.FillColor = color.RGBA{R: 0xEE, G: 0xF4, B: 0xFC, A: 0xFF}
+			n.bg.StrokeColor = color.RGBA{R: 0xBF, G: 0xDB, B: 0xFE, A: 0xFF}
 		} else {
 			n.bg.FillColor = constants.ColorBgHover
 			n.bg.StrokeColor = constants.ColorBorderSubtle
@@ -331,8 +331,8 @@ func (m *MainWindow) ShowThemeDialog() {
 
 	optNeumorphLight := makeOptionCard(
 		constants.ThemeNeumorphismLight,
-		"🫧 Neumorphism Glass (Mode Terang)",
-		"Perpaduan Soft UI taktil & Glassmorphism elegan. Permukaan frosted glass putih berkilau di atas kanvas es lembut, dual-tone shadow sejuk, dan sudut lengkung 14px.",
+		"✨ Neumorphism Glass (Mode Terang)",
+		"Perpaduan Soft UI taktil & Glassmorphism: Kanvas ambient luminous sky-lavender, kartu frosted glass putih berkilau dengan tepian kristal, dual-tone shadow lembut, & pil kristal pastel.",
 		"SOFT GLASS",
 		components.BadgeCyan,
 	)
@@ -374,12 +374,22 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	// ------------------------------------------------------------------------
 	// 1. Sidebar Header (Branding & Quick Theme Toggle)
 	// ------------------------------------------------------------------------
-	brandBg := canvas.NewRectangle(constants.ColorAccentYellow)
+	var brandFill color.Color = constants.ColorAccentYellow
+	var brandTextColor color.Color = color.Black
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		brandFill = constants.ColorAccentCobalt
+		brandTextColor = color.White
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		brandFill = color.RGBA{R: 0x1E, G: 0x29, B: 0x3B, A: 0xFF}
+		brandTextColor = color.White
+	}
+
+	brandBg := canvas.NewRectangle(brandFill)
 	brandBg.StrokeColor = constants.ColorBorderSubtle
 	brandBg.StrokeWidth = constants.CurrentBorderWidth
 	brandBg.CornerRadius = constants.CurrentCornerRadius
 
-	brandTitle := canvas.NewText("⚡ IT TOOLBOX", color.Black)
+	brandTitle := canvas.NewText("⚡ IT TOOLBOX", brandTextColor)
 	brandTitle.TextSize = constants.FontSizeH2
 	brandTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -488,20 +498,24 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	themeBtn.Importance = widget.LowImportance
 
-	statusPillBg := canvas.NewRectangle(constants.ColorSuccess)
-	statusPillBg.StrokeColor = constants.ColorBorderSubtle
+	var pillFill color.Color = constants.ColorSuccess
+	var pillBorder color.Color = constants.ColorBorderSubtle
+	var pillTextColor color.Color = color.Black
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		pillFill = color.RGBA{R: 0xD1, G: 0xFA, B: 0xE5, A: 0xFF}
+		pillBorder = color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF}
+		pillTextColor = color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF}
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		pillFill = color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xFF}
+		pillBorder = color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xFF}
+		pillTextColor = color.RGBA{R: 0x6E, G: 0xE7, B: 0xB7, A: 0xFF}
+	}
+
+	statusPillBg := canvas.NewRectangle(pillFill)
+	statusPillBg.StrokeColor = pillBorder
 	statusPillBg.StrokeWidth = constants.CurrentBorderWidth
 	statusPillBg.CornerRadius = constants.CurrentBadgeRadius
-
-	if constants.IsNeumorphism {
-		if constants.IsDarkTheme {
-			m.StatusLabel.Color = color.RGBA{R: 0x06, G: 0x4E, B: 0x3B, A: 0xFF}
-		} else {
-			m.StatusLabel.Color = color.RGBA{R: 0x06, G: 0x5F, B: 0x46, A: 0xFF}
-		}
-	} else {
-		m.StatusLabel.Color = color.Black
-	}
+	m.StatusLabel.Color = pillTextColor
 	m.StatusLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 	statusPill := container.NewStack(statusPillBg, container.NewPadded(m.StatusLabel))
 
@@ -520,13 +534,37 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	sidebarContent := container.NewBorder(headerCard, footerBox, nil, nil, container.NewPadded(navContainer))
 
 	// Sidebar background
-	bgSidebar := canvas.NewRectangle(constants.ColorBgSidebar)
-	bgSidebar.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
+	var bgSidebar fyne.CanvasObject
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		grad := canvas.NewVerticalGradient(
+			color.RGBA{R: 0xED, G: 0xF3, B: 0xFB, A: 0xFF},
+			color.RGBA{R: 0xE2, G: 0xEA, B: 0xF5, A: 0xFF},
+		)
+		grad.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
+		bgSidebar = grad
+	} else {
+		rect := canvas.NewRectangle(constants.ColorBgSidebar)
+		rect.SetMinSize(fyne.NewSize(float32(constants.SidebarWidth), 0))
+		bgSidebar = rect
+	}
 	sidebarWrapper := container.NewMax(bgSidebar, sidebarContent)
 	sidebarWithSep := container.NewBorder(nil, nil, nil, widget.NewSeparator(), sidebarWrapper)
 
+	// Content Area with ambient luminous backdrop for Neumorphism Light (Glassmorphic)
+	var contentAreaWrapper fyne.CanvasObject
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		ambientBg := canvas.NewHorizontalGradient(
+			color.RGBA{R: 0xD6, G: 0xE6, B: 0xFD, A: 0xFF}, // Soft Sky Cyan (#D6E6FD)
+			color.RGBA{R: 0xEE, G: 0xE2, B: 0xFD, A: 0xFF}, // Soft Dreamy Lavender (#EEE2FD)
+		)
+		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
+	} else {
+		bgContent := canvas.NewRectangle(constants.ColorBgBase)
+		contentAreaWrapper = container.NewStack(bgContent, container.NewPadded(m.ContentArea))
+	}
+
 	// Main Layout: Sidebar on Left, Content Area in Center
-	mainLayout := container.NewBorder(nil, nil, sidebarWithSep, nil, container.NewPadded(m.ContentArea))
+	mainLayout := container.NewBorder(nil, nil, sidebarWithSep, nil, contentAreaWrapper)
 	return mainLayout
 }
 

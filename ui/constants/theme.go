@@ -21,7 +21,7 @@ var (
 	CurrentBadgeRadius  = CornerRadiusBrutal
 
 	ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Top-left highlight
-	ColorNeumorphDarkShadow  = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x90} // Bottom-right shadow
+	ColorNeumorphDarkShadow  = color.RGBA{R: 0xC2, G: 0xD0, B: 0xE2, A: 0xFF} // Bottom-right shadow
 )
 
 // === GEOMETRY CONSTANTS ===
@@ -29,7 +29,7 @@ const (
 	BorderWidthHeavy     = float32(2.5)  // Bold prominent strokes for Neo-Brutalism
 	BorderWidthMedium    = float32(2.0)  // Buttons, badges, inputs
 	BorderWidthThin      = float32(1.5)  // Separators, sub-elements
-	BorderWidthNeumorph  = float32(1.0)  // Fine crystalline glass border for Neumorph/Glass
+	BorderWidthNeumorph  = float32(1.5)  // Fine crystalline glass border for Neumorph/Glass
 	ShadowOffsetHeavy    = float32(4.0)  // Hard offset drop shadow for cards (+4px, +4px)
 	ShadowOffsetMedium   = float32(3.0)  // Hard offset drop shadow for badges & KPIs
 	CornerRadiusBrutal   = float32(4.0)  // Semi-sharp blocky corner radius
@@ -91,18 +91,18 @@ func SetTheme(themeName string) {
 		CurrentBadgeRadius = CornerRadiusPill
 
 		// Glassmorphic Neumorphism (Soft Glass UI) — Luminous Frosted Glass over Cool Ambient Ice
-		ColorBgBase = color.RGBA{R: 0xEF, G: 0xF3, B: 0xF8, A: 0xFF}      // Ethereal ice/pearl canvas
-		ColorBgSidebar = color.RGBA{R: 0xE6, G: 0xEC, B: 0xF4, A: 0xFF}   // Soft frosted sidebar
+		ColorBgBase = color.RGBA{R: 0xEF, G: 0xF4, B: 0xFA, A: 0xFF}      // Ethereal ice/pearl canvas
+		ColorBgSidebar = color.RGBA{R: 0xE8, G: 0xEE, B: 0xF7, A: 0xFF}   // Soft frosted sidebar
 		ColorBgCard = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}      // Luminous frosted white glass card
 		ColorBgCardInner = color.RGBA{R: 0xF4, G: 0xF7, B: 0xFB, A: 0xFF} // Inset frosted container
-		ColorBgHover = color.RGBA{R: 0xE2, G: 0xEB, B: 0xF5, A: 0xFF}     // Frosted hover tint
+		ColorBgHover = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}     // Frosted hover tint
 
-		ColorBorderSubtle = color.RGBA{R: 0xE2, G: 0xE8, B: 0xF0, A: 0xFF} // Fine crystalline glass hairline
-		ColorBorderActive = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0xFF} // Luminous Blue focus
-		ColorShadow = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x88}       // Soft airy ambient shadow
+		ColorBorderSubtle = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Crystalline specular white rim
+		ColorBorderActive = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF} // Luminous Cyan-Blue focus
+		ColorShadow = color.RGBA{R: 0xC2, G: 0xD0, B: 0xE2, A: 0xFF}       // Soft airy ambient shadow
 
 		ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Top-left brilliant white highlight
-		ColorNeumorphDarkShadow = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x90}  // Bottom-right soft cool depth
+		ColorNeumorphDarkShadow = color.RGBA{R: 0xC2, G: 0xD0, B: 0xE2, A: 0xFF}  // Bottom-right soft cool depth
 
 		ColorAccentYellow = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}     // Warm Amber
 		ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF}     // Royal Cobalt
@@ -110,7 +110,7 @@ func SetTheme(themeName string) {
 		ColorAccentCobaltDim = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
 
 		ColorAccentCyan = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0xFF}    // Deep Sky Cyan
-		ColorAccentCyanDim = color.RGBA{R: 0xBA, G: 0xE6, B: 0xFD, A: 0x80}
+		ColorAccentCyanDim = color.RGBA{R: 0xBA, G: 0xE6, B: 0xFD, A: 0xFF}
 
 		ColorSuccess = color.RGBA{R: 0x05, G: 0x96, B: 0x69, A: 0xFF}          // Emerald Green
 		ColorWarning = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}          // Amber

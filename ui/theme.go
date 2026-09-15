@@ -170,7 +170,7 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 		case theme.ColorNameDisabled:
 			return ColorTextDisabled
 		case theme.ColorNameSeparator:
-			return ColorBorderSubtle
+			return color.RGBA{R: 0xE5, G: 0xEB, B: 0xF2, A: 0xFF}
 		case theme.ColorNameSuccess:
 			return ColorSuccess
 		case theme.ColorNameWarning:
