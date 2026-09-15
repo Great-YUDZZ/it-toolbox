@@ -25,7 +25,7 @@ REM 2. Embed Icon Windows (jika rsrc/go-winres tersedia atau hasilkan syso)
 echo [1/3] Memeriksa Windows Resource Icon...
 if not exist "rsrc_windows_amd64.syso" (
     echo Menghasilkan resource syso untuk icon exe...
-    go run github.com/tc-hib/go-winres@latest simply --icon assets/icon.png
+    go run github.com/tc-hib/go-winres@latest simply --icon assets/icon.png --manifest gui --product-version 1.2.0 --file-version 1.2.0 --product-name "IT Toolbox" --file-description "IT Toolbox - All-in-one Toolkit for IT Students & Developers" --copyright "Copyright © 2026 Great-YUDZZ" --original-filename "it-toolbox.exe"
 )
 
 REM 3. Kompilasi binary Windows tanpa console cmd (-H=windowsgui)
