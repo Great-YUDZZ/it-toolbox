@@ -82,6 +82,18 @@ CREATE TABLE IF NOT EXISTS cisco_topology_steps (
     is_completed BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (topology_id) REFERENCES cisco_topologies(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS cisco_custom_snippets (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    title        TEXT NOT NULL,
+    device       TEXT NOT NULL,
+    category     TEXT NOT NULL,
+    mode         TEXT,
+    description  TEXT,
+    commands     TEXT NOT NULL,
+    verification TEXT,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 `
 
 // InitDB initializes SQLite database connection and runs migration schemas

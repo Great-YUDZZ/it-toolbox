@@ -109,3 +109,43 @@ func TestRenderCommandsWithParameters(t *testing.T) {
 		t.Errorf("expected custom hostname in IPExample, got: %s", customIP)
 	}
 }
+
+func TestLibraryAndExplanations(t *testing.T) {
+	cmds := GetAllCommands()
+	if len(cmds) < 40 {
+		t.Errorf("expected at least 40 commands in comprehensive catalog, got %d", len(cmds))
+	}
+
+	// Test Tag Search
+	resHSRP := SearchCommands(FilterCriteria{Query: "hsrp"})
+	if len(resHSRP) == 0 {
+		t.Errorf("expected HSRP search to return results, got 0")
+	}
+
+	resEther := SearchCommands(FilterCriteria{Query: "etherchannel"})
+	if len(resEther) == 0 {
+		t.Errorf("expected EtherChannel search to return results, got 0")
+	}
+
+	resRommon := SearchCommands(FilterCriteria{Query: "0x2142"})
+	if len(resRommon) == 0 {
+		t.Errorf("expected Rommon search to return results, got 0")
+	}
+
+	// Verify explanations exist on advanced commands
+	var foundExplanation bool
+	for _, c := range cmds {
+		if len(c.Explanation) > 0 {
+			foundExplanation = true
+			for _, exp := range c.Explanation {
+				if exp.Command == "" || exp.Explanation == "" {
+					t.Errorf("command %s has empty explanation fields", c.ID)
+				}
+			}
+		}
+	}
+	if !foundExplanation {
+		t.Errorf("expected at least one command with explanations")
+	}
+}
+

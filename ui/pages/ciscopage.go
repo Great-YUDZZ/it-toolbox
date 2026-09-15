@@ -51,6 +51,7 @@ func (p *CiscoPage) Build() fyne.CanvasObject {
 	)
 
 	tabs := container.NewAppTabs(
+		container.NewTabItemWithIcon(constants.TabCiscoLibrary, theme.FolderOpenIcon(), p.buildLibraryView()),
 		container.NewTabItemWithIcon(constants.TabCiscoAll, theme.ListIcon(), p.buildCategoryView(cisco.CategoryAll)),
 		container.NewTabItemWithIcon(constants.TabCiscoSwitch, theme.FolderIcon(), p.buildCategoryView(cisco.CategoryVLAN)),
 		container.NewTabItemWithIcon(constants.TabCiscoRouting, theme.NavigateNextIcon(), p.buildCategoryView(cisco.CategoryRouting)),
@@ -959,3 +960,809 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 
 	return container.NewVScroll(container.NewPadded(mainContent))
 }
+
+// ============================================================================
+// PERPUSTAKAAN KODE & KONFIGURASI CISCO (CISCO CONFIG LIBRARY)
+// ============================================================================
+
+func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
+	cardsContainer := container.NewVBox()
+
+	libQuery := ""
+	libDevice := cisco.DeviceAll
+	libCategory := cisco.CategoryAll
+	libSource := "Semua Sumber"
+
+	statsLabel := widget.NewLabel("Memuat perpustakaan...")
+	statsLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	var currentFilteredList []cisco.CiscoCommand
+
+	var renderLibrary func()
+	renderLibrary = func() {
+		cardsContainer.Objects = nil
+
+		builtin := cisco.GetAllCommands()
+		customList, _ := database.GetAllCiscoCustomSnippets()
+
+		var allItems []cisco.CiscoCommand
+		if libSource != "Kustom Saya" {
+			allItems = append(allItems, builtin...)
+		}
+		if libSource != "Koleksi Bawaan" {
+			for _, cs := range customList {
+				allItems = append(allItems, cisco.CiscoCommand{
+					ID:          fmt.Sprintf("custom-%d", cs.ID),
+					Title:       cs.Title,
+					Device:      cisco.DeviceType(cs.Device),
+					Category:    cisco.Category(cs.Category),
+					Mode:        cisco.CLIMode(cs.Mode),
+					Description: cs.Description,
+					Commands:    cs.Commands,
+					Verification: cs.Verification,
+					IsCustom:    true,
+					CustomID:    cs.ID,
+				})
+			}
+		}
+
+		// Update Stats
+		tot := len(builtin) + len(customList)
+		statsLabel.SetText(fmt.Sprintf("📚 %d Total Resep Konfigurasi (%d Koleksi Bawaan, %d Resep Kustom)", tot, len(builtin), len(customList)))
+
+		// Filter
+		q := strings.ToLower(strings.TrimSpace(libQuery))
+		var filtered []cisco.CiscoCommand
+
+		for _, item := range allItems {
+			// Device Filter
+			if libDevice != cisco.DeviceAll && item.Device != libDevice && item.Device != cisco.DeviceAll {
+				continue
+			}
+
+			// Category Filter
+			if libCategory != cisco.CategoryAll && item.Category != libCategory {
+				continue
+			}
+
+			// Text Search
+			if q != "" {
+				mTitle := strings.Contains(strings.ToLower(item.Title), q)
+				mDesc := strings.Contains(strings.ToLower(item.Description), q)
+				mCmds := strings.Contains(strings.ToLower(item.Commands), q)
+				mVerif := strings.Contains(strings.ToLower(item.Verification), q)
+				mTips := strings.Contains(strings.ToLower(item.TroubleshootingTips), q)
+				mCat := strings.Contains(strings.ToLower(string(item.Category)), q)
+				mDev := strings.Contains(strings.ToLower(string(item.Device)), q)
+
+				mTags := false
+				for _, tg := range item.Tags {
+					if strings.Contains(strings.ToLower(tg), q) {
+						mTags = true
+						break
+					}
+				}
+
+				mExpl := false
+				for _, ex := range item.Explanation {
+					if strings.Contains(strings.ToLower(ex.Command), q) || strings.Contains(strings.ToLower(ex.Explanation), q) {
+						mExpl = true
+						break
+					}
+				}
+
+				if !mTitle && !mDesc && !mCmds && !mVerif && !mTips && !mCat && !mDev && !mTags && !mExpl {
+					continue
+				}
+			}
+
+			filtered = append(filtered, item)
+		}
+
+		currentFilteredList = filtered
+
+		if len(filtered) == 0 {
+			emptyTitle := canvas.NewText("Tidak Ada Kode Konfigurasi yang Ditemukan", constants.ColorTextPrimary)
+			emptyTitle.TextSize = constants.FontSizeH2
+			emptyTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+			emptySub := canvas.NewText("Coba ubah kata kunci pencarian atau sesuaikan filter perangkat dan kategori.", constants.ColorTextMuted)
+			emptySub.TextSize = constants.FontSizeBody
+
+			resetBtn := widget.NewButtonWithIcon("Reset Semua Filter", theme.ViewRefreshIcon(), func() {
+				libQuery = ""
+				libDevice = cisco.DeviceAll
+				libCategory = cisco.CategoryAll
+				libSource = "Semua Sumber"
+				renderLibrary()
+			})
+			resetBtn.Importance = widget.MediumImportance
+
+			emptyBox := container.NewVBox(
+				container.NewHBox(emptyTitle, components.BadgeWarning("HASIL KOSONG")),
+				emptySub,
+				widget.NewSeparator(),
+				container.NewHBox(resetBtn),
+			)
+			cardsContainer.Add(components.NewPlainCardWithAccent(emptyBox, constants.ColorWarning))
+			cardsContainer.Refresh()
+			return
+		}
+
+		for _, item := range filtered {
+			cmd := item
+			card := p.buildLibraryCard(cmd, renderLibrary)
+			cardsContainer.Add(card)
+		}
+		cardsContainer.Refresh()
+	}
+
+	// 1. Search Bar
+	searchBar := components.NewSearchBar(constants.SearchCiscoLibraryPlaceholder, func(q string) {
+		libQuery = q
+		renderLibrary()
+	})
+
+	// 2. Device Selector
+	deviceOptions := []string{
+		string(cisco.DeviceAll),
+		string(cisco.DeviceRouter),
+		string(cisco.DeviceSwitchL2),
+		string(cisco.DeviceSwitchL3),
+		string(cisco.DevicePC),
+	}
+	devSelect := widget.NewSelect(deviceOptions, func(val string) {
+		libDevice = cisco.DeviceType(val)
+		renderLibrary()
+	})
+	devSelect.SetSelected(string(cisco.DeviceAll))
+
+	devSpacer := canvas.NewRectangle(color.Transparent)
+	devSpacer.SetMinSize(fyne.NewSize(140, 36))
+	devSelectBox := container.NewStack(devSpacer, devSelect)
+
+	// 3. Category Selector
+	categoryOptions := []string{
+		string(cisco.CategoryAll),
+		string(cisco.CategoryBasic),
+		string(cisco.CategoryInterface),
+		string(cisco.CategoryVLAN),
+		string(cisco.CategorySpanningTree),
+		string(cisco.CategoryRouting),
+		string(cisco.CategoryServices),
+		string(cisco.CategorySecurity),
+		string(cisco.CategoryNAT),
+		string(cisco.CategoryRedundancy),
+		string(cisco.CategoryWAN),
+		string(cisco.CategoryHardening),
+		string(cisco.CategoryRecovery),
+		string(cisco.CategoryShowDiag),
+	}
+	catSelect := widget.NewSelect(categoryOptions, func(val string) {
+		libCategory = cisco.Category(val)
+		renderLibrary()
+	})
+	catSelect.SetSelected(string(cisco.CategoryAll))
+
+	catSpacer := canvas.NewRectangle(color.Transparent)
+	catSpacer.SetMinSize(fyne.NewSize(200, 36))
+	catSelectBox := container.NewStack(catSpacer, catSelect)
+
+	// 4. Source Selector
+	sourceOptions := []string{
+		"Semua Sumber",
+		"Koleksi Bawaan",
+		"Kustom Saya",
+	}
+	sourceSelect := widget.NewSelect(sourceOptions, func(val string) {
+		libSource = val
+		renderLibrary()
+	})
+	sourceSelect.SetSelected("Semua Sumber")
+
+	sourceSpacer := canvas.NewRectangle(color.Transparent)
+	sourceSpacer.SetMinSize(fyne.NewSize(130, 36))
+	sourceSelectBox := container.NewStack(sourceSpacer, sourceSelect)
+
+	// Action Buttons
+	addCustomBtn := widget.NewButtonWithIcon("+ Tambah Resep Kustom", theme.ContentAddIcon(), func() {
+		p.showAddCustomSnippetDialog(renderLibrary)
+	})
+	addCustomBtn.Importance = widget.HighImportance
+
+	exportBtn := widget.NewButtonWithIcon("Ekspor Koleksi (.txt)", theme.DocumentSaveIcon(), func() {
+		p.exportLibraryCheatSheet(currentFilteredList)
+	})
+	exportBtn.Importance = widget.LowImportance
+
+	filterRow1 := container.NewHBox(
+		container.NewCenter(components.BadgeCyan("PERANGKAT:")),
+		devSelectBox,
+		widget.NewSeparator(),
+		container.NewCenter(components.BadgeYellow("KATEGORI:")),
+		catSelectBox,
+	)
+
+	filterRow2 := container.NewBorder(nil, nil,
+		container.NewHBox(
+			container.NewCenter(components.BadgeIndigo("SUMBER:")),
+			sourceSelectBox,
+		),
+		container.NewHBox(exportBtn, addCustomBtn),
+	)
+
+	// Hero Header Card for Perpustakaan
+	libHeroTitle := canvas.NewText("PERPUSTAKAAN KODE KONFIGURASI CISCO", constants.ColorTextPrimary)
+	libHeroTitle.TextSize = constants.FontSizeH2
+	libHeroTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	libHeroBadge := components.BadgeCyan("CCNA & PACKET TRACER")
+	libHeroDesc := canvas.NewText("Ensiklopedia lengkap seluruh kode perintah konfigurasi Cisco IOS Router, Switch L2/L3, dan PC. Dilengkapi penjelasan baris demi baris, verifikasi, dan penyimpanan resep kustom.", constants.ColorTextMuted)
+	libHeroDesc.TextSize = constants.FontSizeBody
+
+	libHeaderBox := container.NewVBox(
+		container.NewHBox(libHeroTitle, libHeroBadge),
+		libHeroDesc,
+		widget.NewSeparator(),
+		statsLabel,
+	)
+	libHeaderCard := components.NewPlainCardWithAccent(libHeaderBox, constants.ColorTechIndigo)
+
+	headerBox := container.NewVBox(
+		libHeaderCard,
+		searchBar.Container,
+		filterRow1,
+		filterRow2,
+		widget.NewSeparator(),
+	)
+
+	renderLibrary()
+
+	scrollList := container.NewVScroll(container.NewPadded(cardsContainer))
+	return container.NewBorder(headerBox, nil, nil, nil, scrollList)
+}
+
+func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) fyne.CanvasObject {
+	var accentColor color.Color
+	var devBadge fyne.CanvasObject
+
+	switch cmd.Device {
+	case cisco.DeviceRouter:
+		accentColor = constants.ColorAccentCyan
+		devBadge = components.BadgeCyan("ROUTER")
+	case cisco.DeviceSwitchL2:
+		accentColor = constants.ColorAccentYellow
+		devBadge = components.BadgeYellow("SWITCH L2")
+	case cisco.DeviceSwitchL3:
+		accentColor = constants.ColorWarning
+		devBadge = components.BadgeWarning("SWITCH L3")
+	case cisco.DevicePC:
+		accentColor = constants.ColorSuccess
+		devBadge = components.BadgeSuccess("PC / END DEVICE")
+	default:
+		accentColor = constants.ColorTechIndigo
+		devBadge = components.BadgeIndigo("ROUTER & SWITCH")
+	}
+
+	modeBadge := components.BadgeIndigo(string(cmd.Mode))
+	catBadge := components.BadgeMuted(string(cmd.Category))
+
+	var srcBadge fyne.CanvasObject
+	if cmd.IsCustom {
+		srcBadge = components.BadgeWarning("KUSTOM SAYA")
+	} else {
+		srcBadge = components.BadgeSuccess("BAWAAN")
+	}
+
+	// Title
+	titleLabel := widget.NewLabel(cmd.Title)
+	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
+	titleLabel.Wrapping = fyne.TextWrapWord
+
+	// Copy Script Button
+	copyBtn := widget.NewButtonWithIcon("Salin Kode CLI", theme.ContentCopyIcon(), func() {
+		p.copyToClip(cmd.Commands)
+	})
+	copyBtn.Importance = widget.HighImportance
+
+	headerBadges := container.NewHBox(devBadge, modeBadge, catBadge, srcBadge)
+	headerLeft := container.NewVBox(headerBadges, titleLabel)
+
+	var topRightButtons []fyne.CanvasObject
+	if cmd.IsCustom {
+		editBtn := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {
+			p.showEditCustomSnippetDialog(cmd, refreshFn)
+		})
+		editBtn.Importance = widget.LowImportance
+
+		delBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
+			dialog.ShowConfirm("Hapus Resep Kustom", fmt.Sprintf("Hapus resep konfigurasi %q dari perpustakaan Anda?", cmd.Title), func(ok bool) {
+				if ok {
+					_ = database.DeleteCiscoCustomSnippet(cmd.CustomID)
+					refreshFn()
+				}
+			}, p.window)
+		})
+		delBtn.Importance = widget.LowImportance
+		topRightButtons = append(topRightButtons, editBtn, delBtn)
+	}
+	topRightButtons = append(topRightButtons, copyBtn)
+	headerRight := container.NewHBox(topRightButtons...)
+
+	topHeader := container.NewBorder(nil, nil, headerLeft, headerRight)
+
+	// Description
+	descLabel := widget.NewLabel(cmd.Description)
+	descLabel.Wrapping = fyne.TextWrapWord
+
+	// Code Entry Box
+	codeEntry := widget.NewMultiLineEntry()
+	codeEntry.SetText(cmd.Commands)
+	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	codeEntry.Wrapping = fyne.TextWrapWord
+
+	lines := strings.Split(cmd.Commands, "\n")
+	lineCount := len(lines)
+	if lineCount < 4 {
+		lineCount = 4
+	}
+	minHeight := float32(lineCount*21 + 28)
+	if minHeight < 110 {
+		minHeight = 110
+	}
+	if minHeight > 320 {
+		minHeight = 320
+	}
+
+	codeSpacer := canvas.NewRectangle(color.Transparent)
+	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
+	codeStack := container.NewStack(codeSpacer, codeEntry)
+
+	codeLabel := canvas.NewText("⌨ SKRIP KONFIGURASI LENGKAP:", constants.ColorTextPrimary)
+	codeLabel.TextSize = constants.FontSizeLabel
+	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	lineInfo := canvas.NewText(fmt.Sprintf("%d baris kode", len(lines)), constants.ColorTextMuted)
+	lineInfo.TextSize = constants.FontSizeLabel
+	lineInfo.TextStyle = fyne.TextStyle{Monospace: true}
+
+	codeHeader := container.NewBorder(nil, nil, codeLabel, lineInfo)
+
+	terminalBg := canvas.NewRectangle(constants.ColorBgCardInner)
+	terminalBg.StrokeColor = constants.ColorBorderSubtle
+	terminalBg.StrokeWidth = constants.BorderWidthMedium
+	terminalBg.CornerRadius = constants.CornerRadiusBrutal
+
+	terminalContent := container.NewVBox(
+		container.NewPadded(codeHeader),
+		widget.NewSeparator(),
+		container.NewPadded(codeStack),
+	)
+	terminalPanel := container.NewStack(terminalBg, terminalContent)
+
+	// Card Actions Row
+	explainBtn := widget.NewButtonWithIcon("📖 Detail & Penjelasan Tiap Baris", theme.InfoIcon(), func() {
+		p.showLineExplanationsDialog(cmd)
+	})
+	explainBtn.Importance = widget.MediumImportance
+
+	// Verification Box (Expandable)
+	var verifPanel *fyne.Container
+	if cmd.Verification != "" || cmd.TroubleshootingTips != "" {
+		var verifItems []fyne.CanvasObject
+		if cmd.Verification != "" {
+			vBadge := components.BadgeSuccess("CARA VERIFIKASI / TES")
+			vLbl := widget.NewLabel(cmd.Verification)
+			vLbl.Wrapping = fyne.TextWrapWord
+			verifItems = append(verifItems, container.NewHBox(vBadge), vLbl)
+		}
+		if cmd.TroubleshootingTips != "" {
+			tBadge := components.BadgeDanger("TIPS & JEBAKAN UMUM")
+			tLbl := widget.NewLabel(cmd.TroubleshootingTips)
+			tLbl.Wrapping = fyne.TextWrapWord
+			verifItems = append(verifItems, widget.NewSeparator(), container.NewHBox(tBadge), tLbl)
+		}
+
+		vBg := canvas.NewRectangle(constants.ColorBgCardInner)
+		vBg.StrokeColor = constants.ColorSuccess
+		vBg.StrokeWidth = 1.5
+		vBg.CornerRadius = constants.CornerRadiusBrutal
+
+		verifPanel = container.NewStack(vBg, container.NewPadded(container.NewVBox(verifItems...)))
+		verifPanel.Hide()
+	}
+
+	var toggleVerifBtn *widget.Button
+	if verifPanel != nil {
+		toggleVerifBtn = widget.NewButtonWithIcon("🔍 Cara Verifikasi & Tips", theme.ConfirmIcon(), func() {
+			if verifPanel.Visible() {
+				verifPanel.Hide()
+				toggleVerifBtn.SetText("🔍 Cara Verifikasi & Tips")
+				toggleVerifBtn.SetIcon(theme.ConfirmIcon())
+			} else {
+				verifPanel.Show()
+				toggleVerifBtn.SetText("▲ Sembunyikan Verifikasi")
+				toggleVerifBtn.SetIcon(theme.MenuDropUpIcon())
+			}
+		})
+		toggleVerifBtn.Importance = widget.LowImportance
+	}
+
+	var actionRow fyne.CanvasObject
+	if toggleVerifBtn != nil {
+		actionRow = container.NewHBox(explainBtn, toggleVerifBtn)
+	} else {
+		actionRow = container.NewHBox(explainBtn)
+	}
+
+	cardItems := []fyne.CanvasObject{
+		topHeader,
+		widget.NewSeparator(),
+		descLabel,
+		terminalPanel,
+		actionRow,
+	}
+	if verifPanel != nil {
+		cardItems = append(cardItems, verifPanel)
+	}
+
+	fullCardContent := container.NewVBox(cardItems...)
+	return components.NewPlainCardWithAccent(fullCardContent, accentColor)
+}
+
+func (p *CiscoPage) showLineExplanationsDialog(cmd cisco.CiscoCommand) {
+	var listItems []fyne.CanvasObject
+
+	headerTitle := canvas.NewText("Penjelasan Teknis Perintah CLI", constants.ColorTextPrimary)
+	headerTitle.TextSize = constants.FontSizeH2
+	headerTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	subTitle := canvas.NewText(cmd.Title, constants.ColorTextMuted)
+	subTitle.TextSize = constants.FontSizeSmall
+	subTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	listItems = append(listItems, headerTitle, subTitle, widget.NewSeparator())
+
+	if len(cmd.Explanation) > 0 {
+		for i, ex := range cmd.Explanation {
+			lineNumBadge := components.BadgeIndigo(fmt.Sprintf("Baris %d", i+1))
+
+			cmdText := canvas.NewText(ex.Command, constants.ColorTextPrimary)
+			cmdText.TextSize = constants.FontSizeBody
+			cmdText.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+
+			topRow := container.NewHBox(lineNumBadge, cmdText)
+
+			explLabel := widget.NewLabel(ex.Explanation)
+			explLabel.Wrapping = fyne.TextWrapWord
+
+			explBg := canvas.NewRectangle(constants.ColorBgCardInner)
+			explBg.StrokeColor = constants.ColorBorderSubtle
+			explBg.StrokeWidth = 1
+			explBg.CornerRadius = constants.CornerRadiusBrutal
+
+			boxContent := container.NewVBox(topRow, explLabel)
+			box := container.NewStack(explBg, container.NewPadded(boxContent))
+			listItems = append(listItems, box)
+		}
+	} else {
+		// Fallback: breakdown lines of cmd.Commands
+		rawLines := strings.Split(cmd.Commands, "\n")
+		validIndex := 1
+		for _, rawLine := range rawLines {
+			line := strings.TrimSpace(rawLine)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			numBadge := components.BadgeIndigo(fmt.Sprintf("Baris %d", validIndex))
+			validIndex++
+
+			cmdTxt := canvas.NewText(line, constants.ColorTextPrimary)
+			cmdTxt.TextSize = constants.FontSizeBody
+			cmdTxt.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+
+			desc := "Perintah konfigurasi aktif untuk dieksekusi pada mode prompt Cisco IOS terkait."
+			if strings.HasPrefix(line, "enable") {
+				desc = "Beralih dari User EXEC mode (>) ke Privileged EXEC mode (#) untuk akses konfigurasi tingkat lanjut."
+			} else if strings.HasPrefix(line, "configure terminal") || line == "conf t" {
+				desc = "Masuk ke mode Global Configuration (config)# untuk mengubah setelan sistem perangkat."
+			} else if strings.HasPrefix(line, "exit") {
+				desc = "Keluar dari sub-mode saat ini ke mode satu tingkat di atasnya."
+			} else if strings.HasPrefix(line, "no shutdown") {
+				desc = "Menghidupkan port antarmuka fisik (mengubah status dari administratively down menjadi UP)."
+			} else if strings.HasPrefix(line, "write memory") || strings.HasPrefix(line, "copy running-config") {
+				desc = "Menyimpan konfigurasi aktif di RAM ke NVRAM agar tidak hilang saat perangkat mati atau reboot."
+			}
+
+			lbl := widget.NewLabel(desc)
+			lbl.Wrapping = fyne.TextWrapWord
+
+			bg := canvas.NewRectangle(constants.ColorBgCardInner)
+			bg.StrokeColor = constants.ColorBorderSubtle
+			bg.StrokeWidth = 1
+			bg.CornerRadius = constants.CornerRadiusBrutal
+
+			itemBox := container.NewStack(bg, container.NewPadded(container.NewVBox(container.NewHBox(numBadge, cmdTxt), lbl)))
+			listItems = append(listItems, itemBox)
+		}
+	}
+
+	scrollContent := container.NewVScroll(container.NewVBox(listItems...))
+	scrollContent.SetMinSize(fyne.NewSize(580, 400))
+
+	var d dialog.Dialog
+	closeBtn := widget.NewButtonWithIcon("Tutup", theme.CancelIcon(), func() {
+		if d != nil {
+			d.Hide()
+		}
+	})
+	closeBtn.Importance = widget.HighImportance
+
+	dialogContent := container.NewBorder(nil, container.NewCenter(closeBtn), nil, nil, scrollContent)
+	d = dialog.NewCustom("BEDAH KODE CISCO", "Tutup", dialogContent, p.window)
+	d.Resize(fyne.NewSize(620, 480))
+	d.Show()
+}
+
+func (p *CiscoPage) showAddCustomSnippetDialog(refreshFn func()) {
+	tTitleEntry := widget.NewEntry()
+	tTitleEntry.SetPlaceHolder("cth: Setup EtherChannel LACP Switch Core")
+
+	deviceOptions := []string{
+		string(cisco.DeviceRouter),
+		string(cisco.DeviceSwitchL2),
+		string(cisco.DeviceSwitchL3),
+		string(cisco.DevicePC),
+	}
+	devSelect := widget.NewSelect(deviceOptions, nil)
+	devSelect.SetSelected(string(cisco.DeviceRouter))
+
+	categoryOptions := []string{
+		string(cisco.CategoryBasic),
+		string(cisco.CategoryInterface),
+		string(cisco.CategoryVLAN),
+		string(cisco.CategorySpanningTree),
+		string(cisco.CategoryRouting),
+		string(cisco.CategoryServices),
+		string(cisco.CategorySecurity),
+		string(cisco.CategoryNAT),
+		string(cisco.CategoryRedundancy),
+		string(cisco.CategoryWAN),
+		string(cisco.CategoryHardening),
+		string(cisco.CategoryRecovery),
+		string(cisco.CategoryShowDiag),
+	}
+	catSelect := widget.NewSelect(categoryOptions, nil)
+	catSelect.SetSelected(string(cisco.CategoryBasic))
+
+	modeOptions := []string{
+		string(cisco.ModeGlobalConfig),
+		string(cisco.ModePrivExec),
+		string(cisco.ModeInterface),
+		string(cisco.ModeVLAN),
+		string(cisco.ModeLine),
+		string(cisco.ModeRouterConfig),
+		string(cisco.ModeDHCPConfig),
+		string(cisco.ModeUserExec),
+		string(cisco.ModePCTerminal),
+	}
+	modeSelect := widget.NewSelect(modeOptions, nil)
+	modeSelect.SetSelected(string(cisco.ModeGlobalConfig))
+
+	tDescEntry := widget.NewMultiLineEntry()
+	tDescEntry.SetPlaceHolder("cth: Skrip konfigurasi untuk menggabungkan port trunk antar switch...")
+	tDescEntry.SetMinRowsVisible(2)
+
+	tCmdsEntry := widget.NewMultiLineEntry()
+	tCmdsEntry.SetPlaceHolder("Ketik kode konfigurasi Cisco IOS di sini (tiap baris perintah)...")
+	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	tCmdsEntry.SetMinRowsVisible(5)
+
+	tVerifEntry := widget.NewMultiLineEntry()
+	tVerifEntry.SetPlaceHolder("cth: show etherchannel summary / show running-config")
+	tVerifEntry.SetMinRowsVisible(2)
+
+	makeLbl := func(txt string) *canvas.Text {
+		t := canvas.NewText(txt, constants.ColorTextPrimary)
+		t.TextSize = constants.FontSizeLabel
+		t.TextStyle = fyne.TextStyle{Bold: true}
+		return t
+	}
+
+	formContent := container.NewVBox(
+		makeLbl("NAMA / JUDUL RESEP KONFIGURASI"),
+		tTitleEntry,
+		container.NewGridWithColumns(3,
+			container.NewVBox(makeLbl("PERANGKAT"), devSelect),
+			container.NewVBox(makeLbl("KATEGORI"), catSelect),
+			container.NewVBox(makeLbl("MODE PROMPT CLI"), modeSelect),
+		),
+		makeLbl("DESKRIPSI / TUJUAN"),
+		tDescEntry,
+		makeLbl("SKRIP PERINTAH CLI (MONOSPACE)"),
+		tCmdsEntry,
+		makeLbl("CARA VERIFIKASI / CATATAN"),
+		tVerifEntry,
+	)
+
+	components.ShowBrutalistFormDialog(
+		p.window,
+		"TAMBAH KODE",
+		constants.ColorAccentCyan,
+		"Tambah Resep Cisco Baru",
+		"Simpan kode konfigurasi kustom Anda ke perpustakaan lokal",
+		formContent,
+		"Simpan ke Perpustakaan",
+		func() {
+			if strings.TrimSpace(tTitleEntry.Text) == "" || strings.TrimSpace(tCmdsEntry.Text) == "" {
+				dialog.ShowError(fmt.Errorf("Judul dan Skrip Perintah tidak boleh kosong"), p.window)
+				return
+			}
+			_, err := database.CreateCiscoCustomSnippet(database.CiscoCustomSnippet{
+				Title:        tTitleEntry.Text,
+				Device:       devSelect.Selected,
+				Category:     catSelect.Selected,
+				Mode:         modeSelect.Selected,
+				Description:  tDescEntry.Text,
+				Commands:     tCmdsEntry.Text,
+				Verification: tVerifEntry.Text,
+			})
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("Gagal menyimpan resep: %w", err), p.window)
+				return
+			}
+			dialog.ShowInformation("Tersimpan", "Resep konfigurasi berhasil ditambahkan ke perpustakaan!", p.window)
+			refreshFn()
+		},
+	)
+}
+
+func (p *CiscoPage) showEditCustomSnippetDialog(cmd cisco.CiscoCommand, refreshFn func()) {
+	tTitleEntry := widget.NewEntry()
+	tTitleEntry.SetText(cmd.Title)
+
+	deviceOptions := []string{
+		string(cisco.DeviceRouter),
+		string(cisco.DeviceSwitchL2),
+		string(cisco.DeviceSwitchL3),
+		string(cisco.DevicePC),
+	}
+	devSelect := widget.NewSelect(deviceOptions, nil)
+	devSelect.SetSelected(string(cmd.Device))
+
+	categoryOptions := []string{
+		string(cisco.CategoryBasic),
+		string(cisco.CategoryInterface),
+		string(cisco.CategoryVLAN),
+		string(cisco.CategorySpanningTree),
+		string(cisco.CategoryRouting),
+		string(cisco.CategoryServices),
+		string(cisco.CategorySecurity),
+		string(cisco.CategoryNAT),
+		string(cisco.CategoryRedundancy),
+		string(cisco.CategoryWAN),
+		string(cisco.CategoryHardening),
+		string(cisco.CategoryRecovery),
+		string(cisco.CategoryShowDiag),
+	}
+	catSelect := widget.NewSelect(categoryOptions, nil)
+	catSelect.SetSelected(string(cmd.Category))
+
+	modeOptions := []string{
+		string(cisco.ModeGlobalConfig),
+		string(cisco.ModePrivExec),
+		string(cisco.ModeInterface),
+		string(cisco.ModeVLAN),
+		string(cisco.ModeLine),
+		string(cisco.ModeRouterConfig),
+		string(cisco.ModeDHCPConfig),
+		string(cisco.ModeUserExec),
+		string(cisco.ModePCTerminal),
+	}
+	modeSelect := widget.NewSelect(modeOptions, nil)
+	modeSelect.SetSelected(string(cmd.Mode))
+
+	tDescEntry := widget.NewMultiLineEntry()
+	tDescEntry.SetText(cmd.Description)
+	tDescEntry.SetMinRowsVisible(2)
+
+	tCmdsEntry := widget.NewMultiLineEntry()
+	tCmdsEntry.SetText(cmd.Commands)
+	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	tCmdsEntry.SetMinRowsVisible(5)
+
+	tVerifEntry := widget.NewMultiLineEntry()
+	tVerifEntry.SetText(cmd.Verification)
+	tVerifEntry.SetMinRowsVisible(2)
+
+	makeLbl := func(txt string) *canvas.Text {
+		t := canvas.NewText(txt, constants.ColorTextPrimary)
+		t.TextSize = constants.FontSizeLabel
+		t.TextStyle = fyne.TextStyle{Bold: true}
+		return t
+	}
+
+	formContent := container.NewVBox(
+		makeLbl("NAMA / JUDUL RESEP KONFIGURASI"),
+		tTitleEntry,
+		container.NewGridWithColumns(3,
+			container.NewVBox(makeLbl("PERANGKAT"), devSelect),
+			container.NewVBox(makeLbl("KATEGORI"), catSelect),
+			container.NewVBox(makeLbl("MODE PROMPT CLI"), modeSelect),
+		),
+		makeLbl("DESKRIPSI / TUJUAN"),
+		tDescEntry,
+		makeLbl("SKRIP PERINTAH CLI (MONOSPACE)"),
+		tCmdsEntry,
+		makeLbl("CARA VERIFIKASI / CATATAN"),
+		tVerifEntry,
+	)
+
+	components.ShowBrutalistFormDialog(
+		p.window,
+		"EDIT RESEP",
+		constants.ColorAccentYellow,
+		"Edit Resep Kustom",
+		"Perbarui rincian resep konfigurasi perpustakaan Anda",
+		formContent,
+		"Simpan Perubahan",
+		func() {
+			if strings.TrimSpace(tTitleEntry.Text) == "" || strings.TrimSpace(tCmdsEntry.Text) == "" {
+				dialog.ShowError(fmt.Errorf("Judul dan Skrip Perintah tidak boleh kosong"), p.window)
+				return
+			}
+			err := database.UpdateCiscoCustomSnippet(database.CiscoCustomSnippet{
+				ID:           cmd.CustomID,
+				Title:        tTitleEntry.Text,
+				Device:       devSelect.Selected,
+				Category:     catSelect.Selected,
+				Mode:         modeSelect.Selected,
+				Description:  tDescEntry.Text,
+				Commands:     tCmdsEntry.Text,
+				Verification: tVerifEntry.Text,
+			})
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("Gagal memperbarui resep: %w", err), p.window)
+				return
+			}
+			dialog.ShowInformation("Tersimpan", "Perubahan berhasil disimpan!", p.window)
+			refreshFn()
+		},
+	)
+}
+
+func (p *CiscoPage) exportLibraryCheatSheet(items []cisco.CiscoCommand) {
+	if len(items) == 0 {
+		dialog.ShowInformation("Ekspor", "Tidak ada resep yang sesuai untuk diekspor.", p.window)
+		return
+	}
+
+	var sb strings.Builder
+	sb.WriteString("================================================================================\n")
+	sb.WriteString("IT TOOLBOX - PERPUSTAKAAN KODE KONFIGURASI CISCO PACKET TRACER\n")
+	sb.WriteString(fmt.Sprintf("Jumlah Resep: %d Konfigurasi\n", len(items)))
+	sb.WriteString("================================================================================\n\n")
+
+	for i, it := range items {
+		sb.WriteString(fmt.Sprintf("[%d] %s\n", i+1, it.Title))
+		sb.WriteString(fmt.Sprintf("Perangkat : %s\n", it.Device))
+		sb.WriteString(fmt.Sprintf("Kategori  : %s\n", it.Category))
+		sb.WriteString(fmt.Sprintf("Mode CLI  : %s\n", it.Mode))
+		if it.Description != "" {
+			sb.WriteString(fmt.Sprintf("Deskripsi : %s\n", it.Description))
+		}
+		sb.WriteString("\n--- SKRIP KONFIGURASI CLI ---\n")
+		sb.WriteString(it.Commands)
+		sb.WriteString("\n")
+		if it.Verification != "" {
+			sb.WriteString("\n--- CARA VERIFIKASI ---\n")
+			sb.WriteString(it.Verification)
+			sb.WriteString("\n")
+		}
+		sb.WriteString("\n--------------------------------------------------------------------------------\n\n")
+	}
+
+	p.copyToClip(sb.String())
+	dialog.ShowInformation("Ekspor Berhasil", fmt.Sprintf("%d resep konfigurasi Cisco berhasil diekspor dan disalin ke clipboard!\nAnda dapat langsung mem-paste ke berkas teks atau Notepad.", len(items)), p.window)
+}
+

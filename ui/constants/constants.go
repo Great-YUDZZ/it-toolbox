@@ -25,11 +25,12 @@ const (
 	TabFormatter   = "Format & Encode"
 
 	// Cisco Packet Tracer Tabs
-	TabCiscoAll        = "Katalog Perintah"
-	TabCiscoSwitch     = "Switching & VLAN"
-	TabCiscoRouting    = "Routing & WAN"
-	TabCiscoServices   = "Layanan & Security"
-	TabCiscoVerify     = "Panduan Verifikasi"
+	TabCiscoLibrary       = "Perpustakaan Konfigurasi"
+	TabCiscoAll           = "Katalog Perintah"
+	TabCiscoSwitch        = "Switching & VLAN"
+	TabCiscoRouting       = "Routing & WAN"
+	TabCiscoServices      = "Layanan & Security"
+	TabCiscoVerify        = "Panduan Verifikasi"
 	TabCiscoTopologyNotes = "Catatan Topologi"
 
 	// File Converter Tabs
@@ -83,7 +84,8 @@ const (
 	SearchCommandPlaceholder = "Cari command (misal: docker, git, ls)..."
 	SearchPortPlaceholder    = "Cari port atau protokol (misal: 80, SSH, HTTPS)..."
 	SearchHTTPPlaceholder    = "Cari status code (misal: 404, Unauthorized)..."
-	SearchCiscoPlaceholder   = "Cari perintah Cisco (misal: vlan, ospf, dhcp, nat, roas, ping)..."
+	SearchCiscoPlaceholder        = "Cari perintah Cisco (misal: vlan, ospf, dhcp, nat, roas, ping)..."
+	SearchCiscoLibraryPlaceholder = "Cari di perpustakaan (misal: vlan, ospf, hsrp, etherchannel, lacp, ssh, rommon)..."
 
 	// Subnet Recommender
 	SubnetRecommenderTitle   = "Rekomendasi Subnet Sesuai Kebutuhan Host"
