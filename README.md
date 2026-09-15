@@ -29,10 +29,10 @@ Tersedia dua metode instalasi mudah untuk Linux:
 
 ##### Langkah 1: Unduh Paket `.deb`
 Klik link download langsung di bawah ini:
-👉 **[Download it-toolbox_1.3.0_amd64.deb (v1.3.0)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.0/it-toolbox_1.3.0_amd64.deb)**
+👉 **[Download it-toolbox_1.3.1_amd64.deb (v1.3.1)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/it-toolbox_1.3.1_amd64.deb)**
 
 ##### Langkah 2: Install dengan 1 Klik (Klik-Klik Aja)
-1. Buka File Manager Anda dan cari file `it-toolbox_1.3.0_amd64.deb`.
+1. Buka File Manager Anda dan cari file `it-toolbox_1.3.1_amd64.deb`.
 2. **Double-click** file `.deb` tersebut.
 3. Jendela **App Center / Software Center / GDebi** akan terbuka secara otomatis.
 4. Klik tombol **Install** (masukkan password komputer Anda jika diminta).
@@ -43,7 +43,7 @@ Klik link download langsung di bawah ini:
 
 > **Tips Terminal (Opsional):** Jika Anda lebih suka terminal, cukup ketik:
 > ```bash
-> sudo apt install ./it-toolbox_1.3.0_amd64.deb
+> sudo apt install ./it-toolbox_1.3.1_amd64.deb
 > ```
 
 ---
@@ -51,17 +51,18 @@ Klik link download langsung di bawah ini:
 ### 🪟 2. Untuk Pengguna Windows (Windows 10 / 11 64-bit)
 
 #### Langkah 1: Unduh File Windows
-Klik salah satu link download langsung di bawah ini:
-- 👉 **[Download it-toolbox.exe (Aplikasi Langsung Siap Pakai)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.0/it-toolbox.exe)**
-- 👉 **[Download IT-Toolbox-Windows-Portable-x64.zip (Paket Zip)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.0/IT-Toolbox-Windows-Portable-x64.zip)**
+Klik link download di bawah ini:
+- 👉 **[Download it-toolbox.exe (Aplikasi Langsung Siap Pakai)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/it-toolbox.exe)** *(Disarankan)*
+- 👉 **[Download IT-Toolbox-Windows-Portable-x64.zip (Paket Zip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/IT-Toolbox-Windows-Portable-x64.zip)**
 
-#### Langkah 2: Cara Menggunakan & Membuat Shortcut Desktop
-1. Simpan file `it-toolbox.exe` di folder yang Anda inginkan (misal di `C:\Program Files\IT Toolbox\` atau folder favorit Anda).
-2. **Untuk membuat Shortcut di Desktop Windows (Langsung Muncul):**
-   - **Klik kanan** pada file `it-toolbox.exe`
-   - Pilih **Kirim ke / Send to** ➔ **Desktop (buat shortcut / create shortcut)**
-   - Shortcut resmi **IT Toolbox** langsung muncul di layar Desktop Anda!
-3. **Double-click shortcut tersebut**: Aplikasi akan langsung terbuka secara instan dengan tema gelap modern tanpa memunculkan jendela hitam CMD (*clean GUI mode*).
+#### Langkah 2: Cara Menggunakan & Otomatisasi Shortcut Desktop
+1. Pindahkan file `it-toolbox.exe` ke folder permanen pilihan Anda (contoh: `D:\Tools\IT-Toolbox\` atau `C:\Program Files\IT Toolbox\`).
+2. **Double-click file `it-toolbox.exe` 1 kali untuk menjalankannya:**
+   - ⚡ **Shortcut Otomatis Dibuat:** Begitu aplikasi dibuka, aplikasi secara cerdas akan **langsung membuat shortcut resmi `IT Toolbox` di Desktop Windows Anda** (mendukung Desktop lokal maupun OneDrive Desktop).
+   - Icon resmi aplikasi dan target direktori kerja akan otomatis dikonfigurasi tanpa perlu setting manual!
+3. **Jika Menggunakan Paket Zip (`IT-Toolbox-Windows-Portable-x64.zip`):**
+   - Ekstrak file zip ke folder mana saja.
+   - Di dalam folder hasil ekstrak, tersedia file `create-shortcut.bat`. Cukup **double-click `create-shortcut.bat`**, maka shortcut Desktop dan Start Menu akan langsung dibuat dalam 1 detik!
 
 ---
 
@@ -137,7 +138,7 @@ go run .
 ```bash
 bash build/linux/package-deb.sh 1.3.0
 ```
-*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.3.0_amd64.deb`.*
+*Hasil `.deb` akan disimpan di folder `dist/it-toolbox_1.3.1_amd64.deb`.*
 
 ### 3. Membangun Installer Windows (.exe)
 Di komputer Windows (menggunakan Command Prompt atau PowerShell):
