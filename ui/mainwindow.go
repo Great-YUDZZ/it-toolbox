@@ -64,12 +64,22 @@ func (n *NavItem) SetActive(active bool) {
 	n.bg.CornerRadius = constants.CurrentCornerRadius
 	if active {
 		if constants.IsNeumorphism {
-			n.bg.FillColor = constants.ColorBgCardInner
-			n.bg.StrokeColor = constants.ColorBorderActive
-			n.bg.StrokeWidth = constants.CurrentBorderWidth
-			n.leftBar.FillColor = constants.ColorAccentCobalt
-			n.labelTxt.Color = constants.ColorTextPrimary
-			n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
+			if constants.IsDarkTheme {
+				n.bg.FillColor = constants.ColorBgCardInner
+				n.bg.StrokeColor = constants.ColorBorderActive
+				n.bg.StrokeWidth = constants.CurrentBorderWidth
+				n.leftBar.FillColor = constants.ColorAccentCobalt
+				n.labelTxt.Color = constants.ColorTextPrimary
+				n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
+			} else {
+				// Glassmorphic Neumorphism: Translucent Ice-Blue active glass pill
+				n.bg.FillColor = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xD0}
+				n.bg.StrokeColor = color.RGBA{R: 0x93, G: 0xC5, B: 0xFD, A: 0xA0}
+				n.bg.StrokeWidth = constants.CurrentBorderWidth
+				n.leftBar.FillColor = constants.ColorAccentCobalt
+				n.labelTxt.Color = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
+				n.labelTxt.TextStyle = fyne.TextStyle{Bold: true}
+			}
 		} else {
 			// Neo-Brutalism (Signature)
 			n.bg.FillColor = constants.ColorAccentYellow
@@ -100,8 +110,13 @@ func (n *NavItem) Tapped(_ *fyne.PointEvent) {
 
 func (n *NavItem) MouseIn(_ *desktop.MouseEvent) {
 	if !n.active {
-		n.bg.FillColor = constants.ColorBgHover
-		n.bg.StrokeColor = constants.ColorBorderSubtle
+		if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+			n.bg.FillColor = color.RGBA{R: 0xEE, G: 0xF3, B: 0xFA, A: 0xDD}
+			n.bg.StrokeColor = color.RGBA{R: 0xE2, G: 0xE8, B: 0xF0, A: 0xAA}
+		} else {
+			n.bg.FillColor = constants.ColorBgHover
+			n.bg.StrokeColor = constants.ColorBorderSubtle
+		}
 		n.bg.StrokeWidth = constants.CurrentBorderWidth
 		n.bg.CornerRadius = constants.CurrentCornerRadius
 		n.bg.Refresh()
@@ -316,15 +331,15 @@ func (m *MainWindow) ShowThemeDialog() {
 
 	optNeumorphLight := makeOptionCard(
 		constants.ThemeNeumorphismLight,
-		"🫧 Neumorphism — Mode Terang",
-		"Soft UI monokromatik abu-abu lembut dengan bayangan ganda (dual-tone shadow: highlight putih + bayangan halus) dan sudut melengkung 14px.",
-		"SOFT UI",
+		"🫧 Neumorphism Glass (Mode Terang)",
+		"Perpaduan Soft UI taktil & Glassmorphism elegan. Permukaan frosted glass putih berkilau di atas kanvas es lembut, dual-tone shadow sejuk, dan sudut lengkung 14px.",
+		"SOFT GLASS",
 		components.BadgeCyan,
 	)
 
 	optNeumorphDark := makeOptionCard(
 		constants.ThemeNeumorphismDark,
-		"🌙 Neumorphism — Mode Gelap",
+		"🌙 Neumorphism (Mode Gelap)",
 		"Dark Soft UI monokromatik slate gelap, sudut lembut, bayangan ganda emboss, & teks lembut yang nyaman di mata.",
 		"DARK SOFT",
 		components.BadgeIndigo,
@@ -462,9 +477,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	var themeBtnText string
 	switch m.CurrentTheme {
 	case constants.ThemeNeumorphismLight:
-		themeBtnText = "🫧 Neumorph (Terang)"
+		themeBtnText = "🫧 Neumorph Glass"
 	case constants.ThemeNeumorphismDark:
-		themeBtnText = "🌙 Neumorph (Gelap)"
+		themeBtnText = "🌙 Neumorph Gelap"
 	default:
 		themeBtnText = "⚡ Neo-Brutalism"
 	}

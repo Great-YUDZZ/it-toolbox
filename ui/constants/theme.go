@@ -3,7 +3,7 @@ package constants
 import "image/color"
 
 // ============================================================================
-// DESIGN TOKEN SYSTEM — Neo-Brutalism & Neumorphism (Soft UI) Multi-Theme
+// DESIGN TOKEN SYSTEM — Neo-Brutalism & Neumorphism / Glassmorphism Multi-Theme
 // ============================================================================
 
 const (
@@ -20,8 +20,8 @@ var (
 	CurrentBorderWidth  = BorderWidthHeavy
 	CurrentBadgeRadius  = CornerRadiusBrutal
 
-	ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xE6} // Top-left highlight
-	ColorNeumorphDarkShadow  = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99} // Bottom-right shadow
+	ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Top-left highlight
+	ColorNeumorphDarkShadow  = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x90} // Bottom-right shadow
 )
 
 // === GEOMETRY CONSTANTS ===
@@ -29,7 +29,7 @@ const (
 	BorderWidthHeavy     = float32(2.5)  // Bold prominent strokes for Neo-Brutalism
 	BorderWidthMedium    = float32(2.0)  // Buttons, badges, inputs
 	BorderWidthThin      = float32(1.5)  // Separators, sub-elements
-	BorderWidthNeumorph  = float32(0.8)  // Subtle soft outline for Neumorphism
+	BorderWidthNeumorph  = float32(1.0)  // Fine crystalline glass border for Neumorph/Glass
 	ShadowOffsetHeavy    = float32(4.0)  // Hard offset drop shadow for cards (+4px, +4px)
 	ShadowOffsetMedium   = float32(3.0)  // Hard offset drop shadow for badges & KPIs
 	CornerRadiusBrutal   = float32(4.0)  // Semi-sharp blocky corner radius
@@ -79,7 +79,7 @@ var (
 	ColorCardBgBlue   = color.RGBA{R: 0x38, G: 0x82, B: 0xF6, A: 0xFF} // Vivid Electric Royal Blue (#3882F6)
 )
 
-// SetTheme switches all design tokens between Neo-Brutalism and Neumorphism (Light / Dark)
+// SetTheme switches all design tokens between Neo-Brutalism and Neumorphism/Glassmorphism (Light / Dark)
 func SetTheme(themeName string) {
 	ActiveTheme = themeName
 	switch themeName {
@@ -90,22 +90,22 @@ func SetTheme(themeName string) {
 		CurrentBorderWidth = BorderWidthNeumorph
 		CurrentBadgeRadius = CornerRadiusPill
 
-		// Neumorphism Light Monochromatic palette (#E0E5EC)
-		ColorBgBase = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}      // Soft extruded canvas
-		ColorBgSidebar = color.RGBA{R: 0xD6, G: 0xDC, B: 0xE5, A: 0xFF}   // Inset sidebar
-		ColorBgCard = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}      // Monochromatic card face
-		ColorBgCardInner = color.RGBA{R: 0xD9, G: 0xDF, B: 0xE8, A: 0xFF} // Inset container
-		ColorBgHover = color.RGBA{R: 0xD0, G: 0xD7, B: 0xE2, A: 0xFF}     // Hover tint
+		// Glassmorphic Neumorphism (Soft Glass UI) — Luminous Frosted Glass over Cool Ambient Ice
+		ColorBgBase = color.RGBA{R: 0xEF, G: 0xF3, B: 0xF8, A: 0xFF}      // Ethereal ice/pearl canvas
+		ColorBgSidebar = color.RGBA{R: 0xE6, G: 0xEC, B: 0xF4, A: 0xFF}   // Soft frosted sidebar
+		ColorBgCard = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}      // Luminous frosted white glass card
+		ColorBgCardInner = color.RGBA{R: 0xF4, G: 0xF7, B: 0xFB, A: 0xFF} // Inset frosted container
+		ColorBgHover = color.RGBA{R: 0xE2, G: 0xEB, B: 0xF5, A: 0xFF}     // Frosted hover tint
 
-		ColorBorderSubtle = color.RGBA{R: 0xCB, G: 0xD5, B: 0xE1, A: 0xFF} // Subtle 0.8px hairline border
-		ColorBorderActive = color.RGBA{R: 0x63, G: 0x66, B: 0xF1, A: 0xFF} // Soft Indigo focus
-		ColorShadow = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99}
+		ColorBorderSubtle = color.RGBA{R: 0xE2, G: 0xE8, B: 0xF0, A: 0xFF} // Fine crystalline glass hairline
+		ColorBorderActive = color.RGBA{R: 0x3B, G: 0x82, B: 0xF6, A: 0xFF} // Luminous Blue focus
+		ColorShadow = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x88}       // Soft airy ambient shadow
 
-		ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xE6} // Top-left crisp white highlight
-		ColorNeumorphDarkShadow = color.RGBA{R: 0xA3, G: 0xB1, B: 0xC6, A: 0x99}  // Bottom-right soft depth
+		ColorNeumorphLightShadow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF} // Top-left brilliant white highlight
+		ColorNeumorphDarkShadow = color.RGBA{R: 0xBD, G: 0xCE, B: 0xE2, A: 0x90}  // Bottom-right soft cool depth
 
 		ColorAccentYellow = color.RGBA{R: 0xD9, G: 0x77, B: 0x06, A: 0xFF}     // Warm Amber
-		ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF}     // Soft Blue
+		ColorAccentCobalt = color.RGBA{R: 0x25, G: 0x63, B: 0xEB, A: 0xFF}     // Royal Cobalt
 		ColorAccentCobaltDark = color.RGBA{R: 0x1D, G: 0x4E, B: 0xD8, A: 0xFF}
 		ColorAccentCobaltDim = color.RGBA{R: 0xDB, G: 0xEA, B: 0xFE, A: 0xFF}
 
@@ -119,18 +119,19 @@ func SetTheme(themeName string) {
 		ColorTechIndigo = color.RGBA{R: 0x7C, G: 0x3A, B: 0xED, A: 0xFF}       // Soft Violet
 		ColorInfo = color.RGBA{R: 0x02, G: 0x84, B: 0xC7, A: 0xFF}             // Sky Blue
 
-		ColorTextPrimary = color.RGBA{R: 0x2D, G: 0x37, B: 0x48, A: 0xFF}   // Slate Charcoal
-		ColorTextSecondary = color.RGBA{R: 0x4A, G: 0x55, B: 0x68, A: 0xFF} // Slate
-		ColorTextMuted = color.RGBA{R: 0x71, G: 0x80, B: 0x96, A: 0xFF}     // Muted Slate
-		ColorTextDisabled = color.RGBA{R: 0xA0, G: 0xAE, B: 0xC0, A: 0xFF}
+		// High-contrast sharp Slate typography for crystal clear legibility on frosted glass
+		ColorTextPrimary = color.RGBA{R: 0x0F, G: 0x17, B: 0x2A, A: 0xFF}   // Slate 900
+		ColorTextSecondary = color.RGBA{R: 0x33, G: 0x41, B: 0x55, A: 0xFF} // Slate 700
+		ColorTextMuted = color.RGBA{R: 0x64, G: 0x74, B: 0x8B, A: 0xFF}     // Slate 500
+		ColorTextDisabled = color.RGBA{R: 0x94, G: 0xA3, B: 0xB8, A: 0xFF}  // Slate 400
 
-		ColorCardBgCyan = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgGreen = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgYellow = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgOrange = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgPurple = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgCoral = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
-		ColorCardBgBlue = color.RGBA{R: 0xE0, G: 0xE5, B: 0xEC, A: 0xFF}
+		ColorCardBgCyan = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgGreen = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgYellow = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgOrange = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgPurple = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgCoral = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
+		ColorCardBgBlue = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}
 
 	case ThemeNeumorphismDark:
 		IsNeumorphism = true
@@ -146,7 +147,7 @@ func SetTheme(themeName string) {
 		ColorBgCardInner = color.RGBA{R: 0x18, G: 0x1A, B: 0x20, A: 0xFF} // Inner container
 		ColorBgHover = color.RGBA{R: 0x28, G: 0x2C, B: 0x35, A: 0xFF}     // Hover tint
 
-		ColorBorderSubtle = color.RGBA{R: 0x2D, G: 0x32, B: 0x3C, A: 0xFF} // 0.8px subtle border
+		ColorBorderSubtle = color.RGBA{R: 0x2D, G: 0x32, B: 0x3C, A: 0xFF} // 1.0px subtle border
 		ColorBorderActive = color.RGBA{R: 0x81, G: 0x8C, B: 0xF8, A: 0xFF} // Soft Indigo focus
 		ColorShadow = color.RGBA{R: 0x10, G: 0x12, B: 0x16, A: 0xFF}
 
@@ -164,7 +165,7 @@ func SetTheme(themeName string) {
 		ColorSuccess = color.RGBA{R: 0x34, G: 0xD3, B: 0x99, A: 0xFF}          // Mint Emerald
 		ColorWarning = color.RGBA{R: 0xFB, G: 0xBF, B: 0x24, A: 0xFF}          // Soft Amber
 		ColorWarningTangerine = color.RGBA{R: 0xFB, G: 0x92, B: 0x3C, A: 0xFF} // Orange
-		ColorDanger = color.RGBA{R: 0xF8, G: 0x71, B: 0x71, A: 0xFF}           // Soft Coral
+		ColorDanger = color.RGBA{R: 0xF8, G: 0x71, B: 0xF8, A: 0xFF}           // Soft Coral
 		ColorTechIndigo = color.RGBA{R: 0xA7, G: 0x8B, B: 0xFA, A: 0xFF}       // Soft Violet
 		ColorInfo = color.RGBA{R: 0x38, G: 0xBD, B: 0xF8, A: 0xFF}             // Sky Blue
 

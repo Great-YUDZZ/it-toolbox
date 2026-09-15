@@ -77,12 +77,13 @@ func ResolveCardBg(c color.Color) color.Color {
 
 // StatCard displays a bold metric stat box for KPIs adapted to the active theme
 type StatCard struct {
-	Widget     fyne.CanvasObject
-	valueText  *canvas.Text
-	labelTxt   *canvas.Text
-	sublabel   *canvas.Text
-	accentBar  *canvas.Rectangle
-	borderRect *canvas.Rectangle
+	Widget      fyne.CanvasObject
+	valueText   *canvas.Text
+	labelTxt    *canvas.Text
+	sublabel    *canvas.Text
+	accentBar   *canvas.Rectangle
+	borderRect  *canvas.Rectangle
+	accentColor color.Color
 }
 
 // NewStatCard builds a themed KPI widget
@@ -103,7 +104,7 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	bg.StrokeWidth = constants.CurrentBorderWidth
 	bg.CornerRadius = constants.CurrentCornerRadius
 
-	// Accent Bar (Solid black for Brutalism, accent colored for Neumorphism)
+	// Accent Bar (Solid black for Brutalism, accent colored for Neumorphism/Glass)
 	var barColor color.Color
 	if constants.IsNeumorphism {
 		barColor = accentColor
@@ -114,17 +115,25 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	accentBar.CornerRadius = constants.CurrentCornerRadius / 2
 	accentBar.SetMinSize(fyne.NewSize(4, 38))
 
-	textColor := constants.ColorTextPrimary
+	var labelColor color.Color = constants.ColorTextSecondary
+	if !constants.IsNeumorphism {
+		labelColor = color.Black
+	}
 
-	lbl := canvas.NewText(strings.ToUpper(label), textColor)
+	var valueColor color.Color = constants.ColorTextPrimary
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		valueColor = accentColor
+	}
+
+	lbl := canvas.NewText(strings.ToUpper(label), labelColor)
 	lbl.TextSize = constants.FontSizeLabel // 9.5px
 	lbl.TextStyle = fyne.TextStyle{Bold: true}
 
-	val := canvas.NewText(initialValue, textColor)
+	val := canvas.NewText(initialValue, valueColor)
 	val.TextSize = 18
 	val.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 
-	sub := canvas.NewText("", textColor)
+	sub := canvas.NewText("", constants.ColorTextMuted)
 	sub.TextSize = constants.FontSizeSmall // 11px
 	sub.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -142,18 +151,23 @@ func NewStatCard(label, initialValue string, accentColor color.Color) *StatCard 
 	boundedWidget := container.New(&boundedLayout{minWidth: 140}, shadowedWidget)
 
 	return &StatCard{
-		Widget:     boundedWidget,
-		valueText:  val,
-		labelTxt:   lbl,
-		sublabel:   sub,
-		accentBar:  accentBar,
-		borderRect: bg,
+		Widget:      boundedWidget,
+		valueText:   val,
+		labelTxt:    lbl,
+		sublabel:    sub,
+		accentBar:   accentBar,
+		borderRect:  bg,
+		accentColor: accentColor,
 	}
 }
 
 func (s *StatCard) SetValue(val string) {
 	s.valueText.Text = val
-	s.valueText.Color = constants.ColorTextPrimary
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight && s.accentColor != nil {
+		s.valueText.Color = s.accentColor
+	} else {
+		s.valueText.Color = constants.ColorTextPrimary
+	}
 
 	// Dynamically adjust font size so long values fit comfortably
 	if len(val) > 24 {
@@ -168,20 +182,31 @@ func (s *StatCard) SetValue(val string) {
 
 func (s *StatCard) SetSubtext(txt string) {
 	s.sublabel.Text = txt
-	s.sublabel.Color = constants.ColorTextPrimary
+	s.sublabel.Color = constants.ColorTextMuted
 	s.sublabel.Refresh()
 }
 
 func (s *StatCard) SetLabel(lbl string) {
 	s.labelTxt.Text = strings.ToUpper(lbl)
-	s.labelTxt.Color = constants.ColorTextPrimary
+	if constants.IsNeumorphism {
+		s.labelTxt.Color = constants.ColorTextSecondary
+	} else {
+		s.labelTxt.Color = color.Black
+	}
 	s.labelTxt.Refresh()
 }
 
 func (s *StatCard) SetColor(c color.Color) {
-	s.valueText.Color = constants.ColorTextPrimary
-	s.labelTxt.Color = constants.ColorTextPrimary
-	s.sublabel.Color = constants.ColorTextPrimary
+	s.accentColor = c
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		s.valueText.Color = c
+		s.labelTxt.Color = constants.ColorTextSecondary
+		s.sublabel.Color = constants.ColorTextMuted
+	} else {
+		s.valueText.Color = constants.ColorTextPrimary
+		s.labelTxt.Color = constants.ColorTextPrimary
+		s.sublabel.Color = constants.ColorTextPrimary
+	}
 	s.valueText.Refresh()
 	s.labelTxt.Refresh()
 	s.sublabel.Refresh()
