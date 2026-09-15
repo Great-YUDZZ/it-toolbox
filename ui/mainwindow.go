@@ -7,7 +7,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -273,101 +272,99 @@ func (m *MainWindow) ToggleTheme() {
 	m.CycleTheme()
 }
 
-// ShowThemeDialog opens a modal for choosing between Neo-Brutalism and Neumorphism Light/Dark
-func (m *MainWindow) ShowThemeDialog() {
-	var d dialog.Dialog
+// ShowThemeMenu opens a non-modal popup menu anchored directly at the trigger button
+func (m *MainWindow) ShowThemeMenu(anchor fyne.CanvasObject) {
+	headerTxt := canvas.NewText("🎨 GANTI TEMA TAMPILAN", constants.ColorTextPrimary)
+	headerTxt.TextSize = constants.FontSizeSmall
+	headerTxt.TextStyle = fyne.TextStyle{Bold: true}
 
-	title := canvas.NewText("🎨 PILIH TEMA TAMPILAN", constants.ColorTextPrimary)
-	title.TextSize = constants.FontSizeH2
-	title.TextStyle = fyne.TextStyle{Bold: true}
+	var pop *widget.PopUp
 
-	sub := canvas.NewText("Pilih gaya visual antarmuka IT-Toolbox yang Anda inginkan:", constants.ColorTextMuted)
-	sub.TextSize = constants.FontSizeSmall
+	makeThemeRow := func(k, name, desc string, icon fyne.Resource) fyne.CanvasObject {
+		titleTxt := canvas.NewText(name, constants.ColorTextPrimary)
+		titleTxt.TextSize = constants.FontSizeBody
+		titleTxt.TextStyle = fyne.TextStyle{Bold: true}
 
-	makeOptionCard := func(themeKey, name, desc, badgeLabel string, badgeFn func(string) fyne.CanvasObject) fyne.CanvasObject {
-		optTitle := canvas.NewText(name, constants.ColorTextPrimary)
-		optTitle.TextSize = constants.FontSizeH3
-		optTitle.TextStyle = fyne.TextStyle{Bold: true}
+		descTxt := canvas.NewText(desc, constants.ColorTextMuted)
+		descTxt.TextSize = constants.FontSizeLabel
 
-		badge := badgeFn(badgeLabel)
-		headerRow := container.NewHBox(optTitle, badge)
-		if m.CurrentTheme == themeKey {
-			activeBadge := components.BadgeSuccess("AKTIF ✓")
-			headerRow.Add(activeBadge)
-		}
+		textCol := container.NewVBox(titleTxt, descTxt)
 
-		descText := widget.NewLabel(desc)
-		descText.Wrapping = fyne.TextWrapWord
-
-		selectBtn := widget.NewButton("Pilih Tema Ini", func() {
-			if d != nil {
-				d.Hide()
-			}
-			m.SwitchTheme(themeKey)
-		})
-		if m.CurrentTheme == themeKey {
-			selectBtn.Importance = widget.HighImportance
-			selectBtn.SetText("Tema Sedang Aktif ✓")
-			selectBtn.Disable()
+		var rightBadge fyne.CanvasObject
+		if m.CurrentTheme == k {
+			rightBadge = components.BadgeSuccess("AKTIF ✓")
 		} else {
-			selectBtn.Importance = widget.MediumImportance
+			rightBadge = canvas.NewText("", constants.ColorTextMuted)
 		}
 
-		cardInner := container.NewVBox(
-			headerRow,
-			descText,
-			selectBtn,
-		)
-		return components.NewPlainCard(cardInner)
+		iconWidget := widget.NewIcon(icon)
+		rowContent := container.NewBorder(nil, nil, iconWidget, rightBadge, container.NewPadded(textCol))
+
+		btn := widget.NewButton("", func() {
+			if pop != nil {
+				pop.Hide()
+			}
+			m.SwitchTheme(k)
+		})
+		btn.Importance = widget.LowImportance
+
+		return container.NewStack(btn, rowContent)
 	}
 
-	optBrutal := makeOptionCard(
-		constants.ThemeNeoBrutalism,
-		"⚡ Neo-Brutalism (Signature)",
-		"Gaya retro retro paper, border tegas 2.5px solid hitam, font pitch-black, & bayangan tajam (zero blur).",
-		"SIGNATURE",
-		components.BadgeYellow,
+	rowBrutal := makeThemeRow(constants.ThemeNeoBrutalism, "Neo-Brutalism", "Gaya retro paper & hard shadow", theme.SettingsIcon())
+	rowLight := makeThemeRow(constants.ThemeNeumorphismLight, "Neumorphism Glass", "Soft glass & ambient aurora", theme.ColorPaletteIcon())
+	rowDark := makeThemeRow(constants.ThemeNeumorphismDark, "Neumorph Gelap", "Monokromatik slate & soft shadow", theme.HomeIcon())
+
+	popInner := container.NewVBox(
+		container.NewPadded(headerTxt),
+		widget.NewSeparator(),
+		rowBrutal,
+		rowLight,
+		rowDark,
 	)
 
-	optNeumorphLight := makeOptionCard(
-		constants.ThemeNeumorphismLight,
-		"✨ Neumorphism Glass (Mode Terang)",
-		"Perpaduan Soft UI taktil & Glassmorphism: Kanvas ambient luminous sky-lavender, kartu frosted glass putih berkilau dengan tepian kristal, dual-tone shadow lembut, & pil kristal pastel.",
-		"SOFT GLASS",
-		components.BadgeCyan,
-	)
+	card := components.NewPlainCard(popInner)
+	pop = widget.NewPopUp(card, m.Window.Canvas())
 
-	optNeumorphDark := makeOptionCard(
-		constants.ThemeNeumorphismDark,
-		"🌙 Neumorphism (Mode Gelap)",
-		"Dark Soft UI monokromatik slate gelap, sudut lembut, bayangan ganda emboss, & teks lembut yang nyaman di mata.",
-		"DARK SOFT",
-		components.BadgeIndigo,
-	)
+	cardMin := card.MinSize()
+	var popX, popY float32
 
-	closeBtn := widget.NewButton("Tutup", func() {
-		if d != nil {
-			d.Hide()
+	if anchor != nil {
+		pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(anchor)
+		aSize := anchor.Size()
+
+		popX = pos.X
+
+		// If anchor is in lower half of screen, pop UP above the button
+		if pos.Y > cardMin.Height+20 {
+			popY = pos.Y - cardMin.Height - 8
+		} else {
+			// Pop DOWN below the button
+			popY = pos.Y + aSize.Height + 8
 		}
-	})
-	closeBtn.Importance = widget.LowImportance
 
-	content := container.NewVBox(
-		title,
-		sub,
-		widget.NewSeparator(),
-		optBrutal,
-		optNeumorphLight,
-		optNeumorphDark,
-		widget.NewSeparator(),
-		container.NewCenter(closeBtn),
-	)
+		// Ensure popup stays within canvas boundaries
+		canvasW := m.Window.Canvas().Size().Width
+		if popX+cardMin.Width > canvasW-8 {
+			popX = canvasW - cardMin.Width - 8
+		}
+		if popX < 8 {
+			popX = 8
+		}
+		if popY < 8 {
+			popY = 8
+		}
+	} else {
+		popX = 16
+		popY = m.Window.Canvas().Size().Height - cardMin.Height - 60
+	}
 
-	scrollContent := container.NewVScroll(container.NewPadded(content))
-	scrollContent.SetMinSize(fyne.NewSize(480, 420))
+	pop.ShowAtPosition(fyne.NewPos(popX, popY))
+}
 
-	d = dialog.NewCustomWithoutButtons("Ganti Tema", scrollContent, m.Window)
-	d.Show()
+// ShowThemeDialog provides backward compatibility, forwarding to ShowThemeMenu
+func (m *MainWindow) ShowThemeDialog() {
+	m.ShowThemeMenu(nil)
 }
 
 func (m *MainWindow) buildLayout() fyne.CanvasObject {
@@ -408,8 +405,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	fullScreenBtn.Importance = widget.LowImportance
 
-	quickThemeBtn := widget.NewButtonWithIcon("", theme.ColorPaletteIcon(), func() {
-		m.ShowThemeDialog()
+	var quickThemeBtn *widget.Button
+	quickThemeBtn = widget.NewButtonWithIcon("", theme.ColorPaletteIcon(), func() {
+		m.ShowThemeMenu(quickThemeBtn)
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
@@ -493,8 +491,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	default:
 		themeBtnText = "⚡ Neo-Brutalism"
 	}
-	themeBtn := widget.NewButtonWithIcon(themeBtnText, theme.ColorPaletteIcon(), func() {
-		m.ShowThemeDialog()
+	var themeBtn *widget.Button
+	themeBtn = widget.NewButtonWithIcon(themeBtnText, theme.ColorPaletteIcon(), func() {
+		m.ShowThemeMenu(themeBtn)
 	})
 	themeBtn.Importance = widget.LowImportance
 
