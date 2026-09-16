@@ -26,14 +26,14 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 #### Metode Rekomendasi: Paket Debian (`.deb`)
 
 1. **Unduh Paket Instalasi:**
-   - **[Download it-toolbox_1.3.1_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/it-toolbox_1.3.1_amd64.deb)**
+   - **[Download it-toolbox_1.3.2_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.2/it-toolbox_1.3.2_amd64.deb)**
 
 2. **Pemasangan Aplikasi:**
-   - Klik ganda pada berkas `it-toolbox_1.3.1_amd64.deb` melalui File Manager.
+   - Klik ganda pada berkas `it-toolbox_1.3.2_amd64.deb` melalui File Manager.
    - Jendela App Center / Software Center / GDebi akan terbuka. Klik **Install**.
    - Atau melalui terminal:
      ```bash
-     sudo apt install ./it-toolbox_1.3.1_amd64.deb
+     sudo apt install ./it-toolbox_1.3.2_amd64.deb
      ```
 
 3. **Integrasi Sistem:**
@@ -52,15 +52,16 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 ### 2. Sistem Operasi Windows (Windows 10 / 11 64-bit)
 
 #### Berkas Distribusi Windows:
-- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/it-toolbox.exe)** *(Disarankan)*
-- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.1/IT-Toolbox-Windows-Portable-x64.zip)**
+- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.2/it-toolbox.exe)** *(Disarankan)*
+- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.3.2/IT-Toolbox-Windows-Portable-x64.zip)**
 
 #### Cara Penggunaan & Pembuatan Pintasan:
 1. Tempatkan berkas `it-toolbox.exe` pada folder pilihan Anda (contoh: `D:\Tools\IT-Toolbox\` atau `C:\Program Files\IT Toolbox\`).
-2. Jalankan `it-toolbox.exe`. Aplikasi secara otomatis mendeteksi dan membuat pintasan di:
-   - **Desktop**: `%USERPROFILE%\Desktop` (termasuk deteksi OneDrive Desktop).
-   - **Start Menu**: `%APPDATA%\Microsoft\Windows\Start Menu\Programs`.
-3. Jika menggunakan arsip ZIP, Anda juga dapat menjalankan `create-shortcut.bat` untuk memperbarui pintasan Desktop dan Start Menu secara instan.
+2. Jalankan `it-toolbox.exe`. Pada saat pertama kali dijalankan, aplikasi akan menampilkan jendela dialog pilihan pembuatan pintasan:
+   - Pilihan pembuatan pintasan di Layar Desktop
+   - Pilihan pembuatan pintasan di Start Menu / Menu Aplikasi
+   - Opsi untuk melewati atau memperbarui kapan saja melalui menu Pengaturan
+3. Jika menggunakan arsip ZIP, Anda juga dapat menjalankan `create-shortcut.bat` yang menyediakan menu interaktif (Desktop, Start Menu, atau keduanya).
 
 ---
 
@@ -115,7 +116,7 @@ go build -tags x11 -ldflags="-s -w" -o it-toolbox .
 CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -s -w" -o it-toolbox.exe .
 
 # Membangun Paket Installer Debian (.deb)
-bash build/linux/package-deb.sh 1.3.1
+bash build/linux/package-deb.sh 1.3.2
 ```
 
 ---

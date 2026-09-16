@@ -14,7 +14,7 @@ import (
 //go:embed icon.png
 var embeddedIconPng []byte
 
-func createDesktopShortcut(exePath string) {
+func createPlatformShortcuts(exePath string, desktop, startMenu bool) {
 	home, err := os.UserHomeDir()
 	if err != nil || home == "" {
 		return
@@ -51,29 +51,30 @@ StartupWMClass=it-toolbox
 `, exePath)
 
 	// 3. Place in ~/.local/share/applications/ (Start Menu / Application Launcher)
-	appMenuDir := filepath.Join(home, ".local", "share", "applications")
-	_ = os.MkdirAll(appMenuDir, 0755)
-	appMenuFile := filepath.Join(appMenuDir, "it-toolbox.desktop")
-	_ = os.WriteFile(appMenuFile, []byte(desktopContent), 0755)
-
-	// 4. Place in ~/Desktop & ~/desktop
-	desktopDirs := []string{
-		filepath.Join(home, "Desktop"),
-		filepath.Join(home, "desktop"),
+	if startMenu {
+		appMenuDir := filepath.Join(home, ".local", "share", "applications")
+		_ = os.MkdirAll(appMenuDir, 0755)
+		appMenuFile := filepath.Join(appMenuDir, "it-toolbox.desktop")
+		_ = os.WriteFile(appMenuFile, []byte(desktopContent), 0755)
+		_ = exec.Command("update-desktop-database", appMenuDir).Run()
 	}
 
-	for _, d := range desktopDirs {
-		if fi, err := os.Stat(d); err == nil && fi.IsDir() {
-			desktopFile := filepath.Join(d, "it-toolbox.desktop")
-			if err := os.WriteFile(desktopFile, []byte(desktopContent), 0755); err != nil {
-				log.Printf("Failed to write desktop shortcut: %v\n", err)
-			} else {
-				// Mark trusted on GNOME if gio is available
-				_ = exec.Command("gio", "set", desktopFile, "metadata::trusted", "true").Run()
+	// 4. Place in ~/Desktop & ~/desktop
+	if desktop {
+		desktopDirs := []string{
+			filepath.Join(home, "Desktop"),
+			filepath.Join(home, "desktop"),
+		}
+
+		for _, d := range desktopDirs {
+			if fi, err := os.Stat(d); err == nil && fi.IsDir() {
+				desktopFile := filepath.Join(d, "it-toolbox.desktop")
+				if err := os.WriteFile(desktopFile, []byte(desktopContent), 0755); err != nil {
+					log.Printf("Failed to write desktop shortcut: %v\n", err)
+				} else {
+					_ = exec.Command("gio", "set", desktopFile, "metadata::trusted", "true").Run()
+				}
 			}
 		}
 	}
-
-	// 5. Trigger desktop database update if command is available
-	_ = exec.Command("update-desktop-database", appMenuDir).Run()
 }

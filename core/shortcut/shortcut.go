@@ -6,15 +6,17 @@ import (
 	"path/filepath"
 )
 
-// EnsureDesktopShortcut checks if a desktop shortcut exists for the current executable,
-// and automatically creates it if missing (for both Windows and Linux).
-// It runs synchronously with safety guards so the shortcut is ready immediately upon app launch.
-func EnsureDesktopShortcut() {
+// CreateShortcuts creates shortcuts selectively on Desktop, Start Menu, or both.
+func CreateShortcuts(desktop, startMenu bool) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("Shortcut auto-creation recovered from panic: %v\n", r)
+			log.Printf("Shortcut creation recovered from panic: %v\n", r)
 		}
 	}()
+
+	if !desktop && !startMenu {
+		return
+	}
 
 	exePath, err := os.Executable()
 	if err != nil {
@@ -25,5 +27,10 @@ func EnsureDesktopShortcut() {
 		return
 	}
 
-	createDesktopShortcut(exePath)
+	createPlatformShortcuts(exePath, desktop, startMenu)
+}
+
+// EnsureDesktopShortcut creates shortcuts in both Desktop and Start Menu for backward compatibility.
+func EnsureDesktopShortcut() {
+	CreateShortcuts(true, true)
 }

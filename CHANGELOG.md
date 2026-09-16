@@ -6,6 +6,35 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.3.2] - 2026-09-16
+
+### Peningkatan & Fitur Baru
+- **Pilihan Lokasi Pintasan di Awal Peluncuran / Instalasi**:
+  - Dialog interaktif otomatis saat pertama kali aplikasi dibuka untuk memilih pembuatan pintasan di Desktop, Start Menu, atau keduanya, dengan tombol "Nanti Saja" dan "Pasang Pintasan".
+  - Dukungan pemilihan pintasan di wizard instalasi Inno Setup Windows (`desktopicon` dan `startmenuicon`).
+  - Menu interaktif pada skrip `create-shortcut.bat` untuk memilih Desktop, Start Menu, atau keduanya secara fleksibel.
+  - Opsi pembuatan pintasan fleksibel pada kartu Integrasi Sistem di halaman Pengaturan.
+- **Sistem Pembaruan Otomatis Terhubung GitHub Releases**:
+  - Pengecekan pembaruan langsung terhadap endpoint GitHub Releases API.
+  - Dialog notifikasi pembaruan dengan tombol "Buka Halaman Rilis", "Catatan Rilis", dan "Tutup".
+- **Desain Dialog Modal Baru & Standar Visual Bebas Emoji**:
+  - Efek latar belakang modal dialog dengan scrim bayangan transparan (translucent glass/scrim effect).
+  - Penghapusan seluruh emoji di seluruh antarmuka aplikasi, dokumentasi README, dan skrip instalasi untuk tampilan teknis yang bersih dan profesional.
+- **Perbaikan Scroll pada Area Formulir Cisco**:
+  - Event scroll wheel mouse pada area teks multi-baris (seperti kolom komentar) kini diteruskan secara mulus ke kontainer scroll induk.
+
+---
+
+## [1.3.1] - 2026-09-15
+
+### Fitur Baru & Peningkatan
+- **Pemeriksaan Pembaruan Versi di Pengaturan**:
+  - Kartu pembaruan aplikasi dengan tombol cek manual dan indikator versi saat ini vs versi rilis terbaru di GitHub.
+- **Dukungan Pintasan Start Menu**:
+  - Dukungan pembuatan pintasan terpadu di Desktop dan Start Menu pada Windows dan Linux.
+
+---
+
 ## [1.3.0] - 2026-09-15
 
 ### Desain & Fitur Baru (Multi-Theme Support: Neumorphism)

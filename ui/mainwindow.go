@@ -8,10 +8,12 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/yudz/it-toolbox/core/shortcut"
 	"github.com/yudz/it-toolbox/core/updater"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
@@ -238,6 +240,15 @@ func NewMainWindow(app fyne.App) *MainWindow {
 	mw.RootContainer = container.NewStack(mw.buildLayout())
 	win.SetContent(mw.RootContainer)
 	mw.showPage(constants.NavToolbox)
+
+	// Prompt for initial desktop / start menu shortcut setup on fresh run
+	if !app.Preferences().BoolWithFallback("shortcut_configured", false) {
+		time.AfterFunc(500*time.Millisecond, func() {
+			fyne.Do(func() {
+				mw.showInitialShortcutDialog()
+			})
+		})
+	}
 
 	// Automatic background check for new updates if enabled in preferences
 	if app.Preferences().BoolWithFallback("auto_check_update", true) {
@@ -720,4 +731,67 @@ func (m *MainWindow) SetSettingsUpdateResult(res *updater.UpdateCheckResult) {
 // GetSettingsPage returns the active SettingsPage instance
 func (m *MainWindow) GetSettingsPage() *pages.SettingsPage {
 	return m.settingsPage
+}
+
+func (m *MainWindow) showInitialShortcutDialog() {
+	var d dialog.Dialog
+
+	titleTxt := canvas.NewText("Pengaturan Pintasan Aplikasi", constants.ColorTextPrimary)
+	titleTxt.TextSize = constants.FontSizeH2
+	titleTxt.TextStyle = fyne.TextStyle{Bold: true}
+
+	badge := components.BadgeCyan("PINTASAN SISTEM")
+	headerBox := container.NewVBox(
+		container.NewHBox(titleTxt, badge),
+		canvas.NewText("Pilih lokasi pembuatan pintasan agar aplikasi mudah diakses:", constants.ColorTextMuted),
+		widget.NewSeparator(),
+	)
+
+	chkDesktop := widget.NewCheck("Buat Pintasan di Layar Desktop (Desktop Shortcut)", nil)
+	chkDesktop.SetChecked(true)
+
+	chkStart := widget.NewCheck("Buat Pintasan di Start Menu / Menu Aplikasi (Start Menu Launcher)", nil)
+	chkStart.SetChecked(true)
+
+	hintTxt := canvas.NewText("Opsi ini dapat diubah atau diperbarui kapan saja di menu Pengaturan.", constants.ColorTextMuted)
+	hintTxt.TextSize = constants.FontSizeSmall
+
+	bodyContent := container.NewVBox(
+		chkDesktop,
+		chkStart,
+		widget.NewSeparator(),
+		hintTxt,
+	)
+
+	btnSkip := widget.NewButtonWithIcon("Nanti Saja", theme.CancelIcon(), func() {
+		m.App.Preferences().SetBool("shortcut_configured", true)
+		if d != nil {
+			d.Hide()
+		}
+	})
+	btnSkip.Importance = widget.LowImportance
+
+	btnInstall := widget.NewButtonWithIcon("Pasang Pintasan", theme.ConfirmIcon(), func() {
+		m.App.Preferences().SetBool("shortcut_configured", true)
+		shortcut.CreateShortcuts(chkDesktop.Checked, chkStart.Checked)
+		if d != nil {
+			d.Hide()
+		}
+	})
+	btnInstall.Importance = widget.HighImportance
+
+	actionBar := container.NewBorder(nil, nil, nil, container.NewHBox(btnSkip, btnInstall))
+
+	dialogBody := container.NewBorder(
+		headerBox,
+		container.NewVBox(widget.NewSeparator(), actionBar),
+		nil,
+		nil,
+		container.NewPadded(bodyContent),
+	)
+
+	card := components.NewPlainCardWithAccent(dialogBody, constants.ColorAccentCobalt)
+	d = dialog.NewCustomWithoutButtons("", card, m.Window)
+	d.Resize(fyne.NewSize(620, 310))
+	d.Show()
 }

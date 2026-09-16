@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -313,52 +314,89 @@ func (p *SettingsPage) buildSystemCard() fyne.CanvasObject {
 	cardTitle.TextSize = constants.FontSizeH2
 	cardTitle.TextStyle = fyne.TextStyle{Bold: true}
 
-	shortcutBtn := widget.NewButtonWithIcon("Buat / Perbarui Pintasan (Desktop & Start Menu)", theme.ContentAddIcon(), func() {
-		t1 := canvas.NewText("Pintasan aplikasi 'IT Toolbox' akan dipasang di dua lokasi sistem:", constants.ColorTextPrimary)
-		t1.TextSize = constants.FontSizeBody
-		t2 := canvas.NewText("  • Layar Desktop (Desktop Shortcut)", constants.ColorTextSecondary)
-		t2.TextSize = constants.FontSizeBody
-		t3 := canvas.NewText("  • Start Menu / Peluncur Aplikasi (Start Menu Launcher)", constants.ColorTextSecondary)
-		t3.TextSize = constants.FontSizeBody
-		t4 := canvas.NewText("Apakah Anda ingin membuat / memperbarui pintasan sekarang?", constants.ColorTextMuted)
-		t4.TextSize = constants.FontSizeSmall
+	shortcutBtn := widget.NewButtonWithIcon("Buat / Perbarui Pintasan Sistem", theme.ContentAddIcon(), func() {
+		var d dialog.Dialog
 
-		msgContent := container.NewVBox(
-			t1,
-			container.NewVBox(t2, t3),
+		titleTxt := canvas.NewText("Pemasangan Pintasan Sistem", constants.ColorTextPrimary)
+		titleTxt.TextSize = constants.FontSizeH2
+		titleTxt.TextStyle = fyne.TextStyle{Bold: true}
+
+		badge := components.BadgeCyan("PINTASAN SISTEM")
+		headerBox := container.NewVBox(
+			container.NewHBox(titleTxt, badge),
+			canvas.NewText("Pilih lokasi pembuatan pintasan aplikasi IT Toolbox:", constants.ColorTextMuted),
 			widget.NewSeparator(),
-			t4,
 		)
 
-		components.ShowStyledConfirmDialog(
-			p.window,
-			"DESKTOP & START",
-			constants.ColorAccentCobalt,
-			"Pasang Pintasan Sistem",
-			"Integrasi peluncur sistem operasi",
-			msgContent,
-			"Batal",
-			"Pasang Sekarang",
-			func() {
-				shortcut.EnsureDesktopShortcut()
-				s1 := canvas.NewText("Pintasan 'IT Toolbox' telah berhasil dibuat!", constants.ColorSuccess)
-				s1.TextSize = constants.FontSizeBody
-				s1.TextStyle = fyne.TextStyle{Bold: true}
-				s2 := canvas.NewText("Aplikasi kini dapat diluncurkan langsung dari Desktop maupun Start Menu sistem Anda.", constants.ColorTextSecondary)
-				s2.TextSize = constants.FontSizeBody
-				successContent := container.NewVBox(s1, s2)
-				components.ShowStyledInformationDialog(
-					p.window,
-					"SUKSES",
-					constants.ColorSuccess,
-					"Pintasan Berhasil Dipasang",
-					"Telah ditambahkan ke Desktop dan Start Menu",
-				successContent,
-					"Tutup",
-					nil,
-				)
-			},
+		chkDesktop := widget.NewCheck("Pintasan Layar Desktop (Desktop Shortcut)", nil)
+		chkDesktop.SetChecked(true)
+
+		chkStart := widget.NewCheck("Pintasan Start Menu / Menu Aplikasi (Start Menu Launcher)", nil)
+		chkStart.SetChecked(true)
+
+		bodyContent := container.NewVBox(
+			chkDesktop,
+			chkStart,
 		)
+
+		btnCancel := widget.NewButtonWithIcon("Batal", theme.CancelIcon(), func() {
+			if d != nil {
+				d.Hide()
+			}
+		})
+		btnCancel.Importance = widget.LowImportance
+
+		btnInstall := widget.NewButtonWithIcon("Pasang Sekarang", theme.ConfirmIcon(), func() {
+			if d != nil {
+				d.Hide()
+			}
+			shortcut.CreateShortcuts(chkDesktop.Checked, chkStart.Checked)
+
+			var locs []string
+			if chkDesktop.Checked {
+				locs = append(locs, "Desktop")
+			}
+			if chkStart.Checked {
+				locs = append(locs, "Start Menu")
+			}
+			locText := strings.Join(locs, " dan ")
+			if len(locs) == 0 {
+				locText = "Tidak ada lokasi yang dipilih"
+			}
+
+			s1 := canvas.NewText(fmt.Sprintf("Pintasan IT Toolbox berhasil dipasang pada: %s.", locText), constants.ColorSuccess)
+			s1.TextSize = constants.FontSizeBody
+			s1.TextStyle = fyne.TextStyle{Bold: true}
+			s2 := canvas.NewText("Aplikasi kini siap diakses dengan cepat dari sistem Anda.", constants.ColorTextSecondary)
+			s2.TextSize = constants.FontSizeBody
+			successContent := container.NewVBox(s1, s2)
+			components.ShowStyledInformationDialog(
+				p.window,
+				"SUKSES",
+				constants.ColorSuccess,
+				"Pintasan Berhasil Dipasang",
+				"Integrasi sistem operasi selesai",
+				successContent,
+				"Tutup",
+				nil,
+			)
+		})
+		btnInstall.Importance = widget.HighImportance
+
+		actionBar := container.NewBorder(nil, nil, nil, container.NewHBox(btnCancel, btnInstall))
+
+		dialogBody := container.NewBorder(
+			headerBox,
+			container.NewVBox(widget.NewSeparator(), actionBar),
+			nil,
+			nil,
+			container.NewPadded(bodyContent),
+		)
+
+		card := components.NewPlainCardWithAccent(dialogBody, constants.ColorAccentCobalt)
+		d = dialog.NewCustomWithoutButtons("", card, p.window)
+		d.Resize(fyne.NewSize(580, 280))
+		d.Show()
 	})
 	shortcutBtn.Importance = widget.MediumImportance
 

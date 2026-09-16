@@ -5,7 +5,7 @@
 ; =====================================================================
 
 #define MyAppName "IT Toolbox"
-#define MyAppVersion "1.3.1"
+#define MyAppVersion "1.3.2"
 #define MyAppPublisher "Yudz"
 #define MyAppURL "https://github.com/Great-YUDZZ/it-toolbox"
 #define MyAppExeName "it-toolbox.exe"
@@ -39,8 +39,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "indonesian"; MessagesFile: "compiler:Languages\Indonesian.isl"
 
 [Tasks]
-; Dicentang secara default sehingga shortcut Desktop langsung dibuat otomatis!
+; Dicentang secara default sehingga pengguna dapat memilih lokasi shortcut saat instalasi
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "startmenuicon"; Description: "Buat pintasan di Start Menu / Program List"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
 Source: "..\..\it-toolbox.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -49,7 +50,7 @@ Source: "..\..\assets\icon.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Shortcut di Start Menu / Program Files
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\icon.ico"
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startmenuicon; IconFilename: "{app}\icon.ico"
 ; Shortcut di Desktop (Langsung muncul setelah instalasi)
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\icon.ico"
 
