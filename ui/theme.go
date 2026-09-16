@@ -143,6 +143,9 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 	switch m.themeName {
 	case constants.ThemeNeumorphismLight:
 		switch name {
+		case theme.ColorNameShadow:
+			// Translucent dark-slate scrim for modal backdrop blur/dim effect
+			return color.NRGBA{R: 0x0F, G: 0x17, B: 0x2A, A: 0x88}
 		case theme.ColorNamePrimary:
 			return ColorAccentCobalt
 		case theme.ColorNameHover:
@@ -177,14 +180,15 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 			return ColorWarning
 		case theme.ColorNameError:
 			return ColorDanger
-		case theme.ColorNameShadow:
-			return ColorShadow
 		default:
 			return theme.DefaultTheme().Color(name, theme.VariantLight)
 		}
 
 	case constants.ThemeNeumorphismDark:
 		switch name {
+		case theme.ColorNameShadow:
+			// Translucent deep obsidian scrim for dark-mode focused glass backdrop
+			return color.NRGBA{R: 0x02, G: 0x06, B: 0x12, A: 0xB8}
 		case theme.ColorNamePrimary:
 			return ColorAccentCobalt
 		case theme.ColorNameHover:
@@ -219,14 +223,15 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 			return ColorWarning
 		case theme.ColorNameError:
 			return ColorDanger
-		case theme.ColorNameShadow:
-			return ColorShadow
 		default:
 			return theme.DefaultTheme().Color(name, theme.VariantDark)
 		}
 
 	default: // Neo-Brutalism (Signature Single Mode)
 		switch name {
+		case theme.ColorNameShadow:
+			// Translucent dark scrim for brutalist modal backdrop
+			return color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x77}
 		case theme.ColorNamePrimary:
 			return color.Black
 		case theme.ColorNameHover:
@@ -261,8 +266,6 @@ func (m *CustomCyanTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVari
 			return ColorWarning
 		case theme.ColorNameError:
 			return ColorDanger
-		case theme.ColorNameShadow:
-			return ColorShadow
 		default:
 			return theme.DefaultTheme().Color(name, theme.VariantLight)
 		}

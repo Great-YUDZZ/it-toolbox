@@ -101,7 +101,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		statPrefix.SetSubtext(fmt.Sprintf("Netmask: %s (Paling Hemat)", rec.Netmask))
 
 		statRange.SetColor(constants.ColorSuccess)
-		statRange.SetValue(fmt.Sprintf("%s ➔ %s", rec.FirstHost, rec.LastHost))
+		statRange.SetValue(fmt.Sprintf("%s -> %s", rec.FirstHost, rec.LastHost))
 		statRange.SetSubtext(fmt.Sprintf("Tersedia %d IP Usable", rec.AllocatedHosts))
 
 		statCapacity.SetColor(constants.ColorAccentYellow)
@@ -112,7 +112,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		statBroadcast.SetValue(rec.Broadcast)
 		statBroadcast.SetSubtext(fmt.Sprintf("Wildcard: %s", rec.WildcardMask))
 
-		hintLabel.Text = fmt.Sprintf("💡 Saran Alokasi: %s", rec.ClassHint)
+		hintLabel.Text = fmt.Sprintf("Saran Alokasi: %s", rec.ClassHint)
 		hintLabel.Color = constants.ColorTextPrimary
 		hintLabel.Refresh()
 	}
@@ -272,6 +272,8 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	vlsmResultArea := widget.NewMultiLineEntry()
 	vlsmResultArea.SetMinRowsVisible(6)
 	vlsmResultArea.TextStyle = fyne.TextStyle{Monospace: true}
+	vlsmResultArea.Wrapping = fyne.TextWrapOff
+	vlsmResultArea.Scroll = fyne.ScrollNone
 
 	calcVLSM := func() {
 		parts := strings.Split(vlsmHostsEntry.Text, ",")
@@ -491,7 +493,7 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 		resultStat.SetColor(constants.ColorSuccess)
 		res := calculators.ConvertDataSize(val, fromSelect.Selected, toSelect.Selected)
 		resultStat.SetValue(fmt.Sprintf("%.4f %s", res, toSelect.Selected))
-		resultStat.SetSubtext(fmt.Sprintf("%s ➔ %s", fromSelect.Selected, toSelect.Selected))
+		resultStat.SetSubtext(fmt.Sprintf("%s -> %s", fromSelect.Selected, toSelect.Selected))
 	}
 
 	dataValEntry.OnChanged = func(string) { calcData() }
@@ -510,10 +512,10 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 
 	dataChips := container.NewHBox(
 		canvas.NewText("Preset Ukuran:", constants.ColorTextSecondary),
-		makeDataChip("1024 MB ➔ GB", "1024", "MB", "GB"),
-		makeDataChip("4096 MB ➔ GB", "4096", "MB", "GB"),
-		makeDataChip("1 TB ➔ GB", "1", "TB", "GB"),
-		makeDataChip("8 bit ➔ Byte", "8", "bit", "Byte"),
+		makeDataChip("1024 MB -> GB", "1024", "MB", "GB"),
+		makeDataChip("4096 MB -> GB", "4096", "MB", "GB"),
+		makeDataChip("1 TB -> GB", "1", "TB", "GB"),
+		makeDataChip("8 bit -> Byte", "8", "bit", "Byte"),
 	)
 
 	dataContent := container.NewVBox(

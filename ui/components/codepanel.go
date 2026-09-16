@@ -21,9 +21,10 @@ func NewCodePanel(title string, initialContent string, win fyne.Window) *CodePan
 	entry := widget.NewMultiLineEntry()
 	entry.SetText(initialContent)
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
-	entry.Wrapping = fyne.TextWrapWord
+	entry.Wrapping = fyne.TextWrapOff
+	entry.Scroll = fyne.ScrollNone
 
-	titleLabel := canvas.NewText("⌨ "+title, constants.ColorTextPrimary)
+	titleLabel := canvas.NewText(""+title, constants.ColorTextPrimary)
 	titleLabel.TextSize = constants.FontSizeSmall
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 

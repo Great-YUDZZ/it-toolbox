@@ -400,7 +400,7 @@ func (p *FileConverterPage) buildImgConverterTab() fyne.CanvasObject {
 
 			resBadge := components.BadgeSuccess(fmt.Sprintf("HEMAT %.1f%%", savingPct))
 			resRow := container.NewBorder(nil, nil,
-				container.NewHBox(resBadge, widget.NewLabelWithStyle(fmt.Sprintf("%s (Awal: %.1f KB ➔ Akhir: %.1f KB)",
+				container.NewHBox(resBadge, widget.NewLabelWithStyle(fmt.Sprintf("%s (Awal: %.1f KB -> Akhir: %.1f KB)",
 					filepath.Base(resItem), float64(origSize)/1024.0, float64(newSize)/1024.0),
 					fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
 				openBtn,
@@ -612,7 +612,7 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 	runMergeBtn.Importance = widget.HighImportance
 
 	mergeCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("📑 Penggabungan Berkas PDF (Merge):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Penggabungan Berkas PDF (Merge):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewHBox(addMergeBtn, widget.NewLabel("atau masukkan path:")),
 		container.NewBorder(nil, nil, nil, addMergePathBtn, mergePathEntry),
 		mergeList,
@@ -657,7 +657,7 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 	runSplitBtn.Importance = widget.HighImportance
 
 	splitCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("✂️ Pemisahan Halaman PDF (Split):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Pemisahan Halaman PDF (Split):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, widget.NewLabelWithStyle("PDF Sumber:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), browseSplitBtn, splitFileEntry),
 		container.NewGridWithColumns(2,
 			container.NewVBox(widget.NewLabelWithStyle("Dari Halaman:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), pageFromEntry),
@@ -721,13 +721,13 @@ func (p *FileConverterPage) buildPDFToolsTab() fyne.CanvasObject {
 		}
 
 		dialog.ShowInformation("Kompresi Berhasil",
-			fmt.Sprintf("PDF berhasil dikompres!\nUkuran Awal: %.1f KB ➔ Akhir: %.1f KB (Hemat %.1f%%)\nLokasi:\n%s",
+			fmt.Sprintf("PDF berhasil dikompres!\nUkuran Awal: %.1f KB -> Akhir: %.1f KB (Hemat %.1f%%)\nLokasi:\n%s",
 				float64(origSize)/1024.0, float64(newSize)/1024.0, savingPct, outPath), p.window)
 	})
 	runCompBtn.Importance = widget.HighImportance
 
 	compCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("🗜️ Kompresi Ukuran PDF:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Kompresi Ukuran PDF:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, widget.NewLabelWithStyle("PDF Sumber:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), browseCompBtn, compFileEntry),
 		widget.NewLabelWithStyle("Tingkat Kompresi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), compLevelSelect,
 		runCompBtn,
@@ -762,7 +762,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 	checkBtn.Importance = widget.HighImportance
 
 	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("🔗 Masukkan Tautan Video YouTube:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Masukkan Tautan Video YouTube:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewBorder(nil, nil, nil, container.NewHBox(pasteBtn, checkBtn), urlEntry),
 	), constants.ColorAccentCyan)
 
@@ -824,7 +824,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 	}
 
 	detailsCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("📺 Informasi Video & Resolusi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Informasi Video & Resolusi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		titleLabel,
 		badgeRow,
 		widget.NewSeparator(),
@@ -848,7 +848,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 		downloadBtn.Disable()
 		openFileBtn.Hide()
 		openFolderBtn.Hide()
-		titleLabel.SetText("⏳ Sedang memeriksa data video dari YouTube...")
+		titleLabel.SetText("Sedang memeriksa data video dari YouTube...")
 		badgeRow.Objects = nil
 		badgeRow.Refresh()
 		statusLabel.SetText("Menghubungi server YouTube dan mengekstrak daftar resolusi...")
@@ -858,7 +858,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 			if err != nil {
 				fyne.Do(func() {
 					checkBtn.Enable()
-					titleLabel.SetText("❌ Gagal memuat data video.")
+					titleLabel.SetText("Gagal memuat data video.")
 					statusLabel.SetText(fmt.Sprintf("Kesalahan: %v", err))
 					dialog.ShowError(err, p.window)
 				})
@@ -871,8 +871,8 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 				titleLabel.SetText(details.Title)
 
 				badgeRow.Objects = nil
-				badgeRow.Add(components.BadgeCyan("📺 " + details.Author))
-				badgeRow.Add(components.BadgeYellow("⏱ " + details.DurationStr))
+				badgeRow.Add(components.BadgeCyan("" + details.Author))
+				badgeRow.Add(components.BadgeYellow("" + details.DurationStr))
 				badgeRow.Add(components.BadgeSuccess(fmt.Sprintf("%d Pilihan Kualitas", len(details.Options))))
 				if youtube.HasFFmpeg() {
 					badgeRow.Add(components.BadgeSuccess("FFmpeg Aktif (Auto-Mux)"))
@@ -904,7 +904,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 					}
 				}
 
-				statusLabel.SetText(fmt.Sprintf("✅ Siap! Ditemukan %d pilihan resolusi sesuai video ini. Pilih kualitas dan klik Unduh.", len(details.Options)))
+				statusLabel.SetText(fmt.Sprintf("Siap! Ditemukan %d pilihan resolusi sesuai video ini. Pilih kualitas dan klik Unduh.", len(details.Options)))
 			})
 		}()
 	}
@@ -946,13 +946,13 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 				checkBtn.Enable()
 
 				if err != nil {
-					statusLabel.SetText(fmt.Sprintf("❌ Unduhan gagal: %v", err))
+					statusLabel.SetText(fmt.Sprintf("Unduhan gagal: %v", err))
 					dialog.ShowError(err, p.window)
 					return
 				}
 
 				downloadProgressBar.SetValue(1.0)
-				statusLabel.SetText(fmt.Sprintf("🎉 Berhasil disimpan ke:\n%s", finalPath))
+				statusLabel.SetText(fmt.Sprintf("Berhasil disimpan ke:\n%s", finalPath))
 
 				openFileBtn.OnTapped = func() {
 					openTarget(finalPath)

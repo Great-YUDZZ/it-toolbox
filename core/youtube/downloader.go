@@ -211,7 +211,7 @@ func (d *Downloader) FetchVideoDetails(rawURL string) (*VideoDetails, error) {
 				label = label + ")"
 			}
 
-			disp := fmt.Sprintf("🎵 %s — %.2f MB", label, sizeMB)
+			disp := fmt.Sprintf("%s — %.2f MB (Audio Only)", label, sizeMB)
 			opt := ResolutionOption{
 				Itag:          f.ItagNo,
 				QualityLabel:  label,
@@ -328,7 +328,7 @@ func (d *Downloader) FetchVideoDetails(rawURL string) (*VideoDetails, error) {
 			sizeStr = "Otomatis"
 		}
 
-		opt.DisplayLabel = fmt.Sprintf("🎬 %s (%s) — %s [%s]",
+		opt.DisplayLabel = fmt.Sprintf("%s (%s) — %s [%s]",
 			opt.QualityLabel, strings.ToUpper(opt.Container), sizeStr, extraInfo)
 
 		details.Options = append(details.Options, opt)

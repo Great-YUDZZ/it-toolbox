@@ -58,12 +58,12 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 	tagsEntry := widget.NewEntry()
 	tagsEntry.SetPlaceHolder("cth: go, sql, cisco, docker, spring")
 
-	errEntry := widget.NewMultiLineEntry()
+	errEntry := components.NewScrollableMultiLineEntry(nil)
 	errEntry.SetPlaceHolder("Salin pesan error, panic output, atau stack trace di sini...")
 	errEntry.SetMinRowsVisible(3)
 	errEntry.TextStyle = fyne.TextStyle{Monospace: true}
 
-	solEntry := widget.NewMultiLineEntry()
+	solEntry := components.NewScrollableMultiLineEntry(nil)
 	solEntry.SetPlaceHolder("Tulis langkah perbaikan atau solusi teknis yang berhasil mengatasi error...")
 	solEntry.SetMinRowsVisible(3)
 
@@ -125,11 +125,11 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 				eTitle.SetText(item.Title)
 				eTags := widget.NewEntry()
 				eTags.SetText(item.Tags)
-				eErr := widget.NewMultiLineEntry()
+				eErr := components.NewScrollableMultiLineEntry(nil)
 				eErr.SetText(item.ErrorMessage)
 				eErr.SetMinRowsVisible(5)
 				eErr.TextStyle = fyne.TextStyle{Monospace: true}
-				eSol := widget.NewMultiLineEntry()
+				eSol := components.NewScrollableMultiLineEntry(nil)
 				eSol.SetText(item.Solution)
 				eSol.SetMinRowsVisible(5)
 
@@ -218,7 +218,7 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 			copyErrBtn.Importance = widget.LowImportance
 
 			errTop := container.NewBorder(nil, nil,
-				components.BadgeDanger("🚨 PESAN ERROR / STACK TRACE"),
+				components.BadgeDanger("PESAN ERROR / STACK TRACE"),
 				copyErrBtn,
 			)
 			errBox := container.NewStack(errBg, container.NewPadded(container.NewVBox(errTop, errLabel)))
@@ -232,7 +232,7 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 			solLabel := widget.NewLabel(item.Solution)
 			solLabel.Wrapping = fyne.TextWrapWord
 
-			solTop := container.NewHBox(components.BadgeSuccess("💡 SOLUSI TERVERIFIKASI"))
+			solTop := container.NewHBox(components.BadgeSuccess("SOLUSI TERVERIFIKASI"))
 			solBox := container.NewStack(solBg, container.NewPadded(container.NewVBox(solTop, solLabel)))
 
 			cardContent := container.NewVBox(
@@ -247,7 +247,7 @@ func (p *LogbookPage) buildErrorLogTab() fyne.CanvasObject {
 	}
 
 	// Inline Neo-Brutalist Form Card for Adding New Error Log
-	formTitle := canvas.NewText("🚨 CATAT INSIDEN ERROR BARU", constants.ColorTextPrimary)
+	formTitle := canvas.NewText("CATAT INSIDEN ERROR BARU", constants.ColorTextPrimary)
 	formTitle.TextSize = constants.FontSizeH2
 	formTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -353,7 +353,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 	descEntry := widget.NewEntry()
 	descEntry.SetPlaceHolder("Deskripsi singkat kegunaan snippet ini...")
 
-	contentEntry := widget.NewMultiLineEntry()
+	contentEntry := components.NewScrollableMultiLineEntry(nil)
 	contentEntry.SetPlaceHolder("Tulis atau tempel kode script siap pakai di sini...")
 	contentEntry.SetMinRowsVisible(6)
 	contentEntry.TextStyle = fyne.TextStyle{Monospace: true}
@@ -415,7 +415,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 				eLang.SetText(snip.Language)
 				eDesc := widget.NewEntry()
 				eDesc.SetText(snip.Description)
-				eCode := widget.NewMultiLineEntry()
+				eCode := components.NewScrollableMultiLineEntry(nil)
 				eCode.SetText(snip.Content)
 				eCode.SetMinRowsVisible(10)
 				eCode.TextStyle = fyne.TextStyle{Monospace: true}
@@ -510,7 +510,7 @@ func (p *LogbookPage) buildSnippetsTab() fyne.CanvasObject {
 	}
 
 	// Inline Neo-Brutalist Form Card for Adding New Snippet
-	formTitle := canvas.NewText("💻 SIMPAN SNIPPET KODE BARU", constants.ColorTextPrimary)
+	formTitle := canvas.NewText("SIMPAN SNIPPET KODE BARU", constants.ColorTextPrimary)
 	formTitle.TextSize = constants.FontSizeH2
 	formTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -675,7 +675,7 @@ func (p *LogbookPage) buildChecklistsTab() fyne.CanvasObject {
 
 			var itemBadge fyne.CanvasObject
 			if len(currentCL.Items) > 0 && completed == len(currentCL.Items) {
-				itemBadge = components.BadgeSuccess(fmt.Sprintf("%d/%d Selesai ✓", completed, len(currentCL.Items)))
+				itemBadge = components.BadgeSuccess(fmt.Sprintf("%d/%d Selesai", completed, len(currentCL.Items)))
 			} else {
 				itemBadge = components.BadgeYellow(fmt.Sprintf("%d/%d Selesai", completed, len(currentCL.Items)))
 			}
@@ -726,7 +726,7 @@ func (p *LogbookPage) buildChecklistsTab() fyne.CanvasObject {
 	}
 
 	// Inline Neo-Brutalist Form Card for Adding New Checklist
-	formTitle := canvas.NewText("📋 BUAT CHECKLIST BARU", constants.ColorTextPrimary)
+	formTitle := canvas.NewText("BUAT CHECKLIST BARU", constants.ColorTextPrimary)
 	formTitle.TextSize = constants.FontSizeH2
 	formTitle.TextStyle = fyne.TextStyle{Bold: true}
 

@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -11,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"github.com/yudz/it-toolbox/core/updater"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
 	"github.com/yudz/it-toolbox/ui/pages"
@@ -186,6 +188,7 @@ type MainWindow struct {
 	navRef      *NavItem
 	navLogbook  *NavItem
 	navTracker  *NavItem
+	navSettings *NavItem
 
 	calcPage     *pages.CalculatorPage
 	fileConvPage *pages.FileConverterPage
@@ -193,6 +196,9 @@ type MainWindow struct {
 	refPage      *pages.ReferencePage
 	logbookPage  *pages.LogbookPage
 	trackerPage  *pages.TrackerPage
+	settingsPage *pages.SettingsPage
+
+	updateBannerContainer *fyne.Container
 }
 
 func NewMainWindow(app fyne.App) *MainWindow {
@@ -225,10 +231,27 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		logbookPage:  pages.NewLogbookPage(win),
 		trackerPage:  pages.NewTrackerPage(win),
 	}
+	mw.settingsPage = pages.NewSettingsPage(win, func(th string) {
+		mw.SwitchTheme(th)
+	})
 
 	mw.RootContainer = container.NewStack(mw.buildLayout())
 	win.SetContent(mw.RootContainer)
 	mw.showPage(constants.NavToolbox)
+
+	// Automatic background check for new updates if enabled in preferences
+	if app.Preferences().BoolWithFallback("auto_check_update", true) {
+		go func() {
+			time.Sleep(1500 * time.Millisecond)
+			res, err := updater.CheckLatestRelease(constants.AppVersion)
+			if err == nil && res != nil && res.HasUpdate {
+				fyne.Do(func() {
+					mw.showUpdateAvailableNotification(res)
+				})
+			}
+		}()
+	}
+
 	return mw
 }
 
@@ -248,6 +271,9 @@ func (m *MainWindow) SwitchTheme(themeName string) {
 	m.refPage = pages.NewReferencePage(m.Window)
 	m.logbookPage = pages.NewLogbookPage(m.Window)
 	m.trackerPage = pages.NewTrackerPage(m.Window)
+	m.settingsPage = pages.NewSettingsPage(m.Window, func(th string) {
+		m.SwitchTheme(th)
+	})
 
 	// Rebuild window layout in place without resetting window geometry
 	m.RootContainer.Objects = []fyne.CanvasObject{m.buildLayout()}
@@ -278,7 +304,7 @@ func (m *MainWindow) ToggleTheme() {
 
 // ShowThemeMenu opens a non-modal popup menu anchored directly at the trigger button
 func (m *MainWindow) ShowThemeMenu(anchor fyne.CanvasObject) {
-	headerTxt := canvas.NewText("🎨 GANTI TEMA TAMPILAN", constants.ColorTextPrimary)
+	headerTxt := canvas.NewText("PILIH TEMA TAMPILAN", constants.ColorTextPrimary)
 	headerTxt.TextSize = constants.FontSizeSmall
 	headerTxt.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -296,7 +322,7 @@ func (m *MainWindow) ShowThemeMenu(anchor fyne.CanvasObject) {
 
 		var rightBadge fyne.CanvasObject
 		if m.CurrentTheme == k {
-			rightBadge = components.BadgeSuccess("AKTIF ✓")
+			rightBadge = components.BadgeSuccess("AKTIF")
 		} else {
 			rightBadge = canvas.NewText("", constants.ColorTextMuted)
 		}
@@ -390,12 +416,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	brandBg.StrokeWidth = constants.CurrentBorderWidth
 	brandBg.CornerRadius = constants.CurrentCornerRadius
 
-	brandTitle := canvas.NewText("⚡ IT TOOLBOX", brandTextColor)
+	brandTitle := canvas.NewText("IT TOOLBOX", brandTextColor)
 	brandTitle.TextSize = constants.FontSizeH2
 	brandTitle.TextStyle = fyne.TextStyle{Bold: true}
 
 	brandBadge := container.NewStack(brandBg, container.NewPadded(brandTitle))
 	verBadge := components.BadgeCyan("v" + constants.AppVersion)
+	m.updateBannerContainer = container.NewVBox()
 
 	var fullScreenBtn *widget.Button
 	fullScreenBtn = widget.NewButtonWithIcon("", theme.ViewFullScreenIcon(), func() {
@@ -415,7 +442,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
-	headerActions := container.NewHBox(fullScreenBtn, quickThemeBtn)
+	var settingsQuickBtn *widget.Button
+	settingsQuickBtn = widget.NewButtonWithIcon("", theme.SettingsIcon(), func() {
+		m.showPage(constants.NavSettings)
+	})
+	settingsQuickBtn.Importance = widget.LowImportance
+
+	headerActions := container.NewHBox(fullScreenBtn, quickThemeBtn, settingsQuickBtn)
 
 	brandHeader := container.NewBorder(nil, nil,
 		container.NewHBox(brandBadge, verBadge),
@@ -443,7 +476,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	secCore.TextSize = constants.FontSizeLabel
 	secCore.TextStyle = fyne.TextStyle{Bold: true}
 
-	m.navToolbox = NewNavItem(constants.NavToolbox, theme.SettingsIcon(), func() {
+	m.navToolbox = NewNavItem(constants.NavToolbox, theme.HomeIcon(), func() {
 		m.showPage(constants.NavToolbox)
 	})
 	m.navFileConv = NewNavItem(constants.NavFileConverter, theme.FolderOpenIcon(), func() {
@@ -470,6 +503,14 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		m.showPage(constants.NavTracker)
 	})
 
+	secSystem := canvas.NewText("SISTEM & PREFERENSI", constants.ColorTextPrimary)
+	secSystem.TextSize = constants.FontSizeLabel
+	secSystem.TextStyle = fyne.TextStyle{Bold: true}
+
+	m.navSettings = NewNavItem(constants.NavSettings, theme.SettingsIcon(), func() {
+		m.showPage(constants.NavSettings)
+	})
+
 	navContainer := container.NewVBox(
 		secCore,
 		m.navToolbox,
@@ -481,6 +522,10 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		m.navRef,
 		m.navLogbook,
 		m.navTracker,
+		widget.NewSeparator(),
+		secSystem,
+		m.navSettings,
+		m.updateBannerContainer,
 	)
 
 	// ------------------------------------------------------------------------
@@ -489,11 +534,11 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	var themeBtnText string
 	switch m.CurrentTheme {
 	case constants.ThemeNeumorphismLight:
-		themeBtnText = "🫧 Neumorph Glass"
+		themeBtnText = "Neumorphism Light"
 	case constants.ThemeNeumorphismDark:
-		themeBtnText = "🌙 Dark Glass Neumorph"
+		themeBtnText = "Neumorphism Dark"
 	default:
-		themeBtnText = "⚡ Neo-Brutalism"
+		themeBtnText = "Neo-Brutalism"
 	}
 	var themeBtn *widget.Button
 	themeBtn = widget.NewButtonWithIcon(themeBtnText, theme.ColorPaletteIcon(), func() {
@@ -594,6 +639,9 @@ func (m *MainWindow) updateNavHighlights(active string) {
 	m.navRef.SetActive(active == constants.NavReference)
 	m.navLogbook.SetActive(active == constants.NavLogbook)
 	m.navTracker.SetActive(active == constants.NavTracker)
+	if m.navSettings != nil {
+		m.navSettings.SetActive(active == constants.NavSettings)
+	}
 
 	m.StatusLabel.Text = fmt.Sprintf("● %s", active)
 	m.StatusLabel.Refresh()
@@ -623,6 +671,8 @@ func (m *MainWindow) showPage(name string) {
 		content = m.logbookPage.Build()
 	case constants.NavTracker:
 		content = m.trackerPage.Build()
+	case constants.NavSettings:
+		content = m.settingsPage.BuildLayout()
 	default:
 		content = m.calcPage.Build()
 	}
@@ -634,4 +684,40 @@ func (m *MainWindow) showPage(name string) {
 
 func (m *MainWindow) ShowAndRun() {
 	m.Window.ShowAndRun()
+}
+
+func (m *MainWindow) showUpdateAvailableNotification(res *updater.UpdateCheckResult) {
+	if res == nil || !res.HasUpdate || m.updateBannerContainer == nil {
+		return
+	}
+	if m.settingsPage != nil {
+		m.settingsPage.SetResult(res)
+	}
+	updateBtn := widget.NewButtonWithIcon("Update "+res.LatestVersion+" Tersedia", theme.DownloadIcon(), func() {
+		m.showPage(constants.NavSettings)
+	})
+	updateBtn.Importance = widget.HighImportance
+
+	m.updateBannerContainer.Objects = []fyne.CanvasObject{updateBtn}
+	m.updateBannerContainer.Refresh()
+
+	m.StatusLabel.Text = fmt.Sprintf("● Update %s Tersedia!", res.LatestVersion)
+	m.StatusLabel.Refresh()
+}
+
+// ShowUpdateNotification manually triggers the update notification badge
+func (m *MainWindow) ShowUpdateNotification(res *updater.UpdateCheckResult) {
+	m.showUpdateAvailableNotification(res)
+}
+
+// SetSettingsUpdateResult pre-populates update check result in settings page
+func (m *MainWindow) SetSettingsUpdateResult(res *updater.UpdateCheckResult) {
+	if m.settingsPage != nil {
+		m.settingsPage.SetResult(res)
+	}
+}
+
+// GetSettingsPage returns the active SettingsPage instance
+func (m *MainWindow) GetSettingsPage() *pages.SettingsPage {
+	return m.settingsPage
 }

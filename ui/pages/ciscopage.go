@@ -244,7 +244,8 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	codeEntry := widget.NewMultiLineEntry()
 	codeEntry.SetText(initialCommands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	codeEntry.Wrapping = fyne.TextWrapWord
+	codeEntry.Wrapping = fyne.TextWrapOff
+	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(initialCommands, "\n")
 	lineCount := len(lines)
@@ -255,15 +256,12 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	if minHeight < 120 {
 		minHeight = 120
 	}
-	if minHeight > 360 {
-		minHeight = 360
-	}
 
 	codeSpacer := canvas.NewRectangle(color.Transparent)
 	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
 	codeStack := container.NewStack(codeSpacer, codeEntry)
 
-	codeLabel := canvas.NewText("⌨ PERINTAH CLI CISCO IOS (SIAP SALIN):", constants.ColorTextPrimary)
+	codeLabel := canvas.NewText("PERINTAH CLI CISCO IOS (SIAP SALIN):", constants.ColorTextPrimary)
 	codeLabel.TextSize = constants.FontSizeLabel
 	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -372,7 +370,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		})
 		resetBtn.Importance = widget.LowImportance
 
-		paramBadge := components.BadgeYellow("⚙️ PARAMETER KUSTOMISASI TOPOLOGI")
+		paramBadge := components.BadgeYellow("PARAMETER KUSTOMISASI TOPOLOGI")
 		paramTop := container.NewBorder(nil, nil, paramBadge, resetBtn)
 
 		paramBg := canvas.NewRectangle(constants.ColorBgCardInner)
@@ -389,10 +387,10 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 		paramPanel.Hide()
 
 		var toggleBtn *widget.Button
-		toggleBtn = widget.NewButtonWithIcon("⚙️ Kustomisasi Parameter (Hostname, IP, VLAN...)", theme.SettingsIcon(), func() {
+		toggleBtn = widget.NewButtonWithIcon("Kustomisasi Parameter (Hostname, IP, VLAN...)", theme.SettingsIcon(), func() {
 			if paramPanel.Visible() {
 				paramPanel.Hide()
-				toggleBtn.SetText("⚙️ Kustomisasi Parameter (Hostname, IP, VLAN...)")
+				toggleBtn.SetText("Kustomisasi Parameter (Hostname, IP, VLAN...)")
 				toggleBtn.SetIcon(theme.SettingsIcon())
 			} else {
 				paramPanel.Show()
@@ -553,13 +551,14 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 
 
 func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
+	var mainScroller *container.Scroll
 	listContainer := container.NewVBox()
 	editingStepIDs := make(map[int]bool)
 
 	// Form inputs for inline Create Topology Card
 	tTitleEntry := widget.NewEntry()
 	tTitleEntry.SetPlaceHolder("cth: Topologi 2 Router 2 Switch dengan DHCP & OSPF")
-	tDescEntry := widget.NewMultiLineEntry()
+	tDescEntry := components.NewScrollableMultiLineEntry(nil)
 	tDescEntry.SetPlaceHolder("cth: Hubungkan LAN Teknik (VLAN 10) dan LAN Keuangan (VLAN 20) lintas router WAN...")
 	tDescEntry.SetMinRowsVisible(3)
 
@@ -621,7 +620,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 			if len(currTopo.Steps) == 0 {
 				progBadge = components.BadgeMuted("Belum ada langkah")
 			} else if completedCount == len(currTopo.Steps) {
-				progBadge = components.BadgeSuccess(fmt.Sprintf("%d/%d Langkah Selesai ✓", completedCount, len(currTopo.Steps)))
+				progBadge = components.BadgeSuccess(fmt.Sprintf("%d/%d Langkah Selesai", completedCount, len(currTopo.Steps)))
 				accentColor = constants.ColorSuccess
 			} else {
 				progBadge = components.BadgeYellow(fmt.Sprintf("%d/%d Selesai", completedCount, len(currTopo.Steps)))
@@ -657,7 +656,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 			editTopoBtn := widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
 				eTitleEntry := widget.NewEntry()
 				eTitleEntry.SetText(currTopo.Title)
-				eDescEntry := widget.NewMultiLineEntry()
+				eDescEntry := components.NewScrollableMultiLineEntry(nil)
 				eDescEntry.SetText(currTopo.Description)
 				eDescEntry.SetMinRowsVisible(5)
 
@@ -725,7 +724,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 				descLabel := widget.NewLabel(currTopo.Description)
 				descLabel.Wrapping = fyne.TextWrapWord
 
-				descTitle := canvas.NewText("🎯 SKENARIO / TARGET LAB:", constants.ColorTextPrimary)
+				descTitle := canvas.NewText("SKENARIO / TARGET LAB:", constants.ColorTextPrimary)
 				descTitle.TextSize = constants.FontSizeLabel
 				descTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -735,7 +734,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 			cardBody = append(cardBody, widget.NewSeparator())
 
 			// Steps section header
-			stepsHdr := canvas.NewText("📋 TAHAPAN & LANGKAH KONFIGURASI:", constants.ColorTextPrimary)
+			stepsHdr := canvas.NewText("TAHAPAN & LANGKAH KONFIGURASI:", constants.ColorTextPrimary)
 			stepsHdr.TextSize = constants.FontSizeLabel
 			stepsHdr.TextStyle = fyne.TextStyle{Bold: true}
 			cardBody = append(cardBody, stepsHdr)
@@ -753,7 +752,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 
 				var stepBadge fyne.CanvasObject
 				if currStep.IsCompleted {
-					stepBadge = components.BadgeSuccess(fmt.Sprintf("✓ Langkah %d", currStep.StepNumber))
+					stepBadge = components.BadgeSuccess(fmt.Sprintf("Langkah %d", currStep.StepNumber))
 				} else {
 					stepBadge = components.BadgeIndigo(fmt.Sprintf("Langkah %d", currStep.StepNumber))
 				}
@@ -766,7 +765,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 					sTitleEntry.SetText(currStep.Title)
 					sTitleEntry.SetPlaceHolder("Judul langkah...")
 
-					sDetailEntry := widget.NewMultiLineEntry()
+					sDetailEntry := components.NewScrollableMultiLineEntry(mainScroller)
 					sDetailEntry.SetText(currStep.Detail)
 					sDetailEntry.TextStyle = fyne.TextStyle{Monospace: true}
 					sDetailEntry.SetMinRowsVisible(6)
@@ -898,7 +897,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 	}
 
 	// Inline Neo-Brutalist Form Card for Creating New Topology
-	formTitle := canvas.NewText("📝 TAMBAH CATATAN TOPOLOGI BARU", constants.ColorTextPrimary)
+	formTitle := canvas.NewText("TAMBAH CATATAN TOPOLOGI BARU", constants.ColorTextPrimary)
 	formTitle.TextSize = constants.FontSizeH2
 	formTitle.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -986,7 +985,9 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 		listContainer,
 	)
 
-	return container.NewVScroll(container.NewPadded(mainContent))
+	mainScroller = container.NewVScroll(container.NewPadded(mainContent))
+	tDescEntry.SetParentScroller(mainScroller)
+	return mainScroller
 }
 
 // ============================================================================
@@ -1036,7 +1037,7 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 
 		// Update Stats
 		tot := len(builtin) + len(customList)
-		statsLabel.SetText(fmt.Sprintf("📚 %d Total Resep Konfigurasi (%d Koleksi Bawaan, %d Resep Kustom)", tot, len(builtin), len(customList)))
+		statsLabel.SetText(fmt.Sprintf("%d Total Resep Konfigurasi (%d Koleksi Bawaan, %d Resep Kustom)", tot, len(builtin), len(customList)))
 
 		// Filter
 		q := strings.ToLower(strings.TrimSpace(libQuery))
@@ -1327,7 +1328,8 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 	codeEntry := widget.NewMultiLineEntry()
 	codeEntry.SetText(cmd.Commands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	codeEntry.Wrapping = fyne.TextWrapWord
+	codeEntry.Wrapping = fyne.TextWrapOff
+	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(cmd.Commands, "\n")
 	lineCount := len(lines)
@@ -1338,15 +1340,12 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 	if minHeight < 110 {
 		minHeight = 110
 	}
-	if minHeight > 320 {
-		minHeight = 320
-	}
 
 	codeSpacer := canvas.NewRectangle(color.Transparent)
 	codeSpacer.SetMinSize(fyne.NewSize(0, minHeight))
 	codeStack := container.NewStack(codeSpacer, codeEntry)
 
-	codeLabel := canvas.NewText("⌨ SKRIP KONFIGURASI LENGKAP:", constants.ColorTextPrimary)
+	codeLabel := canvas.NewText("SKRIP KONFIGURASI LENGKAP:", constants.ColorTextPrimary)
 	codeLabel.TextSize = constants.FontSizeLabel
 	codeLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -1369,7 +1368,7 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 	terminalPanel := container.NewStack(terminalBg, terminalContent)
 
 	// Card Actions Row
-	explainBtn := widget.NewButtonWithIcon("📖 Detail & Penjelasan Tiap Baris", theme.InfoIcon(), func() {
+	explainBtn := widget.NewButtonWithIcon("Detail & Penjelasan Tiap Baris", theme.InfoIcon(), func() {
 		p.showLineExplanationsDialog(cmd)
 	})
 	explainBtn.Importance = widget.MediumImportance
@@ -1402,10 +1401,10 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 
 	var toggleVerifBtn *widget.Button
 	if verifPanel != nil {
-		toggleVerifBtn = widget.NewButtonWithIcon("🔍 Cara Verifikasi & Tips", theme.ConfirmIcon(), func() {
+		toggleVerifBtn = widget.NewButtonWithIcon("Cara Verifikasi & Tips", theme.ConfirmIcon(), func() {
 			if verifPanel.Visible() {
 				verifPanel.Hide()
-				toggleVerifBtn.SetText("🔍 Cara Verifikasi & Tips")
+				toggleVerifBtn.SetText("Cara Verifikasi & Tips")
 				toggleVerifBtn.SetIcon(theme.ConfirmIcon())
 			} else {
 				verifPanel.Show()
@@ -1577,16 +1576,16 @@ func (p *CiscoPage) showAddCustomSnippetDialog(refreshFn func()) {
 	modeSelect := widget.NewSelect(modeOptions, nil)
 	modeSelect.SetSelected(string(cisco.ModeGlobalConfig))
 
-	tDescEntry := widget.NewMultiLineEntry()
+	tDescEntry := components.NewScrollableMultiLineEntry(nil)
 	tDescEntry.SetPlaceHolder("cth: Skrip konfigurasi untuk menggabungkan port trunk antar switch...")
 	tDescEntry.SetMinRowsVisible(3)
 
-	tCmdsEntry := widget.NewMultiLineEntry()
+	tCmdsEntry := components.NewScrollableMultiLineEntry(nil)
 	tCmdsEntry.SetPlaceHolder("Ketik kode konfigurasi Cisco IOS di sini (tiap baris perintah)...")
 	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	tCmdsEntry.SetMinRowsVisible(8)
 
-	tVerifEntry := widget.NewMultiLineEntry()
+	tVerifEntry := components.NewScrollableMultiLineEntry(nil)
 	tVerifEntry.SetPlaceHolder("cth: show etherchannel summary / show running-config")
 	tVerifEntry.SetMinRowsVisible(3)
 
@@ -1690,16 +1689,16 @@ func (p *CiscoPage) showEditCustomSnippetDialog(cmd cisco.CiscoCommand, refreshF
 	modeSelect := widget.NewSelect(modeOptions, nil)
 	modeSelect.SetSelected(string(cmd.Mode))
 
-	tDescEntry := widget.NewMultiLineEntry()
+	tDescEntry := components.NewScrollableMultiLineEntry(nil)
 	tDescEntry.SetText(cmd.Description)
 	tDescEntry.SetMinRowsVisible(3)
 
-	tCmdsEntry := widget.NewMultiLineEntry()
+	tCmdsEntry := components.NewScrollableMultiLineEntry(nil)
 	tCmdsEntry.SetText(cmd.Commands)
 	tCmdsEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	tCmdsEntry.SetMinRowsVisible(8)
 
-	tVerifEntry := widget.NewMultiLineEntry()
+	tVerifEntry := components.NewScrollableMultiLineEntry(nil)
 	tVerifEntry.SetText(cmd.Verification)
 	tVerifEntry.SetMinRowsVisible(3)
 

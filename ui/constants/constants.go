@@ -17,6 +17,7 @@ const (
 	NavFileConverter = "Konverter Berkas"
 	NavYouTube       = "Unduh YouTube"
 	NavCisco         = "Cisco Packet Tracer"
+	NavSettings      = "Pengaturan & Update"
 
 	// Calculator Tabs
 	TabConverter   = "Number & Data"

@@ -87,7 +87,7 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 				btnCancel.Importance = widget.LowImportance
 				actions.Add(btnCancel)
 
-				btnDone := widget.NewButtonWithIcon("Selesai ✔", theme.ConfirmIcon(), func() {
+				btnDone := widget.NewButtonWithIcon("Selesai", theme.ConfirmIcon(), func() {
 					_ = database.UpdateTaskStatus(task.ID, "done")
 					reloadKanban()
 				})
@@ -197,9 +197,9 @@ func (p *TrackerPage) buildKanbanTab() fyne.CanvasObject {
 		addTaskBtn,
 	)
 
-	col1Header := container.NewPadded(components.BadgeMuted("📌 BELUM MULAI"))
-	col2Header := container.NewPadded(components.BadgeWarning("⚡ SEDANG DIKERJAKAN"))
-	col3Header := container.NewPadded(components.BadgeSuccess("✅ SELESAI"))
+	col1Header := container.NewPadded(components.BadgeMuted("BELUM MULAI"))
+	col2Header := container.NewPadded(components.BadgeWarning("SEDANG DIKERJAKAN"))
+	col3Header := container.NewPadded(components.BadgeSuccess("SELESAI"))
 
 	col1 := container.NewBorder(col1Header, nil, nil, nil, container.NewVScroll(todoBox))
 	col2 := container.NewBorder(col2Header, nil, nil, nil, container.NewVScroll(inprogBox))
@@ -258,12 +258,12 @@ func (p *TrackerPage) buildProjectsTab() fyne.CanvasObject {
 
 			var links []fyne.CanvasObject
 			if proj.RepoURL != "" {
-				repoTxt := canvas.NewText("🔗 Repo: "+proj.RepoURL, constants.ColorTextPrimary)
+				repoTxt := canvas.NewText("Repo: "+proj.RepoURL, constants.ColorTextPrimary)
 				repoTxt.TextSize = constants.FontSizeSmall
 				links = append(links, repoTxt)
 			}
 			if proj.LiveURL != "" {
-				liveTxt := canvas.NewText("🌐 Demo: "+proj.LiveURL, constants.ColorTextPrimary)
+				liveTxt := canvas.NewText("Demo: "+proj.LiveURL, constants.ColorTextPrimary)
 				liveTxt.TextSize = constants.FontSizeSmall
 				links = append(links, liveTxt)
 			}

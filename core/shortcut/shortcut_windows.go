@@ -16,8 +16,8 @@ import (
 var embeddedIconIco []byte
 
 func createDesktopShortcut(exePath string) {
-	desktopDirs := getWindowsDesktopDirs()
-	if len(desktopDirs) == 0 {
+	targetDirs := append(getWindowsDesktopDirs(), getWindowsStartMenuDirs()...)
+	if len(targetDirs) == 0 {
 		return
 	}
 
@@ -29,21 +29,17 @@ func createDesktopShortcut(exePath string) {
 		_ = os.WriteFile(icoPath, embeddedIconIco, 0644)
 	}
 
-	for _, desktopDir := range desktopDirs {
-		lnkPath := filepath.Join(desktopDir, "IT Toolbox.lnk")
-		if _, err := os.Stat(lnkPath); err == nil {
-			// Shortcut already exists in this desktop directory
-			continue
-		}
+	for _, targetDir := range targetDirs {
+		lnkPath := filepath.Join(targetDir, "IT Toolbox.lnk")
 
 		// Try Method 1: PowerShell (Modern, direct, no temporary files)
 		psScript := fmt.Sprintf(
 			`$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut('%s'); $s.TargetPath = '%s'; $s.WorkingDirectory = '%s'; $s.Description = 'IT Toolbox - All-in-one Developer & Network Suite'; if (Test-Path '%s') { $s.IconLocation = '%s,0' }; $s.Save()`,
-			strings.ReplaceAll(lnkPath, `'`, `''`),
-			strings.ReplaceAll(exePath, `'`, `''`),
-			strings.ReplaceAll(exeDir, `'`, `''`),
-			strings.ReplaceAll(icoPath, `'`, `''`),
-			strings.ReplaceAll(icoPath, `'`, `''`),
+			strings.ReplaceAll(lnkPath, "'", "''"),
+			strings.ReplaceAll(exePath, "'", "''"),
+			strings.ReplaceAll(exeDir, "'", "''"),
+			strings.ReplaceAll(icoPath, "'", "''"),
+			strings.ReplaceAll(icoPath, "'", "''"),
 		)
 
 		psCmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", psScript)
@@ -81,8 +77,7 @@ oShellLink.Save
 	}
 }
 
-// getWindowsDesktopDirs returns all candidate desktop directories,
-// including user desktop, OneDrive Desktop, and Public Desktop.
+// getWindowsDesktopDirs returns candidate desktop directories
 func getWindowsDesktopDirs() []string {
 	var dirs []string
 	seen := make(map[string]bool)
@@ -119,6 +114,48 @@ func getWindowsDesktopDirs() []string {
 	if home, err := os.UserHomeDir(); err == nil {
 		add(filepath.Join(home, "Desktop"))
 		add(filepath.Join(home, "OneDrive", "Desktop"))
+	}
+
+	return dirs
+}
+
+// getWindowsStartMenuDirs returns candidate Start Menu Programs directories
+func getWindowsStartMenuDirs() []string {
+	var dirs []string
+	seen := make(map[string]bool)
+
+	add := func(p string) {
+		if p == "" {
+			return
+		}
+		clean := filepath.Clean(p)
+		if !seen[clean] {
+			_ = os.MkdirAll(clean, 0755)
+			if info, err := os.Stat(clean); err == nil && info.IsDir() {
+				seen[clean] = true
+				dirs = append(dirs, clean)
+			}
+		}
+	}
+
+	// 1. User Start Menu Programs: %APPDATA%\Microsoft\Windows\Start Menu\Programs
+	if appData := os.Getenv("APPDATA"); appData != "" {
+		add(filepath.Join(appData, "Microsoft", "Windows", "Start Menu", "Programs"))
+	}
+
+	// 2. UserProfile fallback: %USERPROFILE%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs
+	if userProfile := os.Getenv("USERPROFILE"); userProfile != "" {
+		add(filepath.Join(userProfile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs"))
+	}
+
+	// 3. UserHomeDir fallback
+	if home, err := os.UserHomeDir(); err == nil {
+		add(filepath.Join(home, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs"))
+	}
+
+	// 4. All Users / ProgramData Start Menu: %ProgramData%\Microsoft\Windows\Start Menu\Programs
+	if progData := os.Getenv("ProgramData"); progData != "" {
+		add(filepath.Join(progData, "Microsoft", "Windows", "Start Menu", "Programs"))
 	}
 
 	return dirs

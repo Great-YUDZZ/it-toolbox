@@ -13,7 +13,7 @@ func TestStatCardBoundedLayout(t *testing.T) {
 	app := test.NewApp()
 	app.Settings().SetTheme(ui.NewCustomCyanTheme())
 
-	card := components.NewStatCard("RENTANG HOST USABLE", "192.168.1.1 ➔ 192.168.1.62", color.White)
+	card := components.NewStatCard("RENTANG HOST USABLE", "192.168.1.1 -> 192.168.1.62", color.White)
 	card.SetSubtext("Tersedia 62 IP Usable")
 
 	minSize := card.Widget.MinSize()
@@ -25,7 +25,7 @@ func TestStatCardBoundedLayout(t *testing.T) {
 	}
 
 	// Update with even longer text
-	card.SetValue("172.16.0.1 ➔ 172.16.15.254 (Subnet Panjang)")
+	card.SetValue("172.16.0.1 -> 172.16.15.254 (Subnet Panjang)")
 	minSizeAfter := card.Widget.MinSize()
 	t.Logf("StatCard MinSize after long text update: %+v", minSizeAfter)
 
