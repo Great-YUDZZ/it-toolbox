@@ -136,10 +136,10 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 		titles = append(titles, t.Title)
 	}
 
-	dbNameEntry := widget.NewEntry()
+	dbNameEntry := components.NewScrollableEntry()
 	dbNameEntry.SetText("db_aplikasi_utama")
 
-	prefixEntry := widget.NewEntry()
+	prefixEntry := components.NewScrollableEntry()
 	prefixEntry.SetText("")
 	prefixEntry.SetPlaceHolder("cth: tbl_")
 
@@ -503,10 +503,10 @@ func (p *DBSchemaPage) showSQLPreviewModal(tableName, sqlText, engine string, co
 // TAB 3: PEMBUAT TABEL KUSTOM (INTERACTIVE DDL BUILDER)
 // ----------------------------------------------------------------------------
 func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
-	dbNameEntry := widget.NewEntry()
+	dbNameEntry := components.NewScrollableEntry()
 	dbNameEntry.SetText(p.builderTableDef.DatabaseName)
 
-	tableNameEntry := widget.NewEntry()
+	tableNameEntry := components.NewScrollableEntry()
 	tableNameEntry.SetText(p.builderTableDef.TableName)
 
 	engineSelect := widget.NewSelect([]string{
@@ -542,7 +542,7 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 			idx := i
 			c := col
 
-			nameEntry := widget.NewEntry()
+			nameEntry := components.NewScrollableEntry()
 			nameEntry.SetText(c.Name)
 			nameEntry.SetPlaceHolder("nama_kolom")
 			nameEntry.OnChanged = func(val string) {
@@ -571,7 +571,7 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 			})
 			typeSelect.SetSelected(string(c.Type))
 
-			lenEntry := widget.NewEntry()
+			lenEntry := components.NewScrollableEntry()
 			lenEntry.SetText(c.Length)
 			lenEntry.SetPlaceHolder("Panjang")
 			lenEntry.OnChanged = func(val string) {

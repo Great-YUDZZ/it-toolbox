@@ -9,11 +9,37 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// NewScrollableEntry creates a single-line entry that transparently forwards mouse wheel scrolling
+// to its parent container without getting stuck or blocking page scrolling.
+func NewScrollableEntry() *widget.Entry {
+	e := widget.NewEntry()
+	e.Wrapping = fyne.TextWrapOff
+	e.Scroll = fyne.ScrollNone
+	return e
+}
+
+// scrollShield wraps a CanvasObject to hide the internal Scrollable implementation from Fyne's
+// driver hit-testing, allowing ScrollableMultiLineEntry to receive the Scrolled event directly.
+type scrollShield struct {
+	fyne.CanvasObject
+}
+
+type scrollableEntryRenderer struct {
+	base    fyne.WidgetRenderer
+	objects []fyne.CanvasObject
+}
+
+func (r *scrollableEntryRenderer) Destroy()                     { r.base.Destroy() }
+func (r *scrollableEntryRenderer) Layout(s fyne.Size)           { r.base.Layout(s) }
+func (r *scrollableEntryRenderer) MinSize() fyne.Size           { return r.base.MinSize() }
+func (r *scrollableEntryRenderer) Objects() []fyne.CanvasObject { return r.objects }
+func (r *scrollableEntryRenderer) Refresh()                     { r.base.Refresh() }
+
 // ScrollableMultiLineEntry wraps widget.Entry to implement fyne.Scrollable.
 // In standard Fyne, mouse-scrolling while hovering over an Entry is consumed and not passed to
 // parent scroll containers. ScrollableMultiLineEntry allows smooth scrolling:
-// 1. If text is short, scrolling immediately scrolls the parent container.
-// 2. If text exceeds visible rows, it scrolls internally until reaching the top/bottom boundary,
+// 1. If text fits within visible height, scrolling immediately scrolls the parent container.
+// 2. If text exceeds visible rows, it scrolls internally until reaching the boundary,
 //    then seamlessly propagates the scroll event to the parent container.
 type ScrollableMultiLineEntry struct {
 	widget.Entry
@@ -27,6 +53,21 @@ func NewScrollableMultiLineEntry(parent *container.Scroll) *ScrollableMultiLineE
 	e.Wrapping = fyne.TextWrapWord
 	e.ExtendBaseWidget(e)
 	return e
+}
+
+// CreateRenderer intercepts renderer objects and shields the inner scroll from swallowing wheel events.
+func (e *ScrollableMultiLineEntry) CreateRenderer() fyne.WidgetRenderer {
+	base := e.Entry.CreateRenderer()
+	rawObjs := base.Objects()
+	wrapped := make([]fyne.CanvasObject, len(rawObjs))
+	for i, o := range rawObjs {
+		if _, ok := o.(fyne.Scrollable); ok {
+			wrapped[i] = &scrollShield{CanvasObject: o}
+		} else {
+			wrapped[i] = o
+		}
+	}
+	return &scrollableEntryRenderer{base: base, objects: wrapped}
 }
 
 // SetParentScroller sets or updates the parent scroll container for scroll propagation.

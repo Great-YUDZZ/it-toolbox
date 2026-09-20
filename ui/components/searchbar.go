@@ -15,7 +15,7 @@ type SearchBar struct {
 }
 
 func NewSearchBar(placeholder string, onSearch func(query string)) *SearchBar {
-	entry := widget.NewEntry()
+	entry := NewScrollableEntry()
 	entry.SetPlaceHolder(placeholder)
 
 	sb := &SearchBar{

@@ -413,7 +413,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand, parentScroller *con
 			pLbl.TextSize = constants.FontSizeLabel
 			pLbl.TextStyle = fyne.TextStyle{Bold: true}
 
-			pEnt := widget.NewEntry()
+			pEnt := components.NewScrollableEntry()
 			pEnt.SetText(pDef)
 			pEnt.SetPlaceHolder(param.Placeholder)
 			paramInputs = append(paramInputs, pEnt)
@@ -628,7 +628,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 	editingStepIDs := make(map[int]bool)
 
 	// Form inputs for inline Create Topology Card
-	tTitleEntry := widget.NewEntry()
+	tTitleEntry := components.NewScrollableEntry()
 	tTitleEntry.SetPlaceHolder("cth: Topologi 2 Router 2 Switch dengan DHCP & OSPF")
 	tDescEntry := components.NewScrollableMultiLineEntry(nil)
 	tDescEntry.SetPlaceHolder("cth: Hubungkan LAN Teknik (VLAN 10) dan LAN Keuangan (VLAN 20) lintas router WAN...")
@@ -726,7 +726,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 
 			// Edit Topology Button using Neo-Brutalist modal
 			editTopoBtn := widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
-				eTitleEntry := widget.NewEntry()
+				eTitleEntry := components.NewScrollableEntry()
 				eTitleEntry.SetText(currTopo.Title)
 				eDescEntry := components.NewScrollableMultiLineEntry(nil)
 				eDescEntry.SetText(currTopo.Description)
@@ -833,7 +833,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 
 				if isEditing {
 					// --- INLINE EDIT MODE LANGSUNG DI KARTU LANGKAH ---
-					sTitleEntry := widget.NewEntry()
+					sTitleEntry := components.NewScrollableEntry()
 					sTitleEntry.SetText(currStep.Title)
 					sTitleEntry.SetPlaceHolder("Judul langkah...")
 
@@ -939,10 +939,10 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 			cardBody = append(cardBody, stepsContainer)
 
 			// Quick Add Step Form Strip
-			newStepTitle := widget.NewEntry()
+			newStepTitle := components.NewScrollableEntry()
 			newStepTitle.SetPlaceHolder("Judul langkah baru (misal: Pasang kabel / Konfigurasi VLAN)...")
 
-			newStepDetail := widget.NewEntry()
+			newStepDetail := components.NewScrollableEntry()
 			newStepDetail.SetPlaceHolder("Catatan / perintah CLI singkat (opsional)...")
 
 			addStepBtn := widget.NewButtonWithIcon("Tambah Langkah", theme.ContentAddIcon(), func() {
@@ -1191,10 +1191,38 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 			return
 		}
 
-		for _, item := range filtered {
-			cmd := item
+		initialBatch := 8
+		hasFilter := (q != "") || (libDevice != cisco.DeviceAll) || (libCategory != cisco.CategoryAll) || (libSource != "Semua Sumber")
+
+		limit := len(filtered)
+		if !hasFilter && limit > initialBatch {
+			limit = initialBatch
+		}
+
+		for i := 0; i < limit; i++ {
+			cmd := filtered[i]
 			card := p.buildLibraryCard(cmd, scrollList, renderLibrary)
 			cardsContainer.Add(card)
+		}
+
+		if !hasFilter && len(filtered) > initialBatch {
+			remaining := len(filtered) - initialBatch
+			var loadAllBtn *widget.Button
+			loadAllBtn = widget.NewButtonWithIcon(
+				fmt.Sprintf("Tampilkan Semua (Sisa %d Resep Lainnya)", remaining),
+				theme.MoveDownIcon(),
+				func() {
+					cardsContainer.Remove(loadAllBtn)
+					for i := initialBatch; i < len(filtered); i++ {
+						cmd := filtered[i]
+						card := p.buildLibraryCard(cmd, scrollList, renderLibrary)
+						cardsContainer.Add(card)
+					}
+					cardsContainer.Refresh()
+				},
+			)
+			loadAllBtn.Importance = widget.MediumImportance
+			cardsContainer.Add(loadAllBtn)
 		}
 		cardsContainer.Refresh()
 	}
@@ -1213,11 +1241,12 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 		string(cisco.DeviceSwitchL3),
 		string(cisco.DevicePC),
 	}
-	devSelect := widget.NewSelect(deviceOptions, func(val string) {
+	devSelect := widget.NewSelect(deviceOptions, nil)
+	devSelect.Selected = string(cisco.DeviceAll)
+	devSelect.OnChanged = func(val string) {
 		libDevice = cisco.DeviceType(val)
 		renderLibrary()
-	})
-	devSelect.SetSelected(string(cisco.DeviceAll))
+	}
 
 	devSpacer := canvas.NewRectangle(color.Transparent)
 	devSpacer.SetMinSize(fyne.NewSize(140, 36))
@@ -1240,11 +1269,12 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 		string(cisco.CategoryRecovery),
 		string(cisco.CategoryShowDiag),
 	}
-	catSelect := widget.NewSelect(categoryOptions, func(val string) {
+	catSelect := widget.NewSelect(categoryOptions, nil)
+	catSelect.Selected = string(cisco.CategoryAll)
+	catSelect.OnChanged = func(val string) {
 		libCategory = cisco.Category(val)
 		renderLibrary()
-	})
-	catSelect.SetSelected(string(cisco.CategoryAll))
+	}
 
 	catSpacer := canvas.NewRectangle(color.Transparent)
 	catSpacer.SetMinSize(fyne.NewSize(140, 36))
@@ -1256,11 +1286,12 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 		"Koleksi Bawaan",
 		"Kustom Saya",
 	}
-	sourceSelect := widget.NewSelect(sourceOptions, func(val string) {
+	sourceSelect := widget.NewSelect(sourceOptions, nil)
+	sourceSelect.Selected = "Semua Sumber"
+	sourceSelect.OnChanged = func(val string) {
 		libSource = val
 		renderLibrary()
-	})
-	sourceSelect.SetSelected("Semua Sumber")
+	}
 
 	sourceSpacer := canvas.NewRectangle(color.Transparent)
 	sourceSpacer.SetMinSize(fyne.NewSize(130, 36))
@@ -1603,7 +1634,7 @@ func (p *CiscoPage) showLineExplanationsDialog(cmd cisco.CiscoCommand) {
 }
 
 func (p *CiscoPage) showAddCustomSnippetDialog(refreshFn func()) {
-	tTitleEntry := widget.NewEntry()
+	tTitleEntry := components.NewScrollableEntry()
 	tTitleEntry.SetPlaceHolder("cth: Setup EtherChannel LACP Switch Core")
 
 	deviceOptions := []string{
@@ -1716,7 +1747,7 @@ func (p *CiscoPage) showAddCustomSnippetDialog(refreshFn func()) {
 }
 
 func (p *CiscoPage) showEditCustomSnippetDialog(cmd cisco.CiscoCommand, refreshFn func()) {
-	tTitleEntry := widget.NewEntry()
+	tTitleEntry := components.NewScrollableEntry()
 	tTitleEntry.SetText(cmd.Title)
 
 	deviceOptions := []string{

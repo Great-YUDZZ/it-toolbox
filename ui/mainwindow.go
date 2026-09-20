@@ -208,6 +208,46 @@ func (l *slidingSidebarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(*l.width, 0)
 }
 
+// mainSlidingLayout manages the smooth sliding transition between the sidebar and content area
+type mainSlidingLayout struct {
+	width       *float32
+	fullWidth   *float32
+	isAnimating *bool
+}
+
+func (l *mainSlidingLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if len(objects) < 2 {
+		return
+	}
+	sidebar := objects[0]
+	content := objects[1]
+
+	sw := *l.width
+	if sidebar != nil && sidebar.Visible() {
+		sidebar.Move(fyne.NewPos(0, 0))
+		sidebar.Resize(fyne.NewSize(sw, size.Height))
+	}
+
+	content.Move(fyne.NewPos(sw, 0))
+	if l.isAnimating != nil && *l.isAnimating {
+		// During animation, keep content width static to eliminate text reflow lag
+		return
+	}
+
+	cw := size.Width - sw
+	if cw < 0 {
+		cw = 0
+	}
+	content.Resize(fyne.NewSize(cw, size.Height))
+}
+
+func (l *mainSlidingLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if len(objects) < 2 {
+		return fyne.NewSize(0, 0)
+	}
+	return objects[1].MinSize().AddWidthHeight(*l.width, 0)
+}
+
 // pageSlideLayout animates page entry with a subtle upward glide (offsetY)
 type pageSlideLayout struct {
 	offsetY *float32
@@ -242,7 +282,9 @@ type MainWindow struct {
 	IsDark        bool
 
 	mainLayout         *fyne.Container
+	contentAreaWrapper fyne.CanvasObject
 	isSidebarCollapsed bool
+	isSidebarAnimating bool
 	sidebarWithSep     *fyne.Container
 	sidebarContainer   *fyne.Container
 	sidebarLayout      *slidingSidebarLayout
@@ -804,8 +846,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		contentAreaWrapper = container.NewStack(bgContent, container.NewPadded(contentWithTopBar))
 	}
 
-	// Main Layout: Sidebar on Left, Content Area in Center
-	m.mainLayout = container.NewBorder(nil, nil, m.sidebarWithSep, nil, contentAreaWrapper)
+	m.contentAreaWrapper = contentAreaWrapper
+	// Main Layout: Custom sliding layout that animates smoothly without reflowing content per frame
+	m.mainLayout = container.New(&mainSlidingLayout{
+		width:       &m.sidebarWidth,
+		fullWidth:   &m.sidebarFullWidth,
+		isAnimating: &m.isSidebarAnimating,
+	}, m.sidebarWithSep, contentAreaWrapper)
 	return m.mainLayout
 }
 
@@ -869,6 +916,16 @@ func (m *MainWindow) ToggleSidebar() {
 		animDuration = 30 * time.Millisecond
 	}
 
+	m.isSidebarAnimating = true
+	if !targetCollapsed {
+		if m.contentAreaWrapper != nil && m.mainLayout != nil {
+			cw := m.mainLayout.Size().Width - endW
+			if cw > 0 {
+				m.contentAreaWrapper.Resize(fyne.NewSize(cw, m.mainLayout.Size().Height))
+			}
+		}
+	}
+
 	m.sidebarAnim = fyne.NewAnimation(animDuration, func(progress float32) {
 		m.sidebarWidth = startW + (endW-startW)*progress
 		if m.sidebarContainer != nil {
@@ -880,12 +937,20 @@ func (m *MainWindow) ToggleSidebar() {
 
 		if progress >= 1.0 {
 			m.sidebarWidth = endW
+			m.isSidebarAnimating = false
 			if targetCollapsed {
 				if m.sidebarWithSep != nil {
 					m.sidebarWithSep.Hide()
 				}
 				if m.topBarWrapper != nil {
 					m.topBarWrapper.Show()
+				}
+			}
+			if m.contentAreaWrapper != nil && m.mainLayout != nil {
+				cw := m.mainLayout.Size().Width - endW
+				if cw > 0 {
+					m.contentAreaWrapper.Resize(fyne.NewSize(cw, m.mainLayout.Size().Height))
+					m.contentAreaWrapper.Refresh()
 				}
 			}
 			if m.mainLayout != nil {
