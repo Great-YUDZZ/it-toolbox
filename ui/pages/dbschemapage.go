@@ -20,6 +20,8 @@ import (
 type DBSchemaPage struct {
 	window fyne.Window
 
+	cachedView fyne.CanvasObject
+
 	// Builder State
 	builderTableDef dbschema.TableDef
 
@@ -72,20 +74,49 @@ func (p *DBSchemaPage) exportSQLFile(defaultName, sqlContent string) {
 }
 
 func (p *DBSchemaPage) Build() fyne.CanvasObject {
+	if p.cachedView != nil {
+		return p.cachedView
+	}
+
 	hero := components.NewHeroHeader(
 		constants.NavDatabase,
 		"Perancang dan generator skema database lengkap untuk MySQL, MariaDB, PostgreSQL, SQLite, SQL Server, dan Oracle. Dilengkapi perpustakaan skema siap pakai, katalog perintah DDL, dan kamus tipe data.",
 		components.BadgeCyan("DATABASE ARCHITECT & DDL GENERATOR"),
 	)
 
-	tabs := container.NewAppTabs(
-		container.NewTabItemWithIcon(constants.TabDBSchemas, theme.FolderOpenIcon(), p.buildSchemasTab()),
-		container.NewTabItemWithIcon(constants.TabDBCatalog, theme.ListIcon(), p.buildCatalogTab()),
-		container.NewTabItemWithIcon(constants.TabDBGenerator, theme.DocumentCreateIcon(), p.buildGeneratorTab()),
-		container.NewTabItemWithIcon(constants.TabDBDataTypes, theme.InfoIcon(), p.buildDataTypesTab()),
-	)
+	tab1 := container.NewTabItemWithIcon(constants.TabDBSchemas, theme.FolderOpenIcon(), p.buildSchemasTab())
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	tabCatalogBox := container.NewStack()
+	tabGeneratorBox := container.NewStack()
+	tabDataTypesBox := container.NewStack()
+
+	tab2 := container.NewTabItemWithIcon(constants.TabDBCatalog, theme.ListIcon(), tabCatalogBox)
+	tab3 := container.NewTabItemWithIcon(constants.TabDBGenerator, theme.DocumentCreateIcon(), tabGeneratorBox)
+	tab4 := container.NewTabItemWithIcon(constants.TabDBDataTypes, theme.InfoIcon(), tabDataTypesBox)
+
+	tabs := container.NewAppTabs(tab1, tab2, tab3, tab4)
+	tabs.OnSelected = func(t *container.TabItem) {
+		switch t {
+		case tab2:
+			if len(tabCatalogBox.Objects) == 0 {
+				tabCatalogBox.Objects = []fyne.CanvasObject{p.buildCatalogTab()}
+				tabCatalogBox.Refresh()
+			}
+		case tab3:
+			if len(tabGeneratorBox.Objects) == 0 {
+				tabGeneratorBox.Objects = []fyne.CanvasObject{p.buildGeneratorTab()}
+				tabGeneratorBox.Refresh()
+			}
+		case tab4:
+			if len(tabDataTypesBox.Objects) == 0 {
+				tabDataTypesBox.Objects = []fyne.CanvasObject{p.buildDataTypesTab()}
+				tabDataTypesBox.Refresh()
+			}
+		}
+	}
+
+	p.cachedView = container.NewBorder(hero, nil, nil, nil, tabs)
+	return p.cachedView
 }
 
 // ----------------------------------------------------------------------------
@@ -112,7 +143,8 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 	prefixEntry.SetText("")
 	prefixEntry.SetPlaceHolder("cth: tbl_")
 
-	sqlPreview := widget.NewMultiLineEntry()
+	tabScroll := container.NewVScroll(nil)
+	sqlPreview := components.NewScrollableMultiLineEntry(tabScroll)
 	sqlPreview.TextStyle = fyne.TextStyle{Monospace: true}
 	sqlPreview.Wrapping = fyne.TextWrapOff
 
@@ -206,7 +238,12 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 
 	refreshPreview()
 
-	return container.NewBorder(headerPanel, nil, nil, nil, container.NewPadded(sqlPreview))
+	previewSpacer := canvas.NewRectangle(color.Transparent)
+	previewSpacer.SetMinSize(fyne.NewSize(0, 320))
+	previewBox := container.NewStack(previewSpacer, container.NewPadded(sqlPreview))
+
+	tabScroll.Content = container.NewVBox(headerPanel, previewBox)
+	return tabScroll
 }
 
 // ----------------------------------------------------------------------------
@@ -214,6 +251,7 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 // ----------------------------------------------------------------------------
 func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 	listContainer := container.NewVBox()
+	scroll := container.NewVScroll(listContainer)
 
 	renderList := func() {
 		listContainer.Objects = nil
@@ -252,7 +290,7 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 			descLabel := widget.NewLabel(cmd.Description)
 			descLabel.Wrapping = fyne.TextWrapWord
 
-			codeBox := widget.NewMultiLineEntry()
+			codeBox := components.NewScrollableMultiLineEntry(scroll)
 			codeBox.SetText(cmd.RenderCommand(nil))
 			codeBox.TextStyle = fyne.TextStyle{Monospace: true}
 			codeBox.Wrapping = fyne.TextWrapOff
@@ -314,7 +352,6 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 	)
 
 	renderList()
-	scroll := container.NewVScroll(listContainer)
 	return container.NewBorder(container.NewPadded(components.NewPlainCard(filterBar)), nil, nil, nil, scroll)
 }
 

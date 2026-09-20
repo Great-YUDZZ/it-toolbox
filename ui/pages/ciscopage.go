@@ -21,6 +21,8 @@ import (
 type CiscoPage struct {
 	window fyne.Window
 
+	cachedView fyne.CanvasObject
+
 	searchQuery      string
 	selectedDevice   cisco.DeviceType
 	selectedMode     cisco.CLIMode
@@ -44,27 +46,75 @@ func (p *CiscoPage) copyToClip(txt string) {
 }
 
 func (p *CiscoPage) Build() fyne.CanvasObject {
+	if p.cachedView != nil {
+		return p.cachedView
+	}
+
 	hero := components.NewHeroHeader(
 		constants.NavCisco,
 		"Katalog lengkap perintah CLI Cisco IOS untuk Router, Switch, dan PC. Dikelompokkan berdasarkan perangkat, mode akses, dan tujuan konfigurasi serta panduan verifikasi topologi.",
 		components.BadgeCyan("CISCO PACKET TRACER"),
 	)
 
-	tabs := container.NewAppTabs(
-		container.NewTabItemWithIcon(constants.TabCiscoLibrary, theme.FolderOpenIcon(), p.buildLibraryView()),
-		container.NewTabItemWithIcon(constants.TabCiscoAll, theme.ListIcon(), p.buildCategoryView(cisco.CategoryAll)),
-		container.NewTabItemWithIcon(constants.TabCiscoSwitch, theme.FolderIcon(), p.buildCategoryView(cisco.CategoryVLAN)),
-		container.NewTabItemWithIcon(constants.TabCiscoRouting, theme.NavigateNextIcon(), p.buildCategoryView(cisco.CategoryRouting)),
-		container.NewTabItemWithIcon(constants.TabCiscoServices, theme.StorageIcon(), p.buildCategoryView(cisco.CategoryServices)),
-		container.NewTabItemWithIcon(constants.TabCiscoVerify, theme.ConfirmIcon(), p.buildVerificationGuideView()),
-		container.NewTabItemWithIcon(constants.TabCiscoTopologyNotes, theme.DocumentCreateIcon(), p.buildTopologyNotesView()),
-	)
+	tab1 := container.NewTabItemWithIcon(constants.TabCiscoLibrary, theme.FolderOpenIcon(), p.buildLibraryView())
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	tabAllBox := container.NewStack()
+	tabSwitchBox := container.NewStack()
+	tabRoutingBox := container.NewStack()
+	tabServicesBox := container.NewStack()
+	tabVerifyBox := container.NewStack()
+	tabNotesBox := container.NewStack()
+
+	tab2 := container.NewTabItemWithIcon(constants.TabCiscoAll, theme.ListIcon(), tabAllBox)
+	tab3 := container.NewTabItemWithIcon(constants.TabCiscoSwitch, theme.FolderIcon(), tabSwitchBox)
+	tab4 := container.NewTabItemWithIcon(constants.TabCiscoRouting, theme.NavigateNextIcon(), tabRoutingBox)
+	tab5 := container.NewTabItemWithIcon(constants.TabCiscoServices, theme.StorageIcon(), tabServicesBox)
+	tab6 := container.NewTabItemWithIcon(constants.TabCiscoVerify, theme.ConfirmIcon(), tabVerifyBox)
+	tab7 := container.NewTabItemWithIcon(constants.TabCiscoTopologyNotes, theme.DocumentCreateIcon(), tabNotesBox)
+
+	tabs := container.NewAppTabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7)
+	tabs.OnSelected = func(t *container.TabItem) {
+		switch t {
+		case tab2:
+			if len(tabAllBox.Objects) == 0 {
+				tabAllBox.Objects = []fyne.CanvasObject{p.buildCategoryView(cisco.CategoryAll)}
+				tabAllBox.Refresh()
+			}
+		case tab3:
+			if len(tabSwitchBox.Objects) == 0 {
+				tabSwitchBox.Objects = []fyne.CanvasObject{p.buildCategoryView(cisco.CategoryVLAN)}
+				tabSwitchBox.Refresh()
+			}
+		case tab4:
+			if len(tabRoutingBox.Objects) == 0 {
+				tabRoutingBox.Objects = []fyne.CanvasObject{p.buildCategoryView(cisco.CategoryRouting)}
+				tabRoutingBox.Refresh()
+			}
+		case tab5:
+			if len(tabServicesBox.Objects) == 0 {
+				tabServicesBox.Objects = []fyne.CanvasObject{p.buildCategoryView(cisco.CategoryServices)}
+				tabServicesBox.Refresh()
+			}
+		case tab6:
+			if len(tabVerifyBox.Objects) == 0 {
+				tabVerifyBox.Objects = []fyne.CanvasObject{p.buildVerificationGuideView()}
+				tabVerifyBox.Refresh()
+			}
+		case tab7:
+			if len(tabNotesBox.Objects) == 0 {
+				tabNotesBox.Objects = []fyne.CanvasObject{p.buildTopologyNotesView()}
+				tabNotesBox.Refresh()
+			}
+		}
+	}
+
+	p.cachedView = container.NewBorder(hero, nil, nil, nil, tabs)
+	return p.cachedView
 }
 
 func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 	listContainer := container.NewVBox()
+	scrollList := container.NewVScroll(container.NewPadded(listContainer))
 
 	query := p.searchQuery
 	devFilter := p.selectedDevice
@@ -91,10 +141,33 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 			return
 		}
 
-		for _, item := range items {
+		limit := len(items)
+		hasMore := false
+		if limit > 6 && query == "" && devFilter == cisco.DeviceAll && modeFilter == cisco.ModeAll && (activeCat == cisco.CategoryAll || activeCat == "") {
+			limit = 6
+			hasMore = true
+		}
+
+		for _, item := range items[:limit] {
 			cmd := item
-			card := p.buildCommandCard(cmd)
+			card := p.buildCommandCard(cmd, scrollList)
 			listContainer.Add(card)
+		}
+
+		if hasMore {
+			remCount := len(items) - limit
+			var btnMore *widget.Button
+			btnMore = widget.NewButtonWithIcon(fmt.Sprintf("Tampilkan Semua (Sisa %d Perintah Lainnya)", remCount), theme.MoveDownIcon(), func() {
+				listContainer.Remove(btnMore)
+				for _, item := range items[limit:] {
+					cmd := item
+					card := p.buildCommandCard(cmd, scrollList)
+					listContainer.Add(card)
+				}
+				listContainer.Refresh()
+			})
+			btnMore.Importance = widget.MediumImportance
+			listContainer.Add(container.NewPadded(btnMore))
 		}
 		listContainer.Refresh()
 	}
@@ -107,11 +180,12 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		string(cisco.DeviceSwitchL3),
 		string(cisco.DevicePC),
 	}
-	devSelect := widget.NewSelect(deviceOptions, func(val string) {
+	devSelect := widget.NewSelect(deviceOptions, nil)
+	devSelect.Selected = string(cisco.DeviceAll)
+	devSelect.OnChanged = func(val string) {
 		devFilter = cisco.DeviceType(val)
 		renderList()
-	})
-	devSelect.SetSelected(string(cisco.DeviceAll))
+	}
 
 	devSpacer := canvas.NewRectangle(color.Transparent)
 	devSpacer.SetMinSize(fyne.NewSize(140, 36))
@@ -131,11 +205,12 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		string(cisco.ModeDHCPConfig),
 		string(cisco.ModePCTerminal),
 	}
-	modeSelect := widget.NewSelect(modeOptions, func(val string) {
+	modeSelect := widget.NewSelect(modeOptions, nil)
+	modeSelect.Selected = string(cisco.ModeAll)
+	modeSelect.OnChanged = func(val string) {
 		modeFilter = cisco.CLIMode(val)
 		renderList()
-	})
-	modeSelect.SetSelected(string(cisco.ModeAll))
+	}
 
 	modeSpacer := canvas.NewRectangle(color.Transparent)
 	modeSpacer.SetMinSize(fyne.NewSize(160, 36))
@@ -171,11 +246,12 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 			string(cisco.CategoryNAT),
 			string(cisco.CategoryShowDiag),
 		}
-		catSelect := widget.NewSelect(catOptions, func(val string) {
+		catSelect := widget.NewSelect(catOptions, nil)
+		catSelect.Selected = string(cisco.CategoryAll)
+		catSelect.OnChanged = func(val string) {
 			activeCat = cisco.Category(val)
 			renderList()
-		})
-		catSelect.SetSelected(string(cisco.CategoryAll))
+		}
 
 		catSpacer := canvas.NewRectangle(color.Transparent)
 		catSpacer.SetMinSize(fyne.NewSize(140, 36))
@@ -196,11 +272,10 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 
 	renderList()
 
-	scrollList := container.NewVScroll(container.NewPadded(listContainer))
 	return container.NewBorder(headerBox, nil, nil, nil, scrollList)
 }
 
-func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
+func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand, parentScroller *container.Scroll) fyne.CanvasObject {
 	// 1. Accent and Badges
 	var accentColor color.Color
 	var devBadge fyne.CanvasObject
@@ -240,12 +315,11 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	initialCommands := cmd.RenderCommands(userParams)
 	initialIPExample := cmd.RenderIPExample(userParams)
 
-	// CLI Script Entry (Monospace)
-	codeEntry := widget.NewMultiLineEntry()
+	// CLI Script Entry (Monospace) with transparent scroll propagation
+	codeEntry := components.NewScrollableMultiLineEntry(parentScroller)
 	codeEntry.SetText(initialCommands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	codeEntry.Wrapping = fyne.TextWrapWord
-	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(initialCommands, "\n")
 	lineCount := len(lines)
@@ -994,6 +1068,7 @@ func (p *CiscoPage) buildTopologyNotesView() fyne.CanvasObject {
 
 func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 	cardsContainer := container.NewVBox()
+	scrollList := container.NewVScroll(container.NewPadded(cardsContainer))
 
 	libQuery := ""
 	libDevice := cisco.DeviceAll
@@ -1118,7 +1193,7 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 
 		for _, item := range filtered {
 			cmd := item
-			card := p.buildLibraryCard(cmd, renderLibrary)
+			card := p.buildLibraryCard(cmd, scrollList, renderLibrary)
 			cardsContainer.Add(card)
 		}
 		cardsContainer.Refresh()
@@ -1245,11 +1320,10 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 
 	renderLibrary()
 
-	scrollList := container.NewVScroll(container.NewPadded(cardsContainer))
 	return container.NewBorder(headerBox, nil, nil, nil, scrollList)
 }
 
-func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) fyne.CanvasObject {
+func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, parentScroller *container.Scroll, refreshFn func()) fyne.CanvasObject {
 	var accentColor color.Color
 	var devBadge fyne.CanvasObject
 
@@ -1322,12 +1396,11 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 	descLabel := widget.NewLabel(cmd.Description)
 	descLabel.Wrapping = fyne.TextWrapWord
 
-	// Code Entry Box
-	codeEntry := widget.NewMultiLineEntry()
+	// Code Entry Box with transparent scroll propagation
+	codeEntry := components.NewScrollableMultiLineEntry(parentScroller)
 	codeEntry.SetText(cmd.Commands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
 	codeEntry.Wrapping = fyne.TextWrapWord
-	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(cmd.Commands, "\n")
 	lineCount := len(lines)

@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/test"
 	"github.com/yudz/it-toolbox/ui"
 	"github.com/yudz/it-toolbox/ui/constants"
+	"github.com/yudz/it-toolbox/ui/components"
+	"github.com/yudz/it-toolbox/ui/pages"
 )
 
 type testSlidingSidebarLayout struct {
@@ -76,6 +78,7 @@ func TestSlidingSidebarLayout(t *testing.T) {
 
 func TestMainWindowToggleSidebarAnimated(t *testing.T) {
 	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
 	mw := ui.NewMainWindow(app)
 
 	// Initially expanded
@@ -94,6 +97,7 @@ func TestMainWindowToggleSidebarAnimated(t *testing.T) {
 
 func TestMainWindowRapidToggle(t *testing.T) {
 	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
 	mw := ui.NewMainWindow(app)
 
 	// Rapidly toggle multiple times in flight
@@ -106,6 +110,7 @@ func TestMainWindowRapidToggle(t *testing.T) {
 
 func TestMainWindowShowPageTransitions(t *testing.T) {
 	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
 	mw := ui.NewMainWindow(app)
 
 	pagesToTest := []string{
@@ -129,4 +134,100 @@ func TestMainWindowShowPageTransitions(t *testing.T) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	time.Sleep(200 * time.Millisecond)
+}
+
+func TestCiscoPageLazyLoadingPerformance(t *testing.T) {
+	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
+	win := app.NewWindow("Test")
+	ciscoPage := pages.NewCiscoPage(win)
+
+	t0 := time.Now()
+	obj := ciscoPage.Build()
+	elapsed := time.Since(t0)
+
+	if obj == nil {
+		t.Fatal("Expected ciscoPage.Build() to return non-nil CanvasObject")
+	}
+
+	t.Logf("CiscoPage.Build() initial elapsed time: %v", elapsed)
+	if elapsed > 500*time.Millisecond {
+		t.Errorf("CiscoPage.Build() took too long (%v), expected < 100ms", elapsed)
+	}
+
+	// Calling Build() second time should return cached instance instantly (< 1ms)
+	t0 = time.Now()
+	obj2 := ciscoPage.Build()
+	elapsedCached := time.Since(t0)
+	t.Logf("CiscoPage.Build() cached elapsed time: %v", elapsedCached)
+
+	if obj != obj2 {
+		t.Errorf("Expected cached view to return the same CanvasObject instance")
+	}
+	if elapsedCached > 10*time.Millisecond {
+		t.Errorf("Cached CiscoPage.Build() took too long (%v), expected < 10ms", elapsedCached)
+	}
+}
+
+func TestDBSchemaPageLazyLoadingPerformance(t *testing.T) {
+	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
+	win := app.NewWindow("Test")
+	dbPage := pages.NewDBSchemaPage(win)
+
+	t0 := time.Now()
+	obj := dbPage.Build()
+	elapsed := time.Since(t0)
+
+	if obj == nil {
+		t.Fatal("Expected dbPage.Build() to return non-nil CanvasObject")
+	}
+
+	t.Logf("DBSchemaPage.Build() initial elapsed time: %v", elapsed)
+	if elapsed > 500*time.Millisecond {
+		t.Errorf("DBSchemaPage.Build() took too long (%v), expected < 100ms", elapsed)
+	}
+
+	// Calling Build() second time should return cached instance instantly (< 1ms)
+	t0 = time.Now()
+	obj2 := dbPage.Build()
+	elapsedCached := time.Since(t0)
+	t.Logf("DBSchemaPage.Build() cached elapsed time: %v", elapsedCached)
+
+	if obj != obj2 {
+		t.Errorf("Expected cached view to return the same CanvasObject instance")
+	}
+	if elapsedCached > 10*time.Millisecond {
+		t.Errorf("Cached DBSchemaPage.Build() took too long (%v), expected < 10ms", elapsedCached)
+	}
+}
+
+func TestScrollableMultiLineEntryEventPropagation(t *testing.T) {
+	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
+
+	mockContent := canvas.NewRectangle(color.Black)
+	mockContent.SetMinSize(fyne.NewSize(400, 2000))
+
+	scroller := container.NewVScroll(mockContent)
+	scroller.Resize(fyne.NewSize(400, 400))
+
+	entry := components.NewScrollableMultiLineEntry(scroller)
+	entry.SetText("Line 1\nLine 2\nLine 3\nLine 4")
+	entry.Resize(fyne.NewSize(400, 150))
+
+	// Initial offset
+	initOffset := scroller.Offset.Y
+
+	// Scroll event simulated over the entry
+	ev := &fyne.ScrollEvent{
+		PointEvent: fyne.PointEvent{Position: fyne.NewPos(50, 50)},
+		Scrolled:   fyne.NewDelta(0, -30),
+	}
+	entry.Scrolled(ev)
+
+	t.Logf("Initial offset: %f, After scroll over entry: %f", initOffset, scroller.Offset.Y)
+	if scroller.Offset.Y == initOffset {
+		t.Errorf("Expected scroller.Offset.Y to change after scrolling over entry, remained %f", scroller.Offset.Y)
+	}
 }

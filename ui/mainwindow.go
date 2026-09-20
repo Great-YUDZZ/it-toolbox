@@ -241,6 +241,7 @@ type MainWindow struct {
 	CurrentTheme  string
 	IsDark        bool
 
+	mainLayout         *fyne.Container
 	isSidebarCollapsed bool
 	sidebarWithSep     *fyne.Container
 	sidebarContainer   *fyne.Container
@@ -804,8 +805,8 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	}
 
 	// Main Layout: Sidebar on Left, Content Area in Center
-	mainLayout := container.NewBorder(nil, nil, m.sidebarWithSep, nil, contentAreaWrapper)
-	return mainLayout
+	m.mainLayout = container.NewBorder(nil, nil, m.sidebarWithSep, nil, contentAreaWrapper)
+	return m.mainLayout
 }
 
 func (m *MainWindow) updateNavHighlights(active string) {
@@ -873,24 +874,24 @@ func (m *MainWindow) ToggleSidebar() {
 		if m.sidebarContainer != nil {
 			m.sidebarContainer.Refresh()
 		}
-		if m.RootContainer != nil {
-			m.RootContainer.Refresh()
+		if m.mainLayout != nil {
+			m.mainLayout.Refresh()
 		}
 
 		if progress >= 1.0 {
 			m.sidebarWidth = endW
 			if targetCollapsed {
-			if m.sidebarWithSep != nil {
-				m.sidebarWithSep.Hide()
+				if m.sidebarWithSep != nil {
+					m.sidebarWithSep.Hide()
+				}
+				if m.topBarWrapper != nil {
+					m.topBarWrapper.Show()
+				}
 			}
-			if m.topBarWrapper != nil {
-				m.topBarWrapper.Show()
+			if m.mainLayout != nil {
+				m.mainLayout.Refresh()
 			}
-		}
-		if m.RootContainer != nil {
-			m.RootContainer.Refresh()
-		}
-		m.sidebarAnim = nil
+			m.sidebarAnim = nil
 		}
 	})
 	m.sidebarAnim.Curve = fyne.AnimationEaseInOut
