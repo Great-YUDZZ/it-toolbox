@@ -183,6 +183,11 @@ type MainWindow struct {
 	CurrentTheme  string
 	IsDark        bool
 
+	isSidebarCollapsed bool
+	sidebarWithSep     *fyne.Container
+	openSidebarBtn     *widget.Button
+	topBarWrapper      *fyne.Container
+
 	navToolbox  *NavItem
 	navFileConv *NavItem
 	navYouTube  *NavItem
@@ -243,6 +248,20 @@ func NewMainWindow(app fyne.App) *MainWindow {
 	mw.RootContainer = container.NewStack(mw.buildLayout())
 	win.SetContent(mw.RootContainer)
 	mw.showPage(constants.NavToolbox)
+
+	// Keyboard shortcuts: F11 for fullscreen, B or M to toggle sidebar
+	win.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+		if k.Name == fyne.KeyF11 {
+			isFull := !win.FullScreen()
+			win.SetFullScreen(isFull)
+			if !isFull {
+				win.Resize(fyne.NewSize(constants.DefaultWinW, constants.DefaultWinH))
+				win.CenterOnScreen()
+			}
+		} else if k.Name == fyne.KeyB || k.Name == fyne.KeyM {
+			mw.ToggleSidebar()
+		}
+	})
 
 	// Prompt for initial desktop / start menu shortcut setup on fresh run
 	if !app.Preferences().BoolWithFallback("shortcut_configured", false) {
@@ -459,7 +478,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
-	headerActions := container.NewHBox(quickThemeBtn, fullScreenBtn)
+	var collapseBtn *widget.Button
+	collapseBtn = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
+		m.ToggleSidebar()
+	})
+	collapseBtn.Importance = widget.LowImportance
+
+	headerActions := container.NewHBox(collapseBtn, quickThemeBtn, fullScreenBtn)
 
 	brandRow := container.NewBorder(nil, nil,
 		brandBadge,
@@ -623,7 +648,40 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		bgSidebar = rect
 	}
 	sidebarWrapper := container.NewMax(bgSidebar, sidebarContent)
-	sidebarWithSep := container.NewBorder(nil, nil, nil, widget.NewSeparator(), sidebarWrapper)
+	m.sidebarWithSep = container.NewBorder(nil, nil, nil, widget.NewSeparator(), sidebarWrapper)
+
+	// Top bar controls that appear when sidebar is collapsed
+	m.openSidebarBtn = widget.NewButtonWithIcon("Tampilkan Menu Sidebar", theme.MenuExpandIcon(), func() {
+		m.ToggleSidebar()
+	})
+	m.openSidebarBtn.Importance = widget.MediumImportance
+
+	var topThemeBtn *widget.Button
+	topThemeBtn = widget.NewButtonWithIcon("", theme.ColorPaletteIcon(), func() {
+		m.ShowThemeMenu(topThemeBtn)
+	})
+	topThemeBtn.Importance = widget.LowImportance
+
+	var topFullBtn *widget.Button
+	topFullBtn = widget.NewButtonWithIcon("", theme.ViewFullScreenIcon(), func() {
+		isFull := !m.Window.FullScreen()
+		m.Window.SetFullScreen(isFull)
+		if isFull {
+			topFullBtn.SetIcon(theme.ViewRestoreIcon())
+		} else {
+			topFullBtn.SetIcon(theme.ViewFullScreenIcon())
+			m.Window.Resize(fyne.NewSize(constants.DefaultWinW, constants.DefaultWinH))
+			m.Window.CenterOnScreen()
+		}
+	})
+	topFullBtn.Importance = widget.LowImportance
+
+	topActions := container.NewHBox(topThemeBtn, topFullBtn)
+	topBar := container.NewBorder(nil, nil, m.openSidebarBtn, topActions)
+	m.topBarWrapper = container.NewVBox(topBar, widget.NewSeparator())
+	m.topBarWrapper.Hide()
+
+	contentWithTopBar := container.NewBorder(m.topBarWrapper, nil, nil, nil, m.ContentArea)
 
 	// Content Area with ambient luminous backdrop for Neumorphism Light (Glassmorphic)
 	var contentAreaWrapper fyne.CanvasObject
@@ -632,20 +690,20 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 			color.RGBA{R: 0xD6, G: 0xE6, B: 0xFD, A: 0xFF}, // Soft Sky Cyan (#D6E6FD)
 			color.RGBA{R: 0xEE, G: 0xE2, B: 0xFD, A: 0xFF}, // Soft Dreamy Lavender (#EEE2FD)
 		)
-		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
+		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(contentWithTopBar))
 	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
 		ambientBg := canvas.NewHorizontalGradient(
 			color.RGBA{R: 0x0A, G: 0x0E, B: 0x18, A: 0xFF}, // Deep space midnight navy (#0A0E18)
 			color.RGBA{R: 0x14, G: 0x1A, B: 0x2D, A: 0xFF}, // Ambient Midnight Indigo Glass (#141A2D)
 		)
-		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(m.ContentArea))
+		contentAreaWrapper = container.NewStack(ambientBg, container.NewPadded(contentWithTopBar))
 	} else {
 		bgContent := canvas.NewRectangle(constants.ColorBgBase)
-		contentAreaWrapper = container.NewStack(bgContent, container.NewPadded(m.ContentArea))
+		contentAreaWrapper = container.NewStack(bgContent, container.NewPadded(contentWithTopBar))
 	}
 
 	// Main Layout: Sidebar on Left, Content Area in Center
-	mainLayout := container.NewBorder(nil, nil, sidebarWithSep, nil, contentAreaWrapper)
+	mainLayout := container.NewBorder(nil, nil, m.sidebarWithSep, nil, contentAreaWrapper)
 	return mainLayout
 }
 
@@ -668,6 +726,29 @@ func (m *MainWindow) updateNavHighlights(active string) {
 
 	m.StatusLabel.Text = fmt.Sprintf("● %s", active)
 	m.StatusLabel.Refresh()
+}
+
+// ToggleSidebar collapses or reveals the left navigation sidebar
+func (m *MainWindow) ToggleSidebar() {
+	m.isSidebarCollapsed = !m.isSidebarCollapsed
+	if m.isSidebarCollapsed {
+		if m.sidebarWithSep != nil {
+			m.sidebarWithSep.Hide()
+		}
+		if m.topBarWrapper != nil {
+			m.topBarWrapper.Show()
+		}
+	} else {
+		if m.sidebarWithSep != nil {
+			m.sidebarWithSep.Show()
+		}
+		if m.topBarWrapper != nil {
+			m.topBarWrapper.Hide()
+		}
+	}
+	if m.RootContainer != nil {
+		m.RootContainer.Refresh()
+	}
 }
 
 // ShowPage switches the active page

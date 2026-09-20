@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -397,6 +398,71 @@ func (p *DBSchemaPage) showParameterModal(cmd dbschema.DBCommandItem) {
 }
 
 // ----------------------------------------------------------------------------
+// MODAL: PREVIEW DDL SQL
+// ----------------------------------------------------------------------------
+func (p *DBSchemaPage) showSQLPreviewModal(tableName, sqlText, engine string, colCount int) {
+	var d dialog.Dialog
+
+	title := canvas.NewText(fmt.Sprintf("Preview DDL SQL — %s", tableName), constants.ColorTextPrimary)
+	title.TextSize = constants.FontSizeH2
+	title.TextStyle = fyne.TextStyle{Bold: true}
+
+	engineBadge := components.BadgeCyan(engine)
+	colBadge := components.BadgeIndigo(fmt.Sprintf("%d Kolom Terdefinisi", colCount))
+
+	headerBox := container.NewVBox(
+		container.NewBorder(nil, nil, title, container.NewHBox(engineBadge, colBadge)),
+		canvas.NewText("Skrip DDL SQL lengkap siap pakai untuk membuat struktur tabel pada database target.", constants.ColorTextMuted),
+		widget.NewSeparator(),
+	)
+
+	sqlEntry := widget.NewMultiLineEntry()
+	sqlEntry.SetText(sqlText)
+	sqlEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	sqlEntry.Wrapping = fyne.TextWrapOff
+
+	btnCancel := widget.NewButtonWithIcon("Tutup", theme.CancelIcon(), func() {
+		if d != nil {
+			d.Hide()
+		}
+	})
+	btnCancel.Importance = widget.LowImportance
+
+	btnExport := widget.NewButtonWithIcon("Ekspor File (.sql)", theme.DocumentSaveIcon(), func() {
+		fname := strings.TrimSpace(tableName)
+		if fname == "" {
+			fname = "tabel_kustom"
+		}
+		p.exportSQLFile(fname+".sql", sqlText)
+	})
+	btnExport.Importance = widget.MediumImportance
+
+	btnCopy := widget.NewButtonWithIcon("Salin DDL SQL", theme.ContentCopyIcon(), func() {
+		p.copyToClip(sqlText)
+	})
+	btnCopy.Importance = widget.HighImportance
+
+	lineCount := len(strings.Split(sqlText, "\n"))
+	lineInfo := canvas.NewText(fmt.Sprintf("Total %d baris kode SQL DDL", lineCount), constants.ColorTextSecondary)
+	lineInfo.TextSize = constants.FontSizeSmall
+
+	actionBar := container.NewBorder(nil, nil, lineInfo, container.NewHBox(btnCancel, btnExport, btnCopy))
+
+	dialogContent := container.NewBorder(
+		headerBox,
+		container.NewVBox(widget.NewSeparator(), actionBar),
+		nil,
+		nil,
+		container.NewPadded(sqlEntry),
+	)
+
+	card := components.NewPlainCardWithAccent(dialogContent, constants.ColorAccentCobalt)
+	d = dialog.NewCustomWithoutButtons("", card, p.window)
+	d.Resize(fyne.NewSize(760, 520))
+	d.Show()
+}
+
+// ----------------------------------------------------------------------------
 // TAB 3: PEMBUAT TABEL KUSTOM (INTERACTIVE DDL BUILDER)
 // ----------------------------------------------------------------------------
 func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
@@ -423,17 +489,13 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	})
 	dropCheck.SetChecked(p.builderTableDef.IncludeDrop)
 
-	sqlOutput := widget.NewMultiLineEntry()
-	sqlOutput.TextStyle = fyne.TextStyle{Monospace: true}
-	sqlOutput.Wrapping = fyne.TextWrapOff
-
 	columnsBox := container.NewVBox()
 
+	currentSQL := ""
 	updateSQL := func() {
 		p.builderTableDef.DatabaseName = strings.TrimSpace(dbNameEntry.Text)
 		p.builderTableDef.TableName = strings.TrimSpace(tableNameEntry.Text)
-		sql := dbschema.GenerateTableDDL(p.builderTableDef)
-		sqlOutput.SetText(sql)
+		currentSQL = dbschema.GenerateTableDDL(p.builderTableDef)
 	}
 
 	var renderColumns func()
@@ -450,6 +512,9 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 				p.builderTableDef.Columns[idx].Name = val
 				updateSQL()
 			}
+			nameSpacer := canvas.NewRectangle(color.Transparent)
+			nameSpacer.SetMinSize(fyne.NewSize(180, 36))
+			nameBox := container.NewStack(nameSpacer, nameEntry)
 
 			typeSelect := widget.NewSelect([]string{
 				string(dbschema.TypeAutoID),
@@ -471,11 +536,14 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 
 			lenEntry := widget.NewEntry()
 			lenEntry.SetText(c.Length)
-			lenEntry.SetPlaceHolder("Panjang (255)")
+			lenEntry.SetPlaceHolder("Panjang")
 			lenEntry.OnChanged = func(val string) {
 				p.builderTableDef.Columns[idx].Length = val
 				updateSQL()
 			}
+			lenSpacer := canvas.NewRectangle(color.Transparent)
+			lenSpacer.SetMinSize(fyne.NewSize(75, 36))
+			lenBox := container.NewStack(lenSpacer, lenEntry)
 
 			notNullChk := widget.NewCheck("Not Null", func(chk bool) {
 				p.builderTableDef.Columns[idx].IsNotNull = chk
@@ -498,10 +566,9 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 			})
 			btnDeleteCol.Importance = widget.DangerImportance
 
-			colInputs := container.NewBorder(nil, nil, nameEntry, lenEntry, typeSelect)
-			colOptions := container.NewBorder(nil, nil, nil, btnDeleteCol, container.NewHBox(notNullChk, uniqueChk))
-			colRow := container.NewVBox(colInputs, colOptions, widget.NewSeparator())
-			columnsBox.Add(colRow)
+			rightControls := container.NewHBox(lenBox, notNullChk, uniqueChk, btnDeleteCol)
+			colRow := container.NewBorder(nil, nil, nameBox, rightControls, typeSelect)
+			columnsBox.Add(container.NewVBox(colRow, widget.NewSeparator()))
 		}
 		columnsBox.Refresh()
 		updateSQL()
@@ -512,7 +579,7 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	engineSelect.OnChanged = func(_ string) { updateSQL() }
 	dropCheck.OnChanged = func(_ bool) { updateSQL() }
 
-	btnAddCol := widget.NewButtonWithIcon("Tambah", theme.ContentAddIcon(), func() {
+	btnAddCol := widget.NewButtonWithIcon("Tambah Kolom", theme.ContentAddIcon(), func() {
 		p.builderTableDef.Columns = append(p.builderTableDef.Columns, dbschema.ColumnDef{
 			Name:      fmt.Sprintf("kolom_%d", len(p.builderTableDef.Columns)+1),
 			Type:      dbschema.TypeVarchar,
@@ -538,73 +605,75 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	})
 	presetSelect.SetSelected("Pilih Preset...")
 
-	presetBar := container.NewBorder(nil, nil,
-		container.NewHBox(canvas.NewText("Preset:", constants.ColorTextMuted), presetSelect),
+	presetBar := container.NewHBox(
+		presetSelect,
 		btnAddCol,
 	)
 
-	btnCopy := widget.NewButtonWithIcon("Salin SQL", theme.ContentCopyIcon(), func() {
-		p.copyToClip(sqlOutput.Text)
+	btnPreviewSQL := widget.NewButtonWithIcon("Preview SQL", theme.VisibilityIcon(), func() {
+		updateSQL()
+		p.showSQLPreviewModal(tableNameEntry.Text, currentSQL, string(p.builderTableDef.Engine), len(p.builderTableDef.Columns))
 	})
-	btnCopy.Importance = widget.HighImportance
+	btnPreviewSQL.Importance = widget.HighImportance
+
+	btnCopy := widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() {
+		updateSQL()
+		p.copyToClip(currentSQL)
+	})
+	btnCopy.Importance = widget.MediumImportance
 
 	btnExport := widget.NewButtonWithIcon("Ekspor", theme.DocumentSaveIcon(), func() {
+		updateSQL()
 		fname := strings.TrimSpace(tableNameEntry.Text)
 		if fname == "" {
 			fname = "tabel_kustom"
 		}
-		p.exportSQLFile(fname+".sql", sqlOutput.Text)
+		p.exportSQLFile(fname+".sql", currentSQL)
 	})
-	btnExport.Importance = widget.MediumImportance
+	btnExport.Importance = widget.LowImportance
 
 	topRow1 := container.NewGridWithColumns(2,
 		container.NewVBox(canvas.NewText("Nama Basis Data:", constants.ColorTextPrimary), dbNameEntry),
 		container.NewVBox(canvas.NewText("Nama Tabel:", constants.ColorTextPrimary), tableNameEntry),
 	)
 	topRow2 := container.NewGridWithColumns(2,
-		container.NewVBox(canvas.NewText("Target Engine:", constants.ColorTextPrimary), engineSelect),
+		container.NewVBox(canvas.NewText("Target Engine Database:", constants.ColorTextPrimary), engineSelect),
 		container.NewVBox(canvas.NewText("Opsi Tambahan:", constants.ColorTextPrimary), dropCheck),
 	)
 	topSettings := container.NewVBox(topRow1, topRow2)
 
-	leftPanel := container.NewBorder(
-		container.NewVBox(
-			topSettings,
-			widget.NewSeparator(),
-			presetBar,
-			widget.NewSeparator(),
-			container.NewGridWithColumns(3,
-				canvas.NewText("Nama Kolom", constants.ColorTextPrimary),
-				canvas.NewText("Tipe Data", constants.ColorTextPrimary),
-				canvas.NewText("Panjang / Presisi", constants.ColorTextPrimary),
-			),
-		),
-		nil,
-		nil,
-		nil,
-		container.NewVScroll(columnsBox),
+	actionsRow := container.NewBorder(nil, nil,
+		presetBar,
+		container.NewHBox(btnPreviewSQL, btnCopy, btnExport),
 	)
 
-	rightPanelHeader := container.NewVBox(
-		container.NewBorder(nil, nil, canvas.NewText("Preview DDL SQL:", constants.ColorTextPrimary), nil),
-		container.NewHBox(btnExport, btnCopy),
+	tableHeader := container.NewBorder(nil, nil,
+		canvas.NewText("Nama Kolom (Field)", constants.ColorTextPrimary),
+		canvas.NewText("Panjang, Nullability, Unique & Hapus", constants.ColorTextPrimary),
+		container.NewCenter(canvas.NewText("Tipe Data", constants.ColorTextPrimary)),
 	)
-	rightPanel := container.NewBorder(
-		rightPanelHeader,
-		nil,
-		nil,
-		nil,
-		container.NewPadded(sqlOutput),
+
+	topHeader := container.NewVBox(
+		components.NewPlainCardWithAccent(topSettings, constants.ColorAccentCobalt),
+		actionsRow,
+		widget.NewSeparator(),
+		tableHeader,
+		widget.NewSeparator(),
 	)
 
 	renderColumns()
 	updateSQL()
 
-	split := container.NewHSplit(leftPanel, rightPanel)
-	split.SetOffset(0.55)
-	return container.NewPadded(split)
+	return container.NewPadded(
+		container.NewBorder(
+			topHeader,
+			nil,
+			nil,
+			nil,
+			container.NewVScroll(columnsBox),
+		),
+	)
 }
-
 // ----------------------------------------------------------------------------
 // TAB 4: KAMUS & KOMPARASI TIPE DATA
 // ----------------------------------------------------------------------------
