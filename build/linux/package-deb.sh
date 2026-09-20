@@ -7,7 +7,7 @@ set -e
 # dengan auto-shortcut di Desktop & Start Menu aplikasi.
 # ==============================================================================
 
-VERSION="${1:-1.4.0}"
+VERSION="${1:-1.4.1}"
 ARCH="amd64"
 PKG_NAME="it-toolbox"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

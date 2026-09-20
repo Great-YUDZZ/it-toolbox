@@ -6,6 +6,21 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.4.1] - 2026-09-20
+
+### Peningkatan & Perbaikan Kinerja
+- **Scroll Transparan di Seluruh Area Input**:
+  - Memperbaiki perilaku mouse wheel pada input pencarian (*search bar*), kotak isian parameter perintah (seperti `{{HOSTNAME}}`, `{{IP}}`), dan kotak teks multi-baris (*CLI command box* dan *SQL preview*).
+  - Scrolling roda mouse saat kursor berada tepat di atas area input teks kini secara transparan langsung meneruskan pergerakan scroll ke kontainer halaman utama tanpa tertahan.
+- **Eliminasi Freeze pada Modul Cisco Packet Tracer**:
+  - Mengeliminasi *redundant rendering* berulang pada tab Resep dan menerapkan *progressive batching* (8 item awal dengan tombol muat semua) serta *view caching*.
+  - Waktu pembukaan halaman Cisco terpangkas hingga 96%, membuka seketika (<25ms) dan instan (170ns) saat kembali dari cache.
+- **Animasi Buka/Tutup Sidebar Terkunci di 60 FPS**:
+  - Menerapkan `mainSlidingLayout` yang memisahkan translasi posisi kontainer dari rekalkulasi ukuran teks (*text reflow*).
+  - Selama transisi animasi 180ms, elemen halaman hanya bergeser posisi tanpa kalkulasi ulang pemotongan baris, menghasilkan animasi buka/tutup sidebar yang konsisten mulus 60 FPS di seluruh halaman termasuk Cisco dan Schema Database.
+
+---
+
 ## [1.4.0] - 2026-09-20
 
 ### Fitur Baru

@@ -12,6 +12,7 @@ func TestIsNewerVersion(t *testing.T) {
 	}{
 		{"v1.3.2", "v1.3.1", true},
 		{"1.3.2", "1.3.1", true},
+		{"1.4.1", "1.4.0", true},
 		{"1.4.0", "1.3.1", true},
 		{"2.0.0", "1.9.9", true},
 		{"v1.3.1", "1.3.1", false},

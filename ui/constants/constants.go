@@ -4,7 +4,7 @@ package constants
 const (
 	AppTitle       = "IT Toolbox"
 	AppSubtitle    = "All-in-one Toolkit for IT Students & Developers"
-	AppVersion     = "1.4.0"
+	AppVersion     = "1.4.1"
 	DefaultWinW    = 960
 	DefaultWinH    = 640
 	SidebarWidth   = 200
