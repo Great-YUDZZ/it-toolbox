@@ -71,6 +71,7 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 | :--- | :--- |
 | **Network Tools** | Kalkulator Subnet IP, Kalkulator CIDR, Usable Host Range Finder, dan Pelacak Diagnostik Jaringan |
 | **Cisco Packet Tracer** | Direktori perintah CLI Cisco IOS (Router, Switch, PC), generator skrip konfigurasi instan, parameter kustom, dan panduan verifikasi topologi lab |
+| **Schema Database** | Perancang skema database, perpustakaan DDL siap pakai (Auth & RBAC, E-Commerce, Akademik TKJ, Jaringan IPAM), generator tabel kustom interaktif, katalog perintah administrasi & backup CLI, serta kamus tipe data lintas DBMS (MySQL, MariaDB, PostgreSQL, SQLite, SQL Server, Oracle) |
 | **Security & Cryptography** | Generator Hash (MD5, SHA-1, SHA-256, SHA-512), JWT Inspector & Decoder, dan Generator Password Aman |
 | **Data & Text Converter** | Base64 Encoder/Decoder, URL Encoder, JSON <-> YAML Converter, Epoch / Unix Timestamp Converter, dan Text Case Formatter |
 | **Document & Media Tools** | Penggabung & Pemisah PDF, Image Converter / Optimizer, Optical Character Recognition (OCR), dan Pengemas Arsip ZIP |

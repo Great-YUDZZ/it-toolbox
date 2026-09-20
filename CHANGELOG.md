@@ -6,6 +6,18 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.4.0] - 2026-09-20
+
+### Fitur Baru
+- **Modul Baru: Schema Database & SQL Architect**:
+  - Menu navigasi khusus **"Schema Database"** di sidebar dengan 4 tab komprehensif:
+    1. **Perpustakaan Skema Siap Pakai**: DDL lengkap dengan relasi PK-FK untuk Autentikasi & RBAC, E-Commerce & Toko Online, Sistem Akademik & Lab TKJ, serta Infrastruktur Jaringan & IPAM (tersedia untuk MySQL/MariaDB, PostgreSQL, dan SQLite) dengan tombol salin dan ekspor file `.sql`.
+    2. **Katalog Perintah DDL & Administrasi**: Direktori perintah terlengkap untuk pembuatan DB, hak akses user & privileges, foreign key cascading, backup/dump CLI (mysqldump, pg_dump, sqlite3), serta pemeliharaan & optimasi (vacuum, reindex, explain) disertai modal penyesuaian parameter interaktif.
+    3. **Pembuat Tabel Kustom (Interactive DDL Builder)**: Generator tabel interaktif dengan pilihan preset kolom (Standar, Akun Pengguna, Produk E-Commerce), kustomisasi tipe data, nullability, unique, dan live SQL preview.
+    4. **Kamus & Komparasi Tipe Data Lintas DBMS**: Matriks perbandingan tipe data antara MySQL, MariaDB, PostgreSQL, SQLite, SQL Server (T-SQL), dan Oracle Database lengkap dengan rekomendasi best practice.
+
+---
+
 ## [1.3.2] - 2026-09-16
 
 ### Peningkatan & Fitur Baru

@@ -4,7 +4,7 @@ package constants
 const (
 	AppTitle       = "IT Toolbox"
 	AppSubtitle    = "All-in-one Toolkit for IT Students & Developers"
-	AppVersion     = "1.3.2"
+	AppVersion     = "1.4.0"
 	DefaultWinW    = 1050
 	DefaultWinH    = 680
 	SidebarWidth   = 200
@@ -17,7 +17,14 @@ const (
 	NavFileConverter = "Konverter Berkas"
 	NavYouTube       = "Unduh YouTube"
 	NavCisco         = "Cisco Packet Tracer"
+	NavDatabase      = "Schema Database"
 	NavSettings      = "Pengaturan & Update"
+
+	// Database Schema Tabs
+	TabDBSchemas   = "Perpustakaan Skema"
+	TabDBCatalog   = "Katalog Perintah & DDL"
+	TabDBGenerator = "Pembuat Tabel Kustom"
+	TabDBDataTypes = "Kamus Tipe Data"
 
 	// Calculator Tabs
 	TabConverter   = "Number & Data"
@@ -87,6 +94,8 @@ const (
 	SearchHTTPPlaceholder    = "Cari status code (misal: 404, Unauthorized)..."
 	SearchCiscoPlaceholder        = "Cari perintah Cisco (misal: vlan, ospf, dhcp, nat, roas, ping)..."
 	SearchCiscoLibraryPlaceholder = "Cari di perpustakaan (misal: vlan, ospf, hsrp, etherchannel, lacp, ssh, rommon)..."
+	SearchDBCatalogPlaceholder    = "Cari perintah DDL (misal: create database, grant, foreign key, mysqldump, vacuum)..."
+	SearchDBDataTypesPlaceholder  = "Cari tipe data (misal: UUID, boolean, decimal, json, timestamp, varchar)..."
 
 	// Subnet Recommender
 	SubnetRecommenderTitle   = "Rekomendasi Subnet Sesuai Kebutuhan Host"

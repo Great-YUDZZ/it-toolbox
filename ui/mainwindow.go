@@ -187,6 +187,7 @@ type MainWindow struct {
 	navFileConv *NavItem
 	navYouTube  *NavItem
 	navCisco    *NavItem
+	navDBSchema *NavItem
 	navRef      *NavItem
 	navLogbook  *NavItem
 	navTracker  *NavItem
@@ -195,6 +196,7 @@ type MainWindow struct {
 	calcPage     *pages.CalculatorPage
 	fileConvPage *pages.FileConverterPage
 	ciscoPage    *pages.CiscoPage
+	dbSchemaPage *pages.DBSchemaPage
 	refPage      *pages.ReferencePage
 	logbookPage  *pages.LogbookPage
 	trackerPage  *pages.TrackerPage
@@ -229,6 +231,7 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		calcPage:     pages.NewCalculatorPage(win),
 		fileConvPage: pages.NewFileConverterPage(win),
 		ciscoPage:    pages.NewCiscoPage(win),
+		dbSchemaPage: pages.NewDBSchemaPage(win),
 		refPage:      pages.NewReferencePage(win),
 		logbookPage:  pages.NewLogbookPage(win),
 		trackerPage:  pages.NewTrackerPage(win),
@@ -279,6 +282,7 @@ func (m *MainWindow) SwitchTheme(themeName string) {
 	m.calcPage = pages.NewCalculatorPage(m.Window)
 	m.fileConvPage = pages.NewFileConverterPage(m.Window)
 	m.ciscoPage = pages.NewCiscoPage(m.Window)
+	m.dbSchemaPage = pages.NewDBSchemaPage(m.Window)
 	m.refPage = pages.NewReferencePage(m.Window)
 	m.logbookPage = pages.NewLogbookPage(m.Window)
 	m.trackerPage = pages.NewTrackerPage(m.Window)
@@ -504,6 +508,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	m.navCisco = NewNavItem(constants.NavCisco, theme.ComputerIcon(), func() {
 		m.showPage(constants.NavCisco)
 	})
+	m.navDBSchema = NewNavItem(constants.NavDatabase, theme.StorageIcon(), func() {
+		m.showPage(constants.NavDatabase)
+	})
 	m.navRef = NewNavItem(constants.NavReference, theme.InfoIcon(), func() {
 		m.showPage(constants.NavReference)
 	})
@@ -530,6 +537,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 		secDocs,
 		m.navCisco,
+		m.navDBSchema,
 		m.navRef,
 		m.navLogbook,
 		m.navTracker,
@@ -647,6 +655,9 @@ func (m *MainWindow) updateNavHighlights(active string) {
 	m.navFileConv.SetActive(active == constants.NavFileConverter)
 	m.navYouTube.SetActive(active == constants.NavYouTube)
 	m.navCisco.SetActive(active == constants.NavCisco)
+	if m.navDBSchema != nil {
+		m.navDBSchema.SetActive(active == constants.NavDatabase)
+	}
 	m.navRef.SetActive(active == constants.NavReference)
 	m.navLogbook.SetActive(active == constants.NavLogbook)
 	m.navTracker.SetActive(active == constants.NavTracker)
@@ -676,6 +687,8 @@ func (m *MainWindow) showPage(name string) {
 		content = m.fileConvPage.BuildYouTubePage()
 	case constants.NavCisco:
 		content = m.ciscoPage.Build()
+	case constants.NavDatabase:
+		content = m.dbSchemaPage.Build()
 	case constants.NavReference:
 		content = m.refPage.Build()
 	case constants.NavLogbook:
