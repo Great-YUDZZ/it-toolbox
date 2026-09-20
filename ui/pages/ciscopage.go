@@ -178,7 +178,7 @@ func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {
 		catSelect.SetSelected(string(cisco.CategoryAll))
 
 		catSpacer := canvas.NewRectangle(color.Transparent)
-		catSpacer.SetMinSize(fyne.NewSize(200, 36))
+		catSpacer.SetMinSize(fyne.NewSize(140, 36))
 		catSelectBox := container.NewStack(catSpacer, catSelect)
 
 		filterRow2 := container.NewHBox(
@@ -244,7 +244,7 @@ func (p *CiscoPage) buildCommandCard(cmd cisco.CiscoCommand) fyne.CanvasObject {
 	codeEntry := widget.NewMultiLineEntry()
 	codeEntry.SetText(initialCommands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	codeEntry.Wrapping = fyne.TextWrapOff
+	codeEntry.Wrapping = fyne.TextWrapWord
 	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(initialCommands, "\n")
@@ -463,9 +463,13 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	contentList := container.NewVBox()
 
 	// Section 1: Diagnosa Lampu Indikator Fisik
-	sec1Title := canvas.NewText("1. DIAGNOSA LAMPU INDIKATOR LINK (LAYER 1 FISIK)", constants.ColorTextPrimary)
-	sec1Title.TextSize = constants.FontSizeH2
-	sec1Title.TextStyle = fyne.TextStyle{Bold: true}
+	makeSecTitle := func(txt string) *widget.Label {
+		lbl := widget.NewLabel(txt)
+		lbl.Wrapping = fyne.TextWrapWord
+		lbl.TextStyle = fyne.TextStyle{Bold: true}
+		return lbl
+	}
+	sec1Title := makeSecTitle("1. DIAGNOSA LAMPU INDIKATOR LINK (LAYER 1 FISIK)")
 
 	makeInfoRow := func(badge fyne.CanvasObject, text string) fyne.CanvasObject {
 		lbl := widget.NewLabel(text)
@@ -484,9 +488,7 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	contentList.Add(card1)
 
 	// Section 2: Prosedur Pengujian Bertingkat (Step-by-Step Testing)
-	sec2Title := canvas.NewText("2. PROSEDUR 6 LANGKAH PENGUJIAN KONEKTIVITAS (PING WORKFLOW)", constants.ColorTextPrimary)
-	sec2Title.TextSize = constants.FontSizeH2
-	sec2Title.TextStyle = fyne.TextStyle{Bold: true}
+	sec2Title := makeSecTitle("2. PROSEDUR 6 LANGKAH PENGUJIAN KONEKTIVITAS (PING WORKFLOW)")
 
 	step1 := widget.NewLabel("Langkah 1: Cek IP PC di Command Prompt (Ketik: ipconfig /all). Pastikan IP, Subnet Mask, dan Default Gateway terisi benar.")
 	step1.Wrapping = fyne.TextWrapWord
@@ -513,9 +515,7 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	contentList.Add(card2)
 
 	// Section 3: Cara Menggunakan Mode Simulasi (Add Simple PDU)
-	sec3Title := canvas.NewText("3. MELACAK PAKET MENGGUNAKAN SIMULASI PDU (AMPLOP SURAT)", constants.ColorTextPrimary)
-	sec3Title.TextSize = constants.FontSizeH2
-	sec3Title.TextStyle = fyne.TextStyle{Bold: true}
+	sec3Title := makeSecTitle("3. MELACAK PAKET MENGGUNAKAN SIMULASI PDU (AMPLOP SURAT)")
 
 	pduDesc := widget.NewLabel("Jika ping gagal di mode Realtime, beralihlah ke Mode Simulasi (tekan Shift + S atau klik tab Simulation di kanan bawah).\n\n" +
 		"1. Klik ikon Amplop Surat Tertutup (Add Simple PDU) atau tekan tombol keyboard 'P'.\n" +
@@ -532,9 +532,7 @@ func (p *CiscoPage) buildVerificationGuideView() fyne.CanvasObject {
 	contentList.Add(card3)
 
 	// Section 4: Tabel Arti Pesan Error Ping
-	sec4Title := canvas.NewText("4. ARTI PESAN HASIL PING & SOLUSINYA", constants.ColorTextPrimary)
-	sec4Title.TextSize = constants.FontSizeH2
-	sec4Title.TextStyle = fyne.TextStyle{Bold: true}
+	sec4Title := makeSecTitle("4. ARTI PESAN HASIL PING & SOLUSINYA")
 
 	rto := makeInfoRow(components.BadgeDanger("Request timed out (RTO)"), "Paket terkirim tapi tidak ada balasan. Cek: (1) Default Gateway di PC tujuan, (2) Routing balik dari router lawan, (3) Jalur terblokir ACL.")
 	dhu := makeInfoRow(components.BadgeWarning("Destination Host Unreachable"), "Router tidak menemukan rute ke subnet tujuan. Cek tabel routing dengan 'show ip route' dan pastikan rute terdaftar.")
@@ -1174,7 +1172,7 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 	catSelect.SetSelected(string(cisco.CategoryAll))
 
 	catSpacer := canvas.NewRectangle(color.Transparent)
-	catSpacer.SetMinSize(fyne.NewSize(200, 36))
+	catSpacer.SetMinSize(fyne.NewSize(140, 36))
 	catSelectBox := container.NewStack(catSpacer, catSelect)
 
 	// 4. Source Selector
@@ -1194,12 +1192,12 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 	sourceSelectBox := container.NewStack(sourceSpacer, sourceSelect)
 
 	// Action Buttons
-	addCustomBtn := widget.NewButtonWithIcon("+ Tambah Resep Kustom", theme.ContentAddIcon(), func() {
+	addCustomBtn := widget.NewButtonWithIcon("+ Resep Kustom", theme.ContentAddIcon(), func() {
 		p.showAddCustomSnippetDialog(renderLibrary)
 	})
 	addCustomBtn.Importance = widget.HighImportance
 
-	exportBtn := widget.NewButtonWithIcon("Ekspor Koleksi (.txt)", theme.DocumentSaveIcon(), func() {
+	exportBtn := widget.NewButtonWithIcon("Ekspor", theme.DocumentSaveIcon(), func() {
 		p.exportLibraryCheatSheet(currentFilteredList)
 	})
 	exportBtn.Importance = widget.LowImportance
@@ -1226,8 +1224,8 @@ func (p *CiscoPage) buildLibraryView() fyne.CanvasObject {
 	libHeroTitle.TextStyle = fyne.TextStyle{Bold: true}
 
 	libHeroBadge := components.BadgeCyan("CCNA & PACKET TRACER")
-	libHeroDesc := canvas.NewText("Ensiklopedia lengkap seluruh kode perintah konfigurasi Cisco IOS Router, Switch L2/L3, dan PC. Dilengkapi penjelasan baris demi baris, verifikasi, dan penyimpanan resep kustom.", constants.ColorTextMuted)
-	libHeroDesc.TextSize = constants.FontSizeBody
+	libHeroDesc := widget.NewLabel("Ensiklopedia lengkap seluruh kode perintah konfigurasi Cisco IOS Router, Switch L2/L3, dan PC. Dilengkapi penjelasan baris demi baris, verifikasi, dan penyimpanan resep kustom.")
+	libHeroDesc.Wrapping = fyne.TextWrapWord
 
 	libHeaderBox := container.NewVBox(
 		container.NewHBox(libHeroTitle, libHeroBadge),
@@ -1328,7 +1326,7 @@ func (p *CiscoPage) buildLibraryCard(cmd cisco.CiscoCommand, refreshFn func()) f
 	codeEntry := widget.NewMultiLineEntry()
 	codeEntry.SetText(cmd.Commands)
 	codeEntry.TextStyle = fyne.TextStyle{Monospace: true}
-	codeEntry.Wrapping = fyne.TextWrapOff
+	codeEntry.Wrapping = fyne.TextWrapWord
 	codeEntry.Scroll = fyne.ScrollNone
 
 	lines := strings.Split(cmd.Commands, "\n")

@@ -67,8 +67,8 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	statCapacity := components.NewStatCard("TOTAL HOST & EFISIENSI", "-", constants.ColorAccentYellow)
 	statBroadcast := components.NewStatCard("BROADCAST & WILDCARD", "-", constants.ColorWarning)
 
-	hintLabel := canvas.NewText("-", constants.ColorTextPrimary)
-	hintLabel.TextSize = constants.FontSizeSmall
+	hintLabel := widget.NewLabel("-")
+	hintLabel.Wrapping = fyne.TextWrapWord
 	hintLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	hintBg := canvas.NewRectangle(constants.ColorBgCardInner)
@@ -112,9 +112,7 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 		statBroadcast.SetValue(rec.Broadcast)
 		statBroadcast.SetSubtext(fmt.Sprintf("Wildcard: %s", rec.WildcardMask))
 
-		hintLabel.Text = fmt.Sprintf("Saran Alokasi: %s", rec.ClassHint)
-		hintLabel.Color = constants.ColorTextPrimary
-		hintLabel.Refresh()
+		hintLabel.SetText(fmt.Sprintf("Saran Alokasi: %s", rec.ClassHint))
 	}
 
 	hostCountEntry.OnChanged = func(string) { calcRecommendation() }
@@ -130,13 +128,11 @@ func (p *CalculatorPage) buildSubnetTab() fyne.CanvasObject {
 	}
 
 	hostChips := container.NewHBox(
-		canvas.NewText("Preset Cepat:", constants.ColorTextSecondary),
+		canvas.NewText("Preset:", constants.ColorTextSecondary),
 		makeHostChip(10),
-		makeHostChip(30),
 		makeHostChip(50),
 		makeHostChip(100),
 		makeHostChip(250),
-		makeHostChip(500),
 	)
 
 	copyRecBtn := widget.NewButtonWithIcon("Salin Ringkasan", theme.ContentCopyIcon(), func() {

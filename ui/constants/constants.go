@@ -5,8 +5,8 @@ const (
 	AppTitle       = "IT Toolbox"
 	AppSubtitle    = "All-in-one Toolkit for IT Students & Developers"
 	AppVersion     = "1.4.0"
-	DefaultWinW    = 1050
-	DefaultWinH    = 680
+	DefaultWinW    = 960
+	DefaultWinH    = 640
 	SidebarWidth   = 200
 
 	// Navigation Menu Labels
@@ -33,13 +33,13 @@ const (
 	TabFormatter   = "Format & Encode"
 
 	// Cisco Packet Tracer Tabs
-	TabCiscoLibrary       = "Perpustakaan Konfigurasi"
-	TabCiscoAll           = "Katalog Perintah"
-	TabCiscoSwitch        = "Switching & VLAN"
-	TabCiscoRouting       = "Routing & WAN"
-	TabCiscoServices      = "Layanan & Security"
-	TabCiscoVerify        = "Panduan Verifikasi"
-	TabCiscoTopologyNotes = "Catatan Topologi"
+	TabCiscoLibrary       = "Resep"
+	TabCiscoAll           = "Katalog"
+	TabCiscoSwitch        = "Switch"
+	TabCiscoRouting       = "Routing"
+	TabCiscoServices      = "Layanan"
+	TabCiscoVerify        = "Verifikasi"
+	TabCiscoTopologyNotes = "Catatan"
 
 	// File Converter Tabs
 	TabDocConverter = "Konversi Dokumen"

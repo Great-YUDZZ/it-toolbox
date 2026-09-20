@@ -119,14 +119,13 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 	descLabel := widget.NewLabel("")
 	descLabel.Wrapping = fyne.TextWrapWord
 
-	notesLabel := canvas.NewText("", constants.ColorTextSecondary)
-	notesLabel.TextSize = constants.FontSizeSmall
+	notesLabel := widget.NewLabel("")
+	notesLabel.Wrapping = fyne.TextWrapWord
 
 	refreshPreview := func() {
 		tmpl := templates[selectedIdx]
 		descLabel.SetText(tmpl.Description)
-		notesLabel.Text = "Catatan: " + tmpl.Notes
-		notesLabel.Refresh()
+		notesLabel.SetText("Catatan: " + tmpl.Notes)
 
 		tableBadgesBox.Objects = nil
 		for _, tbl := range tmpl.Tables {
@@ -181,12 +180,15 @@ func (p *DBSchemaPage) buildSchemasTab() fyne.CanvasObject {
 	})
 	btnExport.Importance = widget.MediumImportance
 
-	controlGrid := container.NewGridWithColumns(4,
+	controlRow1 := container.NewGridWithColumns(2,
 		container.NewVBox(canvas.NewText("Pilih Topik Skema:", constants.ColorTextPrimary), topicSelect),
-		container.NewVBox(canvas.NewText("Target Engine:", constants.ColorTextPrimary), engineSelect),
+		container.NewVBox(canvas.NewText("Target Engine Database:", constants.ColorTextPrimary), engineSelect),
+	)
+	controlRow2 := container.NewGridWithColumns(2,
 		container.NewVBox(canvas.NewText("Nama Basis Data:", constants.ColorTextPrimary), dbNameEntry),
 		container.NewVBox(canvas.NewText("Prefix Tabel (Opsional):", constants.ColorTextPrimary), prefixEntry),
 	)
+	controlGrid := container.NewVBox(controlRow1, controlRow2)
 
 	actionBar := container.NewBorder(nil, nil, nil, container.NewHBox(btnExport, btnCopy))
 
@@ -225,9 +227,9 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 			cmd := item
 
 			// Header items
-			titleTxt := canvas.NewText(cmd.Title, constants.ColorTextPrimary)
-			titleTxt.TextSize = constants.FontSizeBody
-			titleTxt.TextStyle = fyne.TextStyle{Bold: true}
+			titleLabel := widget.NewLabel(cmd.Title)
+			titleLabel.Wrapping = fyne.TextWrapWord
+			titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 			engineBadge := components.BadgeCyan(string(cmd.Engine))
 			catBadge := components.BadgeYellow(string(cmd.Category))
@@ -237,16 +239,14 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 			})
 			btnCopy.Importance = widget.LowImportance
 
-			btnCustomize := widget.NewButtonWithIcon("Sesuaikan Parameter", theme.SettingsIcon(), func() {
+			btnCustomize := widget.NewButtonWithIcon("Sesuaikan", theme.SettingsIcon(), func() {
 				p.showParameterModal(cmd)
 			})
 			btnCustomize.Importance = widget.MediumImportance
 
 			actionBox := container.NewHBox(btnCustomize, btnCopy)
-			header := container.NewBorder(nil, nil,
-				container.NewHBox(engineBadge, catBadge, titleTxt),
-				actionBox,
-			)
+			topInfo := container.NewVBox(container.NewHBox(engineBadge, catBadge), titleLabel)
+			header := container.NewBorder(nil, nil, topInfo, actionBox)
 
 			descLabel := widget.NewLabel(cmd.Description)
 			descLabel.Wrapping = fyne.TextWrapWord
@@ -256,15 +256,15 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 			codeBox.TextStyle = fyne.TextStyle{Monospace: true}
 			codeBox.Wrapping = fyne.TextWrapOff
 
-			notesTxt := canvas.NewText("Petunjuk: "+cmd.Notes, constants.ColorTextSecondary)
-			notesTxt.TextSize = constants.FontSizeSmall
+			notesLabel := widget.NewLabel("Petunjuk: " + cmd.Notes)
+			notesLabel.Wrapping = fyne.TextWrapWord
 
 			cardContent := container.NewVBox(
 				header,
 				widget.NewSeparator(),
 				descLabel,
 				container.NewPadded(codeBox),
-				notesTxt,
+				notesLabel,
 			)
 
 			listContainer.Add(components.NewPlainCardWithAccent(cardContent, constants.ColorAccentCobalt))
@@ -304,10 +304,12 @@ func (p *DBSchemaPage) buildCatalogTab() fyne.CanvasObject {
 	})
 	catSelect.SetSelected(string(dbschema.CatAll))
 
-	filterBar := container.NewGridWithColumns(3,
-		container.NewVBox(canvas.NewText("Pencarian Perintah:", constants.ColorTextPrimary), searchBar.Container),
-		container.NewVBox(canvas.NewText("Filter Engine Database:", constants.ColorTextPrimary), engineSelect),
-		container.NewVBox(canvas.NewText("Filter Kategori:", constants.ColorTextPrimary), catSelect),
+	filterBar := container.NewVBox(
+		container.NewVBox(canvas.NewText("Pencarian Perintah DDL & Administrasi:", constants.ColorTextPrimary), searchBar.Container),
+		container.NewGridWithColumns(2,
+			container.NewVBox(canvas.NewText("Filter Engine Database:", constants.ColorTextPrimary), engineSelect),
+			container.NewVBox(canvas.NewText("Filter Kategori:", constants.ColorTextPrimary), catSelect),
+		),
 	)
 
 	renderList()
@@ -496,14 +498,9 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 			})
 			btnDeleteCol.Importance = widget.DangerImportance
 
-			colRow := container.NewGridWithColumns(6,
-				nameEntry,
-				typeSelect,
-				lenEntry,
-				notNullChk,
-				uniqueChk,
-				btnDeleteCol,
-			)
+			colInputs := container.NewBorder(nil, nil, nameEntry, lenEntry, typeSelect)
+			colOptions := container.NewBorder(nil, nil, nil, btnDeleteCol, container.NewHBox(notNullChk, uniqueChk))
+			colRow := container.NewVBox(colInputs, colOptions, widget.NewSeparator())
 			columnsBox.Add(colRow)
 		}
 		columnsBox.Refresh()
@@ -515,7 +512,7 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	engineSelect.OnChanged = func(_ string) { updateSQL() }
 	dropCheck.OnChanged = func(_ bool) { updateSQL() }
 
-	btnAddCol := widget.NewButtonWithIcon("Tambah Kolom", theme.ContentAddIcon(), func() {
+	btnAddCol := widget.NewButtonWithIcon("Tambah", theme.ContentAddIcon(), func() {
 		p.builderTableDef.Columns = append(p.builderTableDef.Columns, dbschema.ColumnDef{
 			Name:      fmt.Sprintf("kolom_%d", len(p.builderTableDef.Columns)+1),
 			Type:      dbschema.TypeVarchar,
@@ -526,33 +523,32 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	})
 	btnAddCol.Importance = widget.MediumImportance
 
-	btnPresetStandard := widget.NewButton("Preset Standar", func() {
-		p.builderTableDef.Columns = dbschema.PresetColumnsStandard()
-		renderColumns()
+	presetSelect := widget.NewSelect([]string{"Pilih Preset...", "Preset Standar", "Preset Pengguna", "Preset Produk"}, func(val string) {
+		switch val {
+		case "Preset Standar":
+			p.builderTableDef.Columns = dbschema.PresetColumnsStandard()
+			renderColumns()
+		case "Preset Pengguna":
+			p.builderTableDef.Columns = dbschema.PresetColumnsUser()
+			renderColumns()
+		case "Preset Produk":
+			p.builderTableDef.Columns = dbschema.PresetColumnsProduct()
+			renderColumns()
+		}
 	})
-	btnPresetUser := widget.NewButton("Preset Akun Pengguna", func() {
-		p.builderTableDef.Columns = dbschema.PresetColumnsUser()
-		renderColumns()
-	})
-	btnPresetProduct := widget.NewButton("Preset Produk E-Commerce", func() {
-		p.builderTableDef.Columns = dbschema.PresetColumnsProduct()
-		renderColumns()
-	})
+	presetSelect.SetSelected("Pilih Preset...")
 
-	presetBar := container.NewHBox(
-		canvas.NewText("Preset Kolom Cepat:", constants.ColorTextMuted),
-		btnPresetStandard,
-		btnPresetUser,
-		btnPresetProduct,
+	presetBar := container.NewBorder(nil, nil,
+		container.NewHBox(canvas.NewText("Preset:", constants.ColorTextMuted), presetSelect),
 		btnAddCol,
 	)
 
-	btnCopy := widget.NewButtonWithIcon("Salin DDL SQL", theme.ContentCopyIcon(), func() {
+	btnCopy := widget.NewButtonWithIcon("Salin SQL", theme.ContentCopyIcon(), func() {
 		p.copyToClip(sqlOutput.Text)
 	})
 	btnCopy.Importance = widget.HighImportance
 
-	btnExport := widget.NewButtonWithIcon("Ekspor .sql", theme.DocumentSaveIcon(), func() {
+	btnExport := widget.NewButtonWithIcon("Ekspor", theme.DocumentSaveIcon(), func() {
 		fname := strings.TrimSpace(tableNameEntry.Text)
 		if fname == "" {
 			fname = "tabel_kustom"
@@ -561,12 +557,15 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 	})
 	btnExport.Importance = widget.MediumImportance
 
-	topSettings := container.NewGridWithColumns(4,
+	topRow1 := container.NewGridWithColumns(2,
 		container.NewVBox(canvas.NewText("Nama Basis Data:", constants.ColorTextPrimary), dbNameEntry),
 		container.NewVBox(canvas.NewText("Nama Tabel:", constants.ColorTextPrimary), tableNameEntry),
+	)
+	topRow2 := container.NewGridWithColumns(2,
 		container.NewVBox(canvas.NewText("Target Engine:", constants.ColorTextPrimary), engineSelect),
 		container.NewVBox(canvas.NewText("Opsi Tambahan:", constants.ColorTextPrimary), dropCheck),
 	)
+	topSettings := container.NewVBox(topRow1, topRow2)
 
 	leftPanel := container.NewBorder(
 		container.NewVBox(
@@ -574,13 +573,10 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 			widget.NewSeparator(),
 			presetBar,
 			widget.NewSeparator(),
-			container.NewGridWithColumns(6,
+			container.NewGridWithColumns(3,
 				canvas.NewText("Nama Kolom", constants.ColorTextPrimary),
 				canvas.NewText("Tipe Data", constants.ColorTextPrimary),
-				canvas.NewText("Panjang", constants.ColorTextPrimary),
-				canvas.NewText("Nullability", constants.ColorTextPrimary),
-				canvas.NewText("Unique", constants.ColorTextPrimary),
-				canvas.NewText("Aksi", constants.ColorTextPrimary),
+				canvas.NewText("Panjang / Presisi", constants.ColorTextPrimary),
 			),
 		),
 		nil,
@@ -589,8 +585,12 @@ func (p *DBSchemaPage) buildGeneratorTab() fyne.CanvasObject {
 		container.NewVScroll(columnsBox),
 	)
 
+	rightPanelHeader := container.NewVBox(
+		container.NewBorder(nil, nil, canvas.NewText("Preview DDL SQL:", constants.ColorTextPrimary), nil),
+		container.NewHBox(btnExport, btnCopy),
+	)
 	rightPanel := container.NewBorder(
-		container.NewBorder(nil, nil, canvas.NewText("Preview DDL SQL:", constants.ColorTextPrimary), container.NewHBox(btnExport, btnCopy)),
+		rightPanelHeader,
 		nil,
 		nil,
 		nil,
@@ -633,13 +633,18 @@ func (p *DBSchemaPage) buildDataTypesTab() fyne.CanvasObject {
 			descLabel := widget.NewLabel(it.Description)
 			descLabel.Wrapping = fyne.TextWrapWord
 
-			grid := container.NewGridWithColumns(3,
-				container.NewVBox(canvas.NewText("MySQL / MariaDB:", constants.ColorTextMuted), widget.NewLabel(it.MySQL)),
-				container.NewVBox(canvas.NewText("PostgreSQL:", constants.ColorTextMuted), widget.NewLabel(it.PostgreSQL)),
-				container.NewVBox(canvas.NewText("SQLite:", constants.ColorTextMuted), widget.NewLabel(it.SQLite)),
-				container.NewVBox(canvas.NewText("SQL Server (T-SQL):", constants.ColorTextMuted), widget.NewLabel(it.SQLServer)),
-				container.NewVBox(canvas.NewText("Oracle Database:", constants.ColorTextMuted), widget.NewLabel(it.Oracle)),
-				container.NewVBox(canvas.NewText("Rekomendasi Penggunaan:", constants.ColorTextMuted), widget.NewLabel(it.BestUse)),
+			makeVal := func(txt string) *widget.Label {
+				lbl := widget.NewLabel(txt)
+				lbl.Wrapping = fyne.TextWrapWord
+				return lbl
+			}
+			grid := container.NewGridWithColumns(2,
+				container.NewVBox(canvas.NewText("MySQL / MariaDB:", constants.ColorTextMuted), makeVal(it.MySQL)),
+				container.NewVBox(canvas.NewText("PostgreSQL:", constants.ColorTextMuted), makeVal(it.PostgreSQL)),
+				container.NewVBox(canvas.NewText("SQLite:", constants.ColorTextMuted), makeVal(it.SQLite)),
+				container.NewVBox(canvas.NewText("SQL Server (T-SQL):", constants.ColorTextMuted), makeVal(it.SQLServer)),
+				container.NewVBox(canvas.NewText("Oracle Database:", constants.ColorTextMuted), makeVal(it.Oracle)),
+				container.NewVBox(canvas.NewText("Rekomendasi Penggunaan:", constants.ColorTextMuted), makeVal(it.BestUse)),
 			)
 
 			cardContent := container.NewVBox(

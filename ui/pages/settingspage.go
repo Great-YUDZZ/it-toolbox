@@ -214,9 +214,9 @@ func (p *SettingsPage) buildUpdateCard() fyne.CanvasObject {
 		}
 
 		// Initial state before check
-		initialText := canvas.NewText("Klik tombol 'Periksa Pembaruan Sekarang' untuk mengecek ketersediaan versi terbaru di GitHub.", constants.ColorTextMuted)
-		initialText.TextSize = constants.FontSizeBody
-		resultContainer.Add(initialText)
+		initialLbl := widget.NewLabel("Klik tombol 'Periksa Pembaruan Sekarang' untuk mengecek rilis terbaru di GitHub.")
+		initialLbl.Wrapping = fyne.TextWrapWord
+		resultContainer.Add(initialLbl)
 		resultContainer.Refresh()
 	}
 
@@ -242,7 +242,7 @@ func (p *SettingsPage) buildUpdateCard() fyne.CanvasObject {
 	autoCheckKey := "auto_check_update"
 	autoCheckVal := appPref.BoolWithFallback(autoCheckKey, true)
 
-	autoCheckChk := widget.NewCheck("Periksa pembaruan secara otomatis saat aplikasi dibuka (jika terhubung internet)", func(checked bool) {
+	autoCheckChk := widget.NewCheck("Periksa pembaruan otomatis saat aplikasi dibuka", func(checked bool) {
 		appPref.SetBool(autoCheckKey, checked)
 	})
 	autoCheckChk.SetChecked(autoCheckVal)
@@ -273,21 +273,21 @@ func (p *SettingsPage) buildThemeCard() fyne.CanvasObject {
 	subTitle := canvas.NewText("Pilih gaya antarmuka yang paling nyaman untuk lingkungan kerja Anda:", constants.ColorTextSecondary)
 	subTitle.TextSize = constants.FontSizeBody
 
-	btnNeo := widget.NewButtonWithIcon("Neo-Brutalism (Clean Contrast)", theme.VisibilityIcon(), func() {
+	btnNeo := widget.NewButtonWithIcon("Neo-Brutalism", theme.VisibilityIcon(), func() {
 		if p.onThemeChange != nil {
 			p.onThemeChange(constants.ThemeNeoBrutalism)
 		}
 	})
 	btnNeo.Importance = widget.MediumImportance
 
-	btnLight := widget.NewButtonWithIcon("Neumorphism Light (Soft Glass)", theme.ColorPaletteIcon(), func() {
+	btnLight := widget.NewButtonWithIcon("Neumorphism Light", theme.ColorPaletteIcon(), func() {
 		if p.onThemeChange != nil {
 			p.onThemeChange(constants.ThemeNeumorphismLight)
 		}
 	})
 	btnLight.Importance = widget.MediumImportance
 
-	btnDark := widget.NewButtonWithIcon("Neumorphism Dark (Deep Midnight)", theme.StorageIcon(), func() {
+	btnDark := widget.NewButtonWithIcon("Neumorphism Dark", theme.StorageIcon(), func() {
 		if p.onThemeChange != nil {
 			p.onThemeChange(constants.ThemeNeumorphismDark)
 		}

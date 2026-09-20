@@ -447,6 +447,8 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 			fullScreenBtn.SetIcon(theme.ViewRestoreIcon())
 		} else {
 			fullScreenBtn.SetIcon(theme.ViewFullScreenIcon())
+			m.Window.Resize(fyne.NewSize(constants.DefaultWinW, constants.DefaultWinH))
+			m.Window.CenterOnScreen()
 		}
 	})
 	fullScreenBtn.Importance = widget.LowImportance
@@ -457,16 +459,10 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	quickThemeBtn.Importance = widget.LowImportance
 
-	var settingsQuickBtn *widget.Button
-	settingsQuickBtn = widget.NewButtonWithIcon("", theme.SettingsIcon(), func() {
-		m.showPage(constants.NavSettings)
-	})
-	settingsQuickBtn.Importance = widget.LowImportance
+	headerActions := container.NewHBox(quickThemeBtn, fullScreenBtn)
 
-	headerActions := container.NewHBox(fullScreenBtn, quickThemeBtn, settingsQuickBtn)
-
-	brandHeader := container.NewBorder(nil, nil,
-		container.NewHBox(brandBadge, verBadge),
+	brandRow := container.NewBorder(nil, nil,
+		brandBadge,
 		headerActions,
 	)
 
@@ -474,9 +470,14 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	subTitle.TextSize = constants.FontSizeLabel
 	subTitle.TextStyle = fyne.TextStyle{Bold: true}
 
-	brandBox := container.NewVBox(
-		brandHeader,
+	subRow := container.NewBorder(nil, nil,
 		subTitle,
+		verBadge,
+	)
+
+	brandBox := container.NewVBox(
+		brandRow,
+		subRow,
 	)
 
 	headerCard := container.NewVBox(
@@ -598,7 +599,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		)),
 	)
 
-	sidebarContent := container.NewBorder(headerCard, footerBox, nil, nil, container.NewPadded(navContainer))
+	sidebarContent := container.NewBorder(headerCard, footerBox, nil, nil, container.NewVScroll(container.NewPadded(navContainer)))
 
 	// Sidebar background
 	var bgSidebar fyne.CanvasObject
