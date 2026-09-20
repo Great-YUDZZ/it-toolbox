@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"math"
 	"fmt"
 	"image/color"
 	"time"
@@ -173,6 +174,63 @@ func (r *navItemRenderer) Objects() []fyne.CanvasObject {
 func (r *navItemRenderer) Destroy() {}
 
 // MainWindow manages the application shell layout, theme state, and routing
+// slidingSidebarLayout positions and clips the sidebar during slide collapse/expand transitions
+type slidingSidebarLayout struct {
+	width     *float32
+	fullWidth *float32
+}
+
+func (l *slidingSidebarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if len(objects) == 0 {
+		return
+	}
+	clip, ok := objects[0].(*container.Clip)
+	if !ok {
+		return
+	}
+	curWidth := *l.width
+	fullWidth := *l.fullWidth
+	if fullWidth <= 0 {
+		fullWidth = float32(constants.SidebarWidth)
+	}
+
+	clip.Resize(fyne.NewSize(curWidth, size.Height))
+	clip.Move(fyne.NewPos(0, 0))
+
+	offsetX := curWidth - fullWidth
+	if clip.Content != nil {
+		clip.Content.Move(fyne.NewPos(offsetX, 0))
+		clip.Content.Resize(fyne.NewSize(fullWidth, size.Height))
+	}
+}
+
+func (l *slidingSidebarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	return fyne.NewSize(*l.width, 0)
+}
+
+// pageSlideLayout animates page entry with a subtle upward glide (offsetY)
+type pageSlideLayout struct {
+	offsetY *float32
+}
+
+func (l *pageSlideLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if len(objects) == 0 {
+		return
+	}
+	y := *l.offsetY
+	for _, o := range objects {
+		o.Move(fyne.NewPos(0, y))
+		o.Resize(fyne.NewSize(size.Width, size.Height))
+	}
+}
+
+func (l *pageSlideLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	if len(objects) == 0 {
+		return fyne.NewSize(0, 0)
+	}
+	return objects[0].MinSize()
+}
+
 type MainWindow struct {
 	App           fyne.App
 	Window        fyne.Window
@@ -185,8 +243,19 @@ type MainWindow struct {
 
 	isSidebarCollapsed bool
 	sidebarWithSep     *fyne.Container
+	sidebarContainer   *fyne.Container
+	sidebarLayout      *slidingSidebarLayout
+	sidebarFullWidth   float32
+	sidebarWidth       float32
+	sidebarAnim        *fyne.Animation
 	openSidebarBtn     *widget.Button
 	topBarWrapper      *fyne.Container
+
+	pageSlideContainer *fyne.Container
+	pageSlideLayout    *pageSlideLayout
+	pageOffsetY        float32
+	pageCurtain        *canvas.Rectangle
+	pageAnim           *fyne.Animation
 
 	navToolbox  *NavItem
 	navFileConv *NavItem
@@ -648,7 +717,28 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		bgSidebar = rect
 	}
 	sidebarWrapper := container.NewMax(bgSidebar, sidebarContent)
-	m.sidebarWithSep = container.NewBorder(nil, nil, nil, widget.NewSeparator(), sidebarWrapper)
+
+	minW := sidebarWrapper.MinSize().Width
+	if minW < 265 {
+		minW = 265
+	}
+	m.sidebarFullWidth = minW
+	if !m.isSidebarCollapsed {
+		m.sidebarWidth = m.sidebarFullWidth
+	} else {
+		m.sidebarWidth = 0
+	}
+
+	clip := container.NewClip(sidebarWrapper)
+	m.sidebarLayout = &slidingSidebarLayout{
+		width:     &m.sidebarWidth,
+		fullWidth: &m.sidebarFullWidth,
+	}
+	m.sidebarContainer = container.New(m.sidebarLayout, clip)
+	m.sidebarWithSep = container.NewBorder(nil, nil, nil, widget.NewSeparator(), m.sidebarContainer)
+	if m.isSidebarCollapsed {
+		m.sidebarWithSep.Hide()
+	}
 
 	// Top bar controls that appear when sidebar is collapsed
 	m.openSidebarBtn = widget.NewButtonWithIcon("Tampilkan Menu Sidebar", theme.MenuExpandIcon(), func() {
@@ -680,6 +770,17 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	topBar := container.NewBorder(nil, nil, m.openSidebarBtn, topActions)
 	m.topBarWrapper = container.NewVBox(topBar, widget.NewSeparator())
 	m.topBarWrapper.Hide()
+
+	if m.pageSlideContainer == nil {
+		m.pageOffsetY = 0
+		m.pageSlideLayout = &pageSlideLayout{offsetY: &m.pageOffsetY}
+		m.pageSlideContainer = container.New(m.pageSlideLayout)
+		m.pageCurtain = canvas.NewRectangle(color.Transparent)
+		m.pageCurtain.Hide()
+		pageClip := container.NewClip(m.pageSlideContainer)
+		pageStack := container.NewStack(pageClip, m.pageCurtain)
+		m.ContentArea.Objects = []fyne.CanvasObject{pageStack}
+	}
 
 	contentWithTopBar := container.NewBorder(m.topBarWrapper, nil, nil, nil, m.ContentArea)
 
@@ -728,17 +829,27 @@ func (m *MainWindow) updateNavHighlights(active string) {
 	m.StatusLabel.Refresh()
 }
 
-// ToggleSidebar collapses or reveals the left navigation sidebar
+// ToggleSidebar collapses or reveals the left navigation sidebar with smooth slide animation
 func (m *MainWindow) ToggleSidebar() {
-	m.isSidebarCollapsed = !m.isSidebarCollapsed
-	if m.isSidebarCollapsed {
-		if m.sidebarWithSep != nil {
-			m.sidebarWithSep.Hide()
-		}
-		if m.topBarWrapper != nil {
-			m.topBarWrapper.Show()
-		}
+	if m.sidebarAnim != nil {
+		m.sidebarAnim.Stop()
+		m.sidebarAnim = nil
+	}
+
+	targetCollapsed := !m.isSidebarCollapsed
+	m.isSidebarCollapsed = targetCollapsed
+
+	fullW := m.sidebarFullWidth
+	if fullW <= 0 {
+		fullW = 265
+	}
+
+	startW := m.sidebarWidth
+	var endW float32
+	if targetCollapsed {
+		endW = 0
 	} else {
+		endW = fullW
 		if m.sidebarWithSep != nil {
 			m.sidebarWithSep.Show()
 		}
@@ -746,9 +857,44 @@ func (m *MainWindow) ToggleSidebar() {
 			m.topBarWrapper.Hide()
 		}
 	}
-	if m.RootContainer != nil {
-		m.RootContainer.Refresh()
+
+	diff := float32(math.Abs(float64(endW - startW)))
+	ratio := diff / fullW
+	if ratio > 1.0 {
+		ratio = 1.0
 	}
+	animDuration := time.Duration(float32(180*time.Millisecond) * ratio)
+	if animDuration < 30*time.Millisecond {
+		animDuration = 30 * time.Millisecond
+	}
+
+	m.sidebarAnim = fyne.NewAnimation(animDuration, func(progress float32) {
+		m.sidebarWidth = startW + (endW-startW)*progress
+		if m.sidebarContainer != nil {
+			m.sidebarContainer.Refresh()
+		}
+		if m.RootContainer != nil {
+			m.RootContainer.Refresh()
+		}
+
+		if progress >= 1.0 {
+			m.sidebarWidth = endW
+			if targetCollapsed {
+			if m.sidebarWithSep != nil {
+				m.sidebarWithSep.Hide()
+			}
+			if m.topBarWrapper != nil {
+				m.topBarWrapper.Show()
+			}
+		}
+		if m.RootContainer != nil {
+			m.RootContainer.Refresh()
+		}
+		m.sidebarAnim = nil
+		}
+	})
+	m.sidebarAnim.Curve = fyne.AnimationEaseInOut
+	m.sidebarAnim.Start()
 }
 
 // ShowPage switches the active page
@@ -757,7 +903,16 @@ func (m *MainWindow) ShowPage(name string) {
 }
 
 func (m *MainWindow) showPage(name string) {
-	m.ContentArea.Objects = nil
+	if m.ActiveMenu == name && m.pageSlideContainer != nil && len(m.pageSlideContainer.Objects) > 0 {
+		return
+	}
+
+	isFirstLoad := (m.ActiveMenu == "")
+
+	if m.pageAnim != nil {
+		m.pageAnim.Stop()
+		m.pageAnim = nil
+	}
 
 	var content fyne.CanvasObject
 	switch name {
@@ -783,9 +938,67 @@ func (m *MainWindow) showPage(name string) {
 		content = m.calcPage.Build()
 	}
 
-	m.ContentArea.Objects = []fyne.CanvasObject{content}
-	m.ContentArea.Refresh()
+	if m.pageSlideContainer != nil {
+		m.pageSlideContainer.Objects = []fyne.CanvasObject{content}
+	} else {
+		m.ContentArea.Objects = []fyne.CanvasObject{content}
+	}
+
 	m.updateNavHighlights(name)
+
+	if isFirstLoad || m.pageCurtain == nil || m.pageSlideContainer == nil {
+		m.pageOffsetY = 0
+		if m.pageCurtain != nil {
+			m.pageCurtain.Hide()
+		}
+		m.ContentArea.Refresh()
+		return
+	}
+
+	// Animate page slide-in & fade
+	var curtainColor color.NRGBA
+	if constants.ActiveTheme == constants.ThemeNeumorphismLight {
+		curtainColor = color.NRGBA{R: 0xEE, G: 0xF3, B: 0xFB, A: 190}
+	} else if constants.ActiveTheme == constants.ThemeNeumorphismDark {
+		curtainColor = color.NRGBA{R: 0x0A, G: 0x0E, B: 0x18, A: 190}
+	} else if constants.IsDarkTheme {
+		curtainColor = color.NRGBA{R: 0x18, G: 0x18, B: 0x1F, A: 190}
+	} else {
+		curtainColor = color.NRGBA{R: 0xF5, G: 0xF7, B: 0xFA, A: 190}
+	}
+
+	m.pageOffsetY = 16.0
+	m.pageCurtain.FillColor = curtainColor
+	m.pageCurtain.Show()
+	m.pageCurtain.Refresh()
+	m.pageSlideContainer.Refresh()
+
+	startOffset := float32(16.0)
+	startAlpha := float32(curtainColor.A)
+	r, g, b := curtainColor.R, curtainColor.G, curtainColor.B
+
+	m.pageAnim = fyne.NewAnimation(160*time.Millisecond, func(progress float32) {
+		remaining := 1.0 - progress
+		m.pageOffsetY = startOffset * remaining
+		curAlpha := uint8(startAlpha * remaining)
+		m.pageCurtain.FillColor = color.NRGBA{R: r, G: g, B: b, A: curAlpha}
+		m.pageCurtain.Refresh()
+		if m.pageSlideContainer != nil {
+			m.pageSlideContainer.Refresh()
+		}
+
+		if progress >= 1.0 {
+			m.pageOffsetY = 0
+			m.pageCurtain.Hide()
+			m.pageCurtain.Refresh()
+			if m.pageSlideContainer != nil {
+				m.pageSlideContainer.Refresh()
+			}
+			m.pageAnim = nil
+		}
+	})
+	m.pageAnim.Curve = fyne.AnimationEaseOut
+	m.pageAnim.Start()
 }
 
 func (m *MainWindow) ShowAndRun() {
