@@ -26,14 +26,14 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 #### Metode Rekomendasi: Paket Debian (`.deb`)
 
 1. **Unduh Paket Instalasi:**
-   - **[Download it-toolbox_1.4.1_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.4.1/it-toolbox_1.4.1_amd64.deb)**
+   - **[Download it-toolbox_1.5.0_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/it-toolbox_1.5.0_amd64.deb)**
 
 2. **Pemasangan Aplikasi:**
-   - Klik ganda pada berkas `it-toolbox_1.4.1_amd64.deb` melalui File Manager.
+   - Klik ganda pada berkas `it-toolbox_1.5.0_amd64.deb` melalui File Manager.
    - Jendela App Center / Software Center / GDebi akan terbuka. Klik **Install**.
    - Atau melalui terminal:
      ```bash
-     sudo apt install ./it-toolbox_1.4.1_amd64.deb
+     sudo apt install ./it-toolbox_1.5.0_amd64.deb
      ```
 
 3. **Integrasi Sistem:**
@@ -52,8 +52,8 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 ### 2. Sistem Operasi Windows (Windows 10 / 11 64-bit)
 
 #### Berkas Distribusi Windows:
-- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.4.1/it-toolbox.exe)** *(Disarankan)*
-- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.4.1/IT-Toolbox-Windows-Portable-x64.zip)**
+- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/it-toolbox.exe)** *(Disarankan)*
+- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/IT-Toolbox-Windows-Portable-x64.zip)**
 
 #### Cara Penggunaan & Pembuatan Pintasan:
 1. Tempatkan berkas `it-toolbox.exe` pada folder pilihan Anda (contoh: `D:\Tools\IT-Toolbox\` atau `C:\Program Files\IT Toolbox\`).
@@ -117,7 +117,7 @@ go build -tags x11 -ldflags="-s -w" -o it-toolbox .
 CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -s -w" -o it-toolbox.exe .
 
 # Membangun Paket Installer Debian (.deb)
-bash build/linux/package-deb.sh 1.4.1
+bash build/linux/package-deb.sh 1.5.0
 ```
 
 ---

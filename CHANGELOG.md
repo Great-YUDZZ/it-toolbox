@@ -6,6 +6,28 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.5.0] - 2026-09-22
+
+### Fitur Baru
+- **Hashed Password Vault & Manajemen Keamanan Sandi**:
+  - Modul penyimpanan lokal persisten SQLite (`~/.it-toolbox/it-toolbox.db`) untuk sandi yang telah di-hash secara aman.
+  - Dukungan algoritma hashing lengkap: **bcrypt** (standar industri via `golang.org/x/crypto/bcrypt`), **SHA-256**, **SHA-512**, **MD5**, dan **SHA-1**.
+  - Generator Hash Multi-Digest instan dengan tombol cepat **Simpan ke Vault** dan **Salin**.
+  - Integrasi generator password entropy tinggi dengan opsi simpan langsung ke Vault.
+  - Modal penyimpanan Neo-Brutalist dengan live preview kalkulasi hash saat mengetik, opsi salt kustom, dan pilihan penyimpanan sandi plaintext opsional.
+  - Pencarian langsung (*live search*), filter berbasis algoritma, dan badge warna tematik (BCRYPT, SHA-256, SHA-512, MD5, SHA-1).
+  - Masking sandi plaintext (`********`) dengan tombol intip/sembunyi dan salin sandi.
+  - Alat verifikasi kecocokan sandi plaintext terhadap hash tersimpan secara real-time.
+  - Ekspor seluruh data kredensial Vault ke format file **JSON** dan **CSV** yang otomatis tersalin ke clipboard.
+
+### Perbaikan & Optimasi Tampilan (Zero-Overflow Assurance)
+- **Eliminasi Pemotongan UI (Horizontal Overflow)**:
+  - Memperbaiki `NewScrollableEntry` dengan scroller internal berpelindung `scrollShield` sehingga lebar minimum entry tidak membengkak saat menampilkan string digest panjang (seperti SHA-512 128-karakter).
+  - Restrukturisasi tata letak header Vault dan preset chip panjang karakter, menurunkan lebar minimum halaman hingga lebih dari 60% (dari 1.288px ke 516px).
+  - Memastikan seluruh tombol aksi, badge, dan konten tetap proporsional dan tidak terpotong pada berbagai resolusi layar.
+
+---
+
 ## [1.4.1] - 2026-09-20
 
 ### Peningkatan & Perbaikan Kinerja

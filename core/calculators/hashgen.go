@@ -3,14 +3,26 @@ package calculators
 import (
 	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/hex"
 	"math/big"
+	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // GenerateMD5 computes the MD5 hex digest of the input string
 func GenerateMD5(input string) string {
 	hasher := md5.New()
+	hasher.Write([]byte(input))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+// GenerateSHA1 computes the SHA1 hex digest of the input string
+func GenerateSHA1(input string) string {
+	hasher := sha1.New()
 	hasher.Write([]byte(input))
 	return hex.EncodeToString(hasher.Sum(nil))
 }
@@ -22,12 +34,61 @@ func GenerateSHA256(input string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
+// GenerateSHA512 computes the SHA512 hex digest of the input string
+func GenerateSHA512(input string) string {
+	hasher := sha512.New()
+	hasher.Write([]byte(input))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+// GenerateBcrypt hashes password using bcrypt with the specified cost (default 10 if <= 0)
+func GenerateBcrypt(password string, cost int) (string, error) {
+	if cost <= 0 {
+		cost = bcrypt.DefaultCost
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), cost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
+}
+
+// VerifyBcrypt checks if a plaintext password matches the bcrypt hash
+func VerifyBcrypt(hashedPassword, password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
+}
+
+// VerifyHash verifies whether a password matches the hashValue using the specified algorithm
+func VerifyHash(algorithm, hashValue, password, salt string) bool {
+	normAlgo := strings.ToUpper(strings.TrimSpace(algorithm))
+	target := strings.TrimSpace(hashValue)
+
+	switch normAlgo {
+	case "BCRYPT":
+		return VerifyBcrypt(target, password)
+	case "SHA-256", "SHA256":
+		expected := GenerateSHA256(password + salt)
+		return strings.EqualFold(target, expected)
+	case "SHA-512", "SHA512":
+		expected := GenerateSHA512(password + salt)
+		return strings.EqualFold(target, expected)
+	case "MD5":
+		expected := GenerateMD5(password + salt)
+		return strings.EqualFold(target, expected)
+	case "SHA-1", "SHA1":
+		expected := GenerateSHA1(password + salt)
+		return strings.EqualFold(target, expected)
+	default:
+		return false
+	}
+}
+
 // GenerateRandomToken generates a cryptographically secure random hexadecimal token
 func GenerateRandomToken(length int) string {
 	if length <= 0 {
 		return ""
 	}
-	// length in hex characters requires length/2 bytes, rounded up
 	byteCount := (length + 1) / 2
 	b := make([]byte, byteCount)
 	_, err := rand.Read(b)
@@ -65,7 +126,6 @@ func GeneratePassword(length int, useSymbols bool) string {
 	for i := 0; i < length; i++ {
 		randomIndex, err := rand.Int(rand.Reader, poolLen)
 		if err != nil {
-			// Fallback index
 			password[i] = charPool[i%len(charPool)]
 			continue
 		}

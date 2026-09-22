@@ -768,3 +768,163 @@ func SearchCiscoCustomSnippets(query string) ([]CiscoCustomSnippet, error) {
 	return snippets, rows.Err()
 }
 
+
+// ----------------------------------------------------------------------------
+// 6. Hashed Password Vault
+// ----------------------------------------------------------------------------
+
+type HashedPassword struct {
+	ID            int64  `json:"id"`
+	Title         string `json:"title"`
+	Algorithm     string `json:"algorithm"`
+	HashValue     string `json:"hash_value"`
+	PlainPassword string `json:"plain_password,omitempty"`
+	Salt          string `json:"salt,omitempty"`
+	Notes         string `json:"notes,omitempty"`
+	CreatedAt     string `json:"created_at"`
+}
+
+func CreateHashedPassword(hp *HashedPassword) (int64, error) {
+	db, err := getDB()
+	if err != nil {
+		return 0, err
+	}
+	query := `INSERT INTO hashed_passwords (title, algorithm, hash_value, plain_password, salt, notes) VALUES (?, ?, ?, ?, ?, ?)`
+	res, err := db.Exec(query, hp.Title, hp.Algorithm, hp.HashValue, hp.PlainPassword, hp.Salt, hp.Notes)
+	if err != nil {
+		return 0, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	hp.ID = id
+	return id, nil
+}
+
+func GetAllHashedPasswords() ([]HashedPassword, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+	query := `SELECT id, title, algorithm, hash_value, plain_password, salt, notes, created_at FROM hashed_passwords ORDER BY id DESC`
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []HashedPassword
+	for rows.Next() {
+		var hp HashedPassword
+		var plain, salt, notes sql.NullString
+		if err := rows.Scan(&hp.ID, &hp.Title, &hp.Algorithm, &hp.HashValue, &plain, &salt, &notes, &hp.CreatedAt); err != nil {
+			return nil, err
+		}
+		if plain.Valid {
+			hp.PlainPassword = plain.String
+		}
+		if salt.Valid {
+			hp.Salt = salt.String
+		}
+		if notes.Valid {
+			hp.Notes = notes.String
+		}
+		list = append(list, hp)
+	}
+	return list, rows.Err()
+}
+
+func GetHashedPasswordByID(id int64) (*HashedPassword, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+	query := `SELECT id, title, algorithm, hash_value, plain_password, salt, notes, created_at FROM hashed_passwords WHERE id = ?`
+	row := db.QueryRow(query, id)
+
+	var hp HashedPassword
+	var plain, salt, notes sql.NullString
+	if err := row.Scan(&hp.ID, &hp.Title, &hp.Algorithm, &hp.HashValue, &plain, &salt, &notes, &hp.CreatedAt); err != nil {
+		return nil, err
+	}
+	if plain.Valid {
+		hp.PlainPassword = plain.String
+	}
+	if salt.Valid {
+		hp.Salt = salt.String
+	}
+	if notes.Valid {
+		hp.Notes = notes.String
+	}
+	return &hp, nil
+}
+
+func UpdateHashedPassword(hp *HashedPassword) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	query := `UPDATE hashed_passwords SET title = ?, algorithm = ?, hash_value = ?, plain_password = ?, salt = ?, notes = ? WHERE id = ?`
+	_, err = db.Exec(query, hp.Title, hp.Algorithm, hp.HashValue, hp.PlainPassword, hp.Salt, hp.Notes, hp.ID)
+	return err
+}
+
+func DeleteHashedPassword(id int64) error {
+	db, err := getDB()
+	if err != nil {
+		return err
+	}
+	query := `DELETE FROM hashed_passwords WHERE id = ?`
+	_, err = db.Exec(query, id)
+	return err
+}
+
+func SearchHashedPasswords(query, algorithm string) ([]HashedPassword, error) {
+	db, err := getDB()
+	if err != nil {
+		return nil, err
+	}
+
+	q := "%" + strings.TrimSpace(query) + "%"
+	var rows *sql.Rows
+
+	if algorithm != "" && algorithm != "Semua" && algorithm != "Semua Algoritma" {
+		stmt := `SELECT id, title, algorithm, hash_value, plain_password, salt, notes, created_at 
+		         FROM hashed_passwords 
+		         WHERE (title LIKE ? OR notes LIKE ? OR plain_password LIKE ?) AND algorithm = ? 
+		         ORDER BY id DESC`
+		rows, err = db.Query(stmt, q, q, q, algorithm)
+	} else {
+		stmt := `SELECT id, title, algorithm, hash_value, plain_password, salt, notes, created_at 
+		         FROM hashed_passwords 
+		         WHERE (title LIKE ? OR notes LIKE ? OR plain_password LIKE ?) 
+		         ORDER BY id DESC`
+		rows, err = db.Query(stmt, q, q, q)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []HashedPassword
+	for rows.Next() {
+		var hp HashedPassword
+		var plain, salt, notes sql.NullString
+		if err := rows.Scan(&hp.ID, &hp.Title, &hp.Algorithm, &hp.HashValue, &plain, &salt, &notes, &hp.CreatedAt); err != nil {
+			return nil, err
+		}
+		if plain.Valid {
+			hp.PlainPassword = plain.String
+		}
+		if salt.Valid {
+			hp.Salt = salt.String
+		}
+		if notes.Valid {
+			hp.Notes = notes.String
+		}
+		list = append(list, hp)
+	}
+	return list, rows.Err()
+}

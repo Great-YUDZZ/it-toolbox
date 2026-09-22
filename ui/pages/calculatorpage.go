@@ -1,9 +1,14 @@
 package pages
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -14,6 +19,7 @@ import (
 
 	"github.com/yudz/it-toolbox/core/calculators"
 	"github.com/yudz/it-toolbox/core/formatters"
+	"github.com/yudz/it-toolbox/database"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
 )
@@ -537,47 +543,383 @@ func (p *CalculatorPage) buildConverterTab() fyne.CanvasObject {
 }
 
 // ----------------------------------------------------------------------------
-// 3. Tab Hash & Password Generator
+// 3. Tab Hash & Password Generator + Hashed Password Vault
 // ----------------------------------------------------------------------------
+func getAlgorithmBadge(algo string) fyne.CanvasObject {
+	switch strings.ToUpper(strings.TrimSpace(algo)) {
+	case "BCRYPT":
+		return components.BadgeIndigo("BCRYPT")
+	case "SHA-256", "SHA256":
+		return components.BadgeCyan("SHA-256")
+	case "SHA-512", "SHA512":
+		return components.BadgeYellow("SHA-512")
+	case "MD5":
+		return components.BadgeMuted("MD5")
+	case "SHA-1", "SHA1":
+		return components.BadgeWarning("SHA-1")
+	default:
+		return components.BadgeCyan(algo)
+	}
+}
+
+func (p *CalculatorPage) showSaveHashedPasswordDialog(defaultPlain, defaultAlgo, defaultHash string, onSaved func()) {
+	titleEntry := components.NewScrollableEntry()
+	titleEntry.SetPlaceHolder("Contoh: Admin Server, API Secret, Akun DB")
+
+	if defaultAlgo == "" {
+		defaultAlgo = "bcrypt"
+	}
+
+	plainEntry := components.NewScrollableEntry()
+	plainEntry.SetPlaceHolder("Teks sandi plaintext (opsional jika mengisi hash langsung)")
+	plainEntry.SetText(defaultPlain)
+
+	savePlainCheck := widget.NewCheck("Simpan plaintext sandi juga (opsional, untuk catatan referensi)", nil)
+	if defaultPlain != "" {
+		savePlainCheck.SetChecked(true)
+	}
+
+	saltEntry := components.NewScrollableEntry()
+	saltEntry.SetPlaceHolder("Salt opsional (khusus algoritma SHA-256, SHA-512, MD5, SHA-1)")
+
+	hashEntry := components.NewScrollableEntry()
+	hashEntry.SetPlaceHolder("Nilai hash akan dihitung otomatis atau masukkan hash manual...")
+	hashEntry.TextStyle = fyne.TextStyle{Monospace: true}
+	if defaultHash != "" {
+		hashEntry.SetText(defaultHash)
+	}
+
+	notesEntry := widget.NewMultiLineEntry()
+	notesEntry.SetPlaceHolder("Catatan keterangan penggunaan, host, atau lingkungan...")
+	notesEntry.SetMinRowsVisible(2)
+
+	var algoSelect *widget.Select
+	recompute := func() {
+		text := plainEntry.Text
+		if text == "" {
+			return
+		}
+		algo := "bcrypt"
+		if algoSelect != nil && algoSelect.Selected != "" {
+			algo = algoSelect.Selected
+		}
+		salt := saltEntry.Text
+
+		switch algo {
+		case "bcrypt":
+			h, err := calculators.GenerateBcrypt(text, 10)
+			if err == nil {
+				hashEntry.SetText(h)
+			}
+		case "SHA-256":
+			hashEntry.SetText(calculators.GenerateSHA256(text + salt))
+		case "SHA-512":
+			hashEntry.SetText(calculators.GenerateSHA512(text + salt))
+		case "MD5":
+			hashEntry.SetText(calculators.GenerateMD5(text + salt))
+		case "SHA-1":
+			hashEntry.SetText(calculators.GenerateSHA1(text + salt))
+		}
+	}
+
+	algoSelect = widget.NewSelect([]string{"bcrypt", "SHA-256", "SHA-512", "MD5", "SHA-1"}, func(s string) {
+		recompute()
+	})
+	algoSelect.SetSelected(defaultAlgo)
+
+	plainEntry.OnChanged = func(s string) {
+		recompute()
+	}
+	saltEntry.OnChanged = func(s string) {
+		recompute()
+	}
+
+	if defaultPlain != "" && defaultHash == "" {
+		recompute()
+	}
+
+	form := container.NewVBox(
+		widget.NewLabelWithStyle("Nama / Judul Kredensial:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		titleEntry,
+		container.NewGridWithColumns(2,
+			container.NewVBox(
+				widget.NewLabelWithStyle("Algoritma Hash:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+				algoSelect,
+			),
+			container.NewVBox(
+				widget.NewLabelWithStyle("Salt (Opsional):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+				saltEntry,
+			),
+		),
+		widget.NewLabelWithStyle("Sandi Plaintext (Otomatis Dihash):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		plainEntry,
+		savePlainCheck,
+		widget.NewLabelWithStyle("Nilai Hash yang Dihasilkan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		hashEntry,
+		widget.NewLabelWithStyle("Catatan Tambahan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		notesEntry,
+	)
+
+	components.ShowBrutalistFormDialog(
+		p.window,
+		"VAULT",
+		constants.ColorTechIndigo,
+		"Simpan Sandi Ter-Hash ke Vault",
+		"Simpan kredensial ber-hash secara persisten ke database lokal aman.",
+		form,
+		"Simpan ke Vault",
+		func() {
+			title := strings.TrimSpace(titleEntry.Text)
+			if title == "" {
+				dialog.ShowError(fmt.Errorf("nama / judul kredensial tidak boleh kosong"), p.window)
+				return
+			}
+			hashVal := strings.TrimSpace(hashEntry.Text)
+			if hashVal == "" {
+				dialog.ShowError(fmt.Errorf("nilai hash tidak boleh kosong"), p.window)
+				return
+			}
+
+			hp := &database.HashedPassword{
+				Title:     title,
+				Algorithm: algoSelect.Selected,
+				HashValue: hashVal,
+				Salt:      strings.TrimSpace(saltEntry.Text),
+				Notes:     strings.TrimSpace(notesEntry.Text),
+			}
+			if savePlainCheck.Checked {
+				hp.PlainPassword = plainEntry.Text
+			}
+
+			_, err := database.CreateHashedPassword(hp)
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("gagal menyimpan ke vault: %w", err), p.window)
+				return
+			}
+
+			dialog.ShowInformation("Vault", "Sandi ber-hash berhasil disimpan ke Vault!", p.window)
+			if onSaved != nil {
+				onSaved()
+			}
+		},
+	)
+}
+
+func (p *CalculatorPage) showVerifyPasswordDialog(hp *database.HashedPassword) {
+	testEntry := components.NewScrollableEntry()
+	testEntry.SetPlaceHolder("Ketik teks sandi plaintext yang ingin diverifikasi...")
+
+	resultBadgeContainer := container.NewHBox()
+	resultText := canvas.NewText("Ketik sandi plaintext di atas untuk menguji validitas hash.", constants.ColorTextMuted)
+	resultText.TextSize = constants.FontSizeBody
+
+	verifyBox := container.NewVBox(
+		container.NewHBox(
+			widget.NewLabelWithStyle("Target Kredensial:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabel(hp.Title),
+			getAlgorithmBadge(hp.Algorithm),
+		),
+		widget.NewLabelWithStyle("Nilai Hash Tersimpan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel(hp.HashValue),
+	)
+
+	if hp.Salt != "" {
+		verifyBox.Add(container.NewHBox(
+			widget.NewLabelWithStyle("Salt Tersimpan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabel(hp.Salt),
+		))
+	}
+
+	testEntry.OnChanged = func(s string) {
+		resultBadgeContainer.Objects = nil
+		if s == "" {
+			resultText.Text = "Ketik sandi plaintext di atas untuk menguji validitas hash."
+			resultText.Color = constants.ColorTextMuted
+			resultText.Refresh()
+			return
+		}
+
+		matched := calculators.VerifyHash(hp.Algorithm, hp.HashValue, s, hp.Salt)
+		if matched {
+			resultBadgeContainer.Add(components.BadgeSuccess("COCOK / VALID"))
+			resultText.Text = "Sandi plaintext yang Anda masukkan COCOK dengan hash tersimpan!"
+			resultText.Color = constants.ColorSuccess
+		} else {
+			resultBadgeContainer.Add(components.BadgeDanger("TIDAK COCOK"))
+			resultText.Text = "Sandi plaintext TIDAK SESUAI dengan nilai hash ini."
+			resultText.Color = constants.ColorDanger
+		}
+		resultBadgeContainer.Refresh()
+		resultText.Refresh()
+	}
+
+	verifyContent := container.NewVBox(
+		verifyBox,
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Uji Sandi Plaintext:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		testEntry,
+		container.NewVBox(
+			resultBadgeContainer,
+			resultText,
+		),
+	)
+
+	components.ShowStyledInformationDialog(
+		p.window,
+		"VERIFIKASI HASH",
+		constants.ColorAccentCobalt,
+		"Verifikasi Sandi Plaintext",
+		"Uji apakah suatu sandi plaintext menghasilkan hash yang identik.",
+		verifyContent,
+		"Selesai",
+		nil,
+	)
+}
+
+func (p *CalculatorPage) exportVaultJSON(list []database.HashedPassword) {
+	if len(list) == 0 {
+		dialog.ShowInformation("Ekspor Vault", "Tidak ada data sandi ber-hash untuk diekspor.", p.window)
+		return
+	}
+
+	data, err := json.MarshalIndent(list, "", "  ")
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("gagal memformat JSON: %w", err), p.window)
+		return
+	}
+
+	home, _ := os.UserHomeDir()
+	outDir := filepath.Join(home, ".it-toolbox")
+	_ = os.MkdirAll(outDir, 0755)
+	fileName := fmt.Sprintf("hashed_passwords_export_%d.json", time.Now().Unix())
+	filePath := filepath.Join(outDir, fileName)
+
+	err = os.WriteFile(filePath, data, 0644)
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("gagal menulis file JSON: %w", err), p.window)
+		return
+	}
+
+	p.window.Clipboard().SetContent(string(data))
+	msg := fmt.Sprintf("Berhasil mengekspor %d kredensial hash ke:\n%s\n\nData telah disalin ke clipboard!", len(list), filePath)
+	dialog.ShowInformation("Ekspor JSON Berhasil", msg, p.window)
+}
+
+func (p *CalculatorPage) exportVaultCSV(list []database.HashedPassword) {
+	if len(list) == 0 {
+		dialog.ShowInformation("Ekspor Vault", "Tidak ada data sandi ber-hash untuk diekspor.", p.window)
+		return
+	}
+
+	var sb strings.Builder
+	w := csv.NewWriter(&sb)
+	_ = w.Write([]string{"ID", "Title", "Algorithm", "HashValue", "PlainPassword", "Salt", "Notes", "CreatedAt"})
+
+	for _, hp := range list {
+		_ = w.Write([]string{
+			strconv.FormatInt(hp.ID, 10),
+			hp.Title,
+			hp.Algorithm,
+			hp.HashValue,
+			hp.PlainPassword,
+			hp.Salt,
+			hp.Notes,
+			hp.CreatedAt,
+		})
+	}
+	w.Flush()
+
+	csvData := sb.String()
+	home, _ := os.UserHomeDir()
+	outDir := filepath.Join(home, ".it-toolbox")
+	_ = os.MkdirAll(outDir, 0755)
+	fileName := fmt.Sprintf("hashed_passwords_export_%d.csv", time.Now().Unix())
+	filePath := filepath.Join(outDir, fileName)
+
+	err := os.WriteFile(filePath, []byte(csvData), 0644)
+	if err != nil {
+		dialog.ShowError(fmt.Errorf("gagal menulis file CSV: %w", err), p.window)
+		return
+	}
+
+	p.window.Clipboard().SetContent(csvData)
+	msg := fmt.Sprintf("Berhasil mengekspor %d kredensial hash ke:\n%s\n\nData telah disalin ke clipboard!", len(list), filePath)
+	dialog.ShowInformation("Ekspor CSV Berhasil", msg, p.window)
+}
+
 func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
-	hashInput := widget.NewEntry()
+	hashInput := components.NewScrollableEntry()
 	hashInput.SetPlaceHolder("Ketik teks untuk dihitung nilai hash-nya...")
 	hashInput.SetText("Hello IT Toolbox 2026")
 
-	md5Out := widget.NewEntry()
+	md5Out := components.NewScrollableEntry()
 	md5Out.TextStyle = fyne.TextStyle{Monospace: true}
-	sha256Out := widget.NewEntry()
+
+	sha1Out := components.NewScrollableEntry()
+	sha1Out.TextStyle = fyne.TextStyle{Monospace: true}
+
+	sha256Out := components.NewScrollableEntry()
 	sha256Out.TextStyle = fyne.TextStyle{Monospace: true}
+
+	sha512Out := components.NewScrollableEntry()
+	sha512Out.TextStyle = fyne.TextStyle{Monospace: true}
 
 	updateHashes := func(s string) {
 		if s == "" {
 			md5Out.SetText("")
+			sha1Out.SetText("")
 			sha256Out.SetText("")
+			sha512Out.SetText("")
 			return
 		}
 		md5Out.SetText(calculators.GenerateMD5(s))
+		sha1Out.SetText(calculators.GenerateSHA1(s))
 		sha256Out.SetText(calculators.GenerateSHA256(s))
+		sha512Out.SetText(calculators.GenerateSHA512(s))
 	}
 
 	hashInput.OnChanged = updateHashes
 
+	var refreshVault func()
+
+	makeHashRow := func(algoName string, entry *widget.Entry) fyne.CanvasObject {
+		btnSave := widget.NewButtonWithIcon("Simpan", theme.DocumentSaveIcon(), func() {
+			if entry.Text == "" {
+				dialog.ShowError(fmt.Errorf("nilai hash belum tersedia untuk disimpan"), p.window)
+				return
+			}
+			p.showSaveHashedPasswordDialog(hashInput.Text, algoName, entry.Text, refreshVault)
+		})
+		btnCopy := widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() {
+			p.copyToClip(entry.Text)
+		})
+		return container.NewBorder(nil, nil, nil, container.NewHBox(btnSave, btnCopy), entry)
+	}
+
 	hashContent := container.NewVBox(
-		widget.NewLabelWithStyle("Teks Input:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewHBox(
+			widget.NewLabelWithStyle("Teks Input:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			components.BadgeIndigo("MULTI-DIGEST"),
+		),
 		hashInput,
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("MD5 (128-bit Digest):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewBorder(nil, nil, nil, widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(md5Out.Text) }), md5Out),
+		makeHashRow("MD5", md5Out),
+		widget.NewLabelWithStyle("SHA-1 (160-bit Digest):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		makeHashRow("SHA-1", sha1Out),
 		widget.NewLabelWithStyle("SHA-256 (256-bit Secure Digest):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewBorder(nil, nil, nil, widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(sha256Out.Text) }), sha256Out),
+		makeHashRow("SHA-256", sha256Out),
+		widget.NewLabelWithStyle("SHA-512 (512-bit High Security Digest):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		makeHashRow("SHA-512", sha512Out),
 	)
 	hashCard := components.NewPlainCardWithAccent(hashContent, constants.ColorTechIndigo)
 
 	// Password Generator
-	pwdLenEntry := widget.NewEntry()
+	pwdLenEntry := components.NewScrollableEntry()
 	pwdLenEntry.SetText("16")
 	pwdSymCheck := widget.NewCheck("Gunakan Simbol (!@#$%^&*)", nil)
 	pwdSymCheck.SetChecked(true)
-	pwdResult := widget.NewEntry()
+	pwdResult := components.NewScrollableEntry()
 	pwdResult.TextStyle = fyne.TextStyle{Monospace: true}
 
 	genPwd := func() {
@@ -594,7 +936,7 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 	genPwdBtn.Importance = widget.HighImportance
 
 	makeLenChip := func(l int) *widget.Button {
-		btn := widget.NewButton(fmt.Sprintf("%d Karakter", l), func() {
+		btn := widget.NewButton(fmt.Sprintf("%d", l), func() {
 			pwdLenEntry.SetText(strconv.Itoa(l))
 			genPwd()
 		})
@@ -611,6 +953,15 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 		makeLenChip(32),
 	)
 
+	btnSavePwdToVault := widget.NewButtonWithIcon("Simpan ke Vault", theme.DocumentSaveIcon(), func() {
+		if pwdResult.Text == "" {
+			dialog.ShowError(fmt.Errorf("generate password terlebih dahulu"), p.window)
+			return
+		}
+		p.showSaveHashedPasswordDialog(pwdResult.Text, "bcrypt", "", refreshVault)
+	})
+	btnSavePwdToVault.Importance = widget.MediumImportance
+
 	pwdContent := container.NewVBox(
 		container.NewGridWithColumns(2,
 			container.NewVBox(widget.NewLabelWithStyle("Panjang Karakter:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), pwdLenEntry),
@@ -620,19 +971,220 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 		genPwdBtn,
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("Hasil Password Terenkripsi (High Entropy):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewBorder(nil, nil, nil, widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(pwdResult.Text) }), pwdResult),
+		container.NewBorder(nil, nil, nil, container.NewHBox(
+			btnSavePwdToVault,
+			widget.NewButtonWithIcon("Salin", theme.ContentCopyIcon(), func() { p.copyToClip(pwdResult.Text) }),
+		), pwdResult),
 	)
 	pwdCard := components.NewPlainCardWithAccent(pwdContent, constants.ColorTechIndigo)
+
+	// Vault Card
+	vaultItemsBox := container.NewVBox()
+	countBadgeContainer := container.NewHBox(components.BadgeCyan("0 ITEM"))
+
+	var currentQuery string
+	var currentAlgo string = "Semua"
+	var currentList []database.HashedPassword
+
+	refreshVault = func() {
+		list, err := database.SearchHashedPasswords(currentQuery, currentAlgo)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("gagal memuat data vault: %w", err), p.window)
+			return
+		}
+		currentList = list
+
+		countBadgeContainer.Objects = []fyne.CanvasObject{
+			components.BadgeCyan(fmt.Sprintf("%d ITEM", len(list))),
+		}
+		countBadgeContainer.Refresh()
+
+		vaultItemsBox.Objects = nil
+
+		if len(list) == 0 {
+			emptyCard := container.NewVBox(
+				container.NewCenter(widget.NewIcon(theme.FolderOpenIcon())),
+				container.NewCenter(widget.NewLabelWithStyle("Belum ada sandi ter-hash tersimpan.", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})),
+				container.NewCenter(canvas.NewText("Gunakan tombol 'Simpan' pada generator di atas atau 'Tambah Hash Manual' di bawah.", constants.ColorTextMuted)),
+			)
+			vaultItemsBox.Add(container.NewPadded(emptyCard))
+			vaultItemsBox.Refresh()
+			return
+		}
+
+		for _, item := range list {
+			itemCopy := item // Capture for closure
+
+			titleLabel := widget.NewLabelWithStyle(itemCopy.Title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+			algoBadge := getAlgorithmBadge(itemCopy.Algorithm)
+			dateText := canvas.NewText(itemCopy.CreatedAt, constants.ColorTextMuted)
+			dateText.TextSize = constants.FontSizeSmall
+
+			headerRow := container.NewBorder(
+				nil, nil,
+				container.NewHBox(titleLabel, algoBadge),
+				dateText,
+			)
+
+			hashEntry := components.NewScrollableEntry()
+			hashEntry.TextStyle = fyne.TextStyle{Monospace: true}
+			hashEntry.SetText(itemCopy.HashValue)
+
+			copyHashBtn := widget.NewButtonWithIcon("Salin Hash", theme.ContentCopyIcon(), func() {
+				p.copyToClip(itemCopy.HashValue)
+			})
+
+			hashRow := container.NewBorder(
+				nil, nil,
+				canvas.NewText("Hash: ", constants.ColorTextSecondary),
+				copyHashBtn,
+				hashEntry,
+			)
+
+			cardRows := []fyne.CanvasObject{
+				headerRow,
+				hashRow,
+			}
+
+			if itemCopy.Salt != "" {
+				saltRow := container.NewHBox(
+					canvas.NewText("Salt: ", constants.ColorTextSecondary),
+					canvas.NewText(itemCopy.Salt, constants.ColorTextPrimary),
+				)
+				cardRows = append(cardRows, saltRow)
+			}
+
+			if itemCopy.PlainPassword != "" {
+				plainEntry := components.NewScrollableEntry()
+				plainEntry.TextStyle = fyne.TextStyle{Monospace: true}
+				plainEntry.SetText(strings.Repeat("*", len(itemCopy.PlainPassword)))
+				isRevealed := false
+
+				var btnToggle *widget.Button
+				btnToggle = widget.NewButtonWithIcon("Lihat", theme.VisibilityIcon(), func() {
+					if isRevealed {
+						plainEntry.SetText(strings.Repeat("*", len(itemCopy.PlainPassword)))
+						btnToggle.SetText("Lihat")
+						isRevealed = false
+					} else {
+						plainEntry.SetText(itemCopy.PlainPassword)
+						btnToggle.SetText("Sembunyi")
+						isRevealed = true
+					}
+				})
+
+				btnCopyPlain := widget.NewButtonWithIcon("Salin Sandi", theme.ContentCopyIcon(), func() {
+					p.copyToClip(itemCopy.PlainPassword)
+				})
+
+				plainRow := container.NewBorder(
+					nil, nil,
+					canvas.NewText("Plain: ", constants.ColorTextSecondary),
+					container.NewHBox(btnToggle, btnCopyPlain),
+					plainEntry,
+				)
+				cardRows = append(cardRows, plainRow)
+			}
+
+			if itemCopy.Notes != "" {
+				notesLabel := canvas.NewText("Catatan: "+itemCopy.Notes, constants.ColorTextMuted)
+				notesLabel.TextSize = constants.FontSizeSmall
+				cardRows = append(cardRows, notesLabel)
+			}
+
+			btnVerify := widget.NewButtonWithIcon("Verifikasi Sandi", theme.ConfirmIcon(), func() {
+				p.showVerifyPasswordDialog(&itemCopy)
+			})
+			btnVerify.Importance = widget.MediumImportance
+
+			btnDelete := widget.NewButtonWithIcon("Hapus", theme.DeleteIcon(), func() {
+				components.ShowStyledConfirmDialog(
+					p.window,
+					"HAPUS",
+					constants.ColorDanger,
+					"Hapus Sandi Ter-Hash",
+					"Apakah Anda yakin ingin menghapus data hash ini dari Vault?",
+					widget.NewLabel(fmt.Sprintf("Judul: %s\nAlgoritma: %s", itemCopy.Title, itemCopy.Algorithm)),
+					"Batal",
+					"Hapus",
+					func() {
+						_ = database.DeleteHashedPassword(itemCopy.ID)
+						refreshVault()
+					},
+				)
+			})
+			btnDelete.Importance = widget.LowImportance
+
+			cardRows = append(cardRows, container.NewBorder(nil, nil, nil, container.NewHBox(btnVerify, btnDelete)))
+
+			itemBox := container.NewVBox(cardRows...)
+			itemCard := components.NewPlainCardWithAccent(itemBox, constants.ColorAccentCyan)
+			vaultItemsBox.Add(itemCard)
+		}
+		vaultItemsBox.Refresh()
+	}
+
+	searchBar := components.NewSearchBar("Cari nama kredensial, catatan, atau sandi...", func(query string) {
+		currentQuery = query
+		refreshVault()
+	})
+
+	algoSelect := widget.NewSelect([]string{"Semua", "bcrypt", "SHA-256", "SHA-512", "MD5", "SHA-1"}, func(s string) {
+		currentAlgo = s
+		refreshVault()
+	})
+	algoSelect.SetSelected("Semua")
+
+	btnAddManual := widget.NewButtonWithIcon("Tambah Hash", theme.ContentAddIcon(), func() {
+		p.showSaveHashedPasswordDialog("", "bcrypt", "", refreshVault)
+	})
+	btnAddManual.Importance = widget.HighImportance
+
+	btnExportJSON := widget.NewButtonWithIcon("Ekspor JSON", theme.DownloadIcon(), func() {
+		p.exportVaultJSON(currentList)
+	})
+
+	btnExportCSV := widget.NewButtonWithIcon("Ekspor CSV", theme.DocumentSaveIcon(), func() {
+		p.exportVaultCSV(currentList)
+	})
+
+	vaultHeader := container.NewVBox(
+		container.NewBorder(
+			nil, nil,
+			container.NewHBox(
+				widget.NewLabelWithStyle("Hashed Password Vault", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+				countBadgeContainer,
+			),
+			btnAddManual,
+		),
+		canvas.NewText("Penyimpanan lokal kredensial ber-hash aman dengan verifikasi dan ekspor.", constants.ColorTextMuted),
+		widget.NewSeparator(),
+		container.NewGridWithColumns(2,
+			container.NewVBox(widget.NewLabelWithStyle("Pencarian Vault:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), searchBar.Container),
+			container.NewVBox(widget.NewLabelWithStyle("Filter Algoritma:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), algoSelect),
+		),
+		container.NewHBox(
+			canvas.NewText("Alat Ekspor Vault:", constants.ColorTextSecondary),
+			btnExportJSON,
+			btnExportCSV,
+		),
+		widget.NewSeparator(),
+		vaultItemsBox,
+	)
+	vaultCard := components.NewPlainCardWithAccent(vaultHeader, constants.ColorTechIndigo)
 
 	// Initialize
 	updateHashes(hashInput.Text)
 	genPwd()
+	refreshVault()
 
 	return container.NewVScroll(container.NewVBox(
 		hashCard,
 		pwdCard,
+		vaultCard,
 	))
 }
+
 
 // ----------------------------------------------------------------------------
 // 4. Tab Text Formatter & Encoder

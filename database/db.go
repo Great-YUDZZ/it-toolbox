@@ -94,6 +94,17 @@ CREATE TABLE IF NOT EXISTS cisco_custom_snippets (
     verification TEXT,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS hashed_passwords (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    title          TEXT NOT NULL,
+    algorithm      TEXT NOT NULL,
+    hash_value     TEXT NOT NULL,
+    plain_password TEXT,
+    salt           TEXT,
+    notes          TEXT,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 `
 
 // InitDB initializes SQLite database connection and runs migration schemas

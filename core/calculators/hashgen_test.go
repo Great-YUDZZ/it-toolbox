@@ -51,3 +51,78 @@ func TestGeneratePassword(t *testing.T) {
 		t.Errorf("GeneratePassword(24, true) length = %d; want 24", len(pwdWithSym))
 	}
 }
+
+func TestGenerateSHA1(t *testing.T) {
+	// sha1("hello") = aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d
+	got := GenerateSHA1("hello")
+	want := "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d"
+	if got != want {
+		t.Errorf("GenerateSHA1(\"hello\") = %q; want %q", got, want)
+	}
+}
+
+func TestGenerateSHA512(t *testing.T) {
+	// sha512("hello") = 9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043
+	got := GenerateSHA512("hello")
+	want := "9b71d224bd62f3785d96d46ad3ea3d73319bfbc2890caadae2dff72519673ca72323c3d99ba5c11d7c7acc6e14b8c5da0c4663475c2e5c3adef46f73bcdec043"
+	if got != want {
+		t.Errorf("GenerateSHA512(\"hello\") = %q; want %q", got, want)
+	}
+}
+
+func TestGenerateAndVerifyBcrypt(t *testing.T) {
+	password := "SecretP@ssword2026"
+	hash, err := GenerateBcrypt(password, 10)
+	if err != nil {
+		t.Fatalf("GenerateBcrypt error: %v", err)
+	}
+	if !strings.HasPrefix(hash, "$2a$") && !strings.HasPrefix(hash, "$2b$") {
+		t.Errorf("Expected bcrypt hash prefix, got %q", hash)
+	}
+
+	if !VerifyBcrypt(hash, password) {
+		t.Errorf("VerifyBcrypt failed for matching password")
+	}
+
+	if VerifyBcrypt(hash, "WrongPassword") {
+		t.Errorf("VerifyBcrypt should fail for wrong password")
+	}
+}
+
+func TestVerifyHash(t *testing.T) {
+	password := "admin123"
+
+	// bcrypt
+	bHash, _ := GenerateBcrypt(password, 10)
+	if !VerifyHash("bcrypt", bHash, password, "") {
+		t.Errorf("VerifyHash bcrypt failed")
+	}
+	if VerifyHash("bcrypt", bHash, "wrong", "") {
+		t.Errorf("VerifyHash bcrypt matched wrong password")
+	}
+
+	// SHA-256
+	sha256Hash := GenerateSHA256(password)
+	if !VerifyHash("SHA-256", sha256Hash, password, "") {
+		t.Errorf("VerifyHash SHA-256 failed")
+	}
+
+	// SHA-512 with salt
+	salt := "myRandomSalt99"
+	sha512Hash := GenerateSHA512(password + salt)
+	if !VerifyHash("SHA-512", sha512Hash, password, salt) {
+		t.Errorf("VerifyHash SHA-512 with salt failed")
+	}
+
+	// MD5
+	md5Hash := GenerateMD5(password)
+	if !VerifyHash("MD5", md5Hash, password, "") {
+		t.Errorf("VerifyHash MD5 failed")
+	}
+
+	// SHA-1
+	sha1Hash := GenerateSHA1(password)
+	if !VerifyHash("SHA-1", sha1Hash, password, "") {
+		t.Errorf("VerifyHash SHA-1 failed")
+	}
+}

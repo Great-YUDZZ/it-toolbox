@@ -335,3 +335,79 @@ func TestCiscoCustomSnippetCRUD(t *testing.T) {
 	}
 }
 
+
+func TestHashedPasswordCRUD(t *testing.T) {
+	setupTestDB(t)
+
+	// 1. Create
+	hp := &HashedPassword{
+		Title:         "Admin Database MySQL",
+		Algorithm:     "bcrypt",
+		HashValue:     "$2a$10$e7mZ9l4z0B2FwYp3fJ1OceQ1rK9wG4M2vX8qY6pL4Z0B2FwYp3fJ1",
+		PlainPassword: "SuperSecretPassword123!",
+		Notes:         "Kredensial root server produksi",
+	}
+
+	id, err := CreateHashedPassword(hp)
+	if err != nil {
+		t.Fatalf("CreateHashedPassword error: %v", err)
+	}
+	if id <= 0 {
+		t.Fatalf("Expected positive ID, got %d", id)
+	}
+
+	// 2. Read by ID
+	fetched, err := GetHashedPasswordByID(id)
+	if err != nil {
+		t.Fatalf("GetHashedPasswordByID error: %v", err)
+	}
+	if fetched.Title != hp.Title || fetched.Algorithm != "bcrypt" {
+		t.Errorf("Fetched data mismatch: %+v", fetched)
+	}
+
+	// 3. Read All
+	list, err := GetAllHashedPasswords()
+	if err != nil {
+		t.Fatalf("GetAllHashedPasswords error: %v", err)
+	}
+	if len(list) != 1 {
+		t.Fatalf("Expected 1 item, got %d", len(list))
+	}
+
+	// 4. Update
+	fetched.Title = "Admin Database MySQL Terupdate"
+	fetched.Notes = "Catatan telah diupdate"
+	if err := UpdateHashedPassword(fetched); err != nil {
+		t.Fatalf("UpdateHashedPassword error: %v", err)
+	}
+
+	// 5. Search
+	results, err := SearchHashedPasswords("Terupdate", "bcrypt")
+	if err != nil || len(results) != 1 {
+		t.Fatalf("SearchHashedPasswords error: %v, count: %d", err, len(results))
+	}
+	if results[0].Title != "Admin Database MySQL Terupdate" {
+		t.Errorf("Expected updated title, got %s", results[0].Title)
+	}
+
+	// Search with different algorithm filter
+	noResults, err := SearchHashedPasswords("Terupdate", "SHA-256")
+	if err != nil {
+		t.Fatalf("SearchHashedPasswords filter error: %v", err)
+	}
+	if len(noResults) != 0 {
+		t.Errorf("Expected 0 results for mismatched algorithm, got %d", len(noResults))
+	}
+
+	// 6. Delete
+	if err := DeleteHashedPassword(id); err != nil {
+		t.Fatalf("DeleteHashedPassword error: %v", err)
+	}
+	afterDelete, err := GetAllHashedPasswords()
+	if err != nil {
+		t.Fatalf("GetAllHashedPasswords after delete error: %v", err)
+	}
+	if len(afterDelete) != 0 {
+		t.Errorf("Expected 0 items after delete, got %d", len(afterDelete))
+	}
+}
