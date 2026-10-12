@@ -301,6 +301,7 @@ type MainWindow struct {
 	pageAnim           *fyne.Animation
 
 	navToolbox  *NavItem
+	navSecurity *NavItem
 	navFileConv *NavItem
 	navYouTube  *NavItem
 	navCisco    *NavItem
@@ -311,6 +312,7 @@ type MainWindow struct {
 	navSettings *NavItem
 
 	calcPage     *pages.CalculatorPage
+	securityPage *pages.SecurityPage
 	fileConvPage *pages.FileConverterPage
 	ciscoPage    *pages.CiscoPage
 	dbSchemaPage *pages.DBSchemaPage
@@ -346,6 +348,7 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		CurrentTheme: themeName,
 		IsDark:       constants.IsDarkTheme,
 		calcPage:     pages.NewCalculatorPage(win),
+		securityPage: pages.NewSecurityPage(win),
 		fileConvPage: pages.NewFileConverterPage(win),
 		ciscoPage:    pages.NewCiscoPage(win),
 		dbSchemaPage: pages.NewDBSchemaPage(win),
@@ -411,6 +414,7 @@ func (m *MainWindow) SwitchTheme(themeName string) {
 
 	// Rebuild pages with updated theme objects
 	m.calcPage = pages.NewCalculatorPage(m.Window)
+	m.securityPage = pages.NewSecurityPage(m.Window)
 	m.fileConvPage = pages.NewFileConverterPage(m.Window)
 	m.ciscoPage = pages.NewCiscoPage(m.Window)
 	m.dbSchemaPage = pages.NewDBSchemaPage(m.Window)
@@ -632,6 +636,9 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	m.navToolbox = NewNavItem(constants.NavToolbox, theme.HomeIcon(), func() {
 		m.showPage(constants.NavToolbox)
 	})
+	m.navSecurity = NewNavItem(constants.NavSecurity, theme.VisibilityIcon(), func() {
+		m.showPage(constants.NavSecurity)
+	})
 	m.navFileConv = NewNavItem(constants.NavFileConverter, theme.FolderOpenIcon(), func() {
 		m.showPage(constants.NavFileConverter)
 	})
@@ -670,6 +677,7 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	navContainer := container.NewVBox(
 		secCore,
 		m.navToolbox,
+		m.navSecurity,
 		m.navFileConv,
 		m.navYouTube,
 		widget.NewSeparator(),
@@ -860,6 +868,9 @@ func (m *MainWindow) updateNavHighlights(active string) {
 	m.ActiveMenu = active
 
 	m.navToolbox.SetActive(active == constants.NavToolbox)
+	if m.navSecurity != nil {
+		m.navSecurity.SetActive(active == constants.NavSecurity)
+	}
 	m.navFileConv.SetActive(active == constants.NavFileConverter)
 	m.navYouTube.SetActive(active == constants.NavYouTube)
 	m.navCisco.SetActive(active == constants.NavCisco)
@@ -984,6 +995,8 @@ func (m *MainWindow) showPage(name string) {
 	switch name {
 	case constants.NavToolbox:
 		content = m.calcPage.Build()
+	case constants.NavSecurity:
+		content = m.securityPage.Build()
 	case constants.NavFileConverter:
 		content = m.fileConvPage.Build()
 	case constants.NavYouTube:

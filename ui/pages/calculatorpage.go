@@ -1005,7 +1005,7 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 			emptyCard := container.NewVBox(
 				container.NewCenter(widget.NewIcon(theme.FolderOpenIcon())),
 				container.NewCenter(widget.NewLabelWithStyle("Belum ada sandi ter-hash tersimpan.", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})),
-				container.NewCenter(canvas.NewText("Gunakan tombol 'Simpan' pada generator di atas atau 'Tambah Hash Manual' di bawah.", constants.ColorTextMuted)),
+				container.NewCenter(widget.NewLabel("Gunakan tombol 'Simpan' pada generator atau 'Tambah Hash Manual'.")),
 			)
 			vaultItemsBox.Add(container.NewPadded(emptyCard))
 			vaultItemsBox.Refresh()
@@ -1157,11 +1157,11 @@ func (p *CalculatorPage) buildHashGenTab() fyne.CanvasObject {
 			),
 			btnAddManual,
 		),
-		canvas.NewText("Penyimpanan lokal kredensial ber-hash aman dengan verifikasi dan ekspor.", constants.ColorTextMuted),
+		widget.NewLabel("Penyimpanan lokal kredensial ber-hash aman dengan verifikasi dan ekspor."),
 		widget.NewSeparator(),
-		container.NewGridWithColumns(2,
-			container.NewVBox(widget.NewLabelWithStyle("Pencarian Vault:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), searchBar.Container),
-			container.NewVBox(widget.NewLabelWithStyle("Filter Algoritma:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), algoSelect),
+		container.NewVBox(
+			widget.NewLabelWithStyle("Pencarian & Filter Algoritma:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			container.NewBorder(nil, nil, nil, algoSelect, searchBar.Container),
 		),
 		container.NewHBox(
 			canvas.NewText("Alat Ekspor Vault:", constants.ColorTextSecondary),

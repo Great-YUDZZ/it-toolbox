@@ -6,6 +6,27 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.6.0] - 2026-10-12
+
+### Fitur Baru
+- **Cyber Security Hub (`core/security`)**:
+  - **Network & Port Scanner**: Pemindaian port TCP konkuren berbasis goroutine worker pool (60 paralel), Top 20 preset port, custom port range parser (`22, 80-88, 443`), banner grabbing respons awal layanan, dan ekspor laporan audit markdown.
+  - **Web & SSL Security Auditor**: Inspeksi sertifikat TLS (validitas, sisa hari, CA penerbit, SAN), audit HTTP security headers (HSTS, CSP, X-Frame-Options, dll.) dengan grading A+ hingga F, generator konfigurasi remediasi Nginx/Apache, dan validasi rekaman DNS SPF/DMARC.
+  - **Forensics & Log Anomaly Parser**: Perhitungan hash berkas 1-pass streaming (MD5, SHA1, SHA256, SHA512), verifikasi integritas, deteksi pemalsuan ekstensi biner via magic bytes, parser anomali log SSH (`auth.log`) dan Web (`access.log`), generator aturan firewall (UFW, iptables, PowerShell), serta pengecekan reputasi VirusTotal v3.
+  - **Security Encoders & Offline JWT Inspector**: Dekoder JWT lokal offline dengan parsing klaim JSON dan waktu kadaluarsa, identifikasi jenis algoritma hash otomatis, dan multi-encoder (Base64, URL, Hex, HTML, ROT13).
+  - **System Hardening Playbook**: Katalog panduan pengerasan sistem keamanan untuk Linux, Windows, Prosedur Respon Insiden (IR), dan OWASP Top 10 dengan tombol salin perintah instan.
+- **Interactive ASCII Suite**:
+  - **Tabel ASCII Interaktif (0-255)**: Meliputi karakter Control (0-31, 127), Printable ASCII (32-126), dan Extended ASCII (128-255) dengan pencarian cepat multikolom.
+  - **Penerjemah ASCII Dua Arah**: Konversi teks alfabet ke kode ASCII (Desimal, Biner, Heksadesimal, Oktal) dan dekode balik kode ASCII ke teks biasa dengan pemisah kustom.
+- **QR Code & Local File Sharing Server (`core/qrcode`)**:
+  - Pembuat barcode QR Code resolusi tinggi untuk teks dan URL.
+  - Server HTTP lokal instan untuk transfer berkas antar perangkat dalam satu jaringan WiFi/LAN tanpa sambungan kabel.
+
+### Optimasi & Jaminan Tampilan (Zero-Overflow Assurance)
+- Pembatasan lebar minimum (`MinSize.Width < 600px`) pada seluruh tab dan kartu dengan pemanfaatan word wrapping (`TextWrapWord`) dan pembungkus horizontal scroll (`NewHScroll`) pada perintah CLI panjang.
+
+---
+
 ## [1.5.0] - 2026-09-22
 
 ### Fitur Baru

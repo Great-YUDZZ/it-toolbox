@@ -26,14 +26,14 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 #### Metode Rekomendasi: Paket Debian (`.deb`)
 
 1. **Unduh Paket Instalasi:**
-   - **[Download it-toolbox_1.5.0_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/it-toolbox_1.5.0_amd64.deb)**
+   - **[Download it-toolbox_1.6.0_amd64.deb](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.6.0/it-toolbox_1.6.0_amd64.deb)**
 
 2. **Pemasangan Aplikasi:**
-   - Klik ganda pada berkas `it-toolbox_1.5.0_amd64.deb` melalui File Manager.
+   - Klik ganda pada berkas `it-toolbox_1.6.0_amd64.deb` melalui File Manager.
    - Jendela App Center / Software Center / GDebi akan terbuka. Klik **Install**.
    - Atau melalui terminal:
      ```bash
-     sudo apt install ./it-toolbox_1.5.0_amd64.deb
+     sudo apt install ./it-toolbox_1.6.0_amd64.deb
      ```
 
 3. **Integrasi Sistem:**
@@ -52,8 +52,8 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 ### 2. Sistem Operasi Windows (Windows 10 / 11 64-bit)
 
 #### Berkas Distribusi Windows:
-- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/it-toolbox.exe)** *(Disarankan)*
-- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.5.0/IT-Toolbox-Windows-Portable-x64.zip)**
+- **[Download it-toolbox.exe (Eksekusi Langsung)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.6.0/it-toolbox.exe)** *(Disarankan)*
+- **[Download IT-Toolbox-Windows-Portable-x64.zip (Arsip Lengkap)](https://github.com/Great-YUDZZ/it-toolbox/releases/download/v1.6.0/IT-Toolbox-Windows-Portable-x64.zip)**
 
 #### Cara Penggunaan & Pembuatan Pintasan:
 1. Tempatkan berkas `it-toolbox.exe` pada folder pilihan Anda (contoh: `D:\Tools\IT-Toolbox\` atau `C:\Program Files\IT Toolbox\`).
@@ -69,10 +69,13 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 
 | Modul | Deskripsi Fungsi |
 | :--- | :--- |
+| **Cyber Security Hub** | Network & TCP Port Scanner konkuren (worker pool & banner grabbing), Web & SSL Security Auditor (skoring A+ hingga F, perbaikan konfigurasi Nginx/Apache, audit DNS SPF/DMARC), Forensics & Log Anomaly Parser (1-pass multi-hasher, magic bytes anti-kamuflase, analisis SSH auth & Web log, generator blokir UFW/iptables/PowerShell, VirusTotal v3), Offline JWT Inspector, Identifikasi Hash, dan System Hardening Playbook |
+| **Interactive ASCII Suite** | Tabel ASCII lengkap 0-255 (Control, Printable, Extended) dengan pencarian cepat, serta Penerjemah Dua Arah (Teks ke Desimal, Biner, Heksadesimal, Oktal dengan pemisah kustom) |
+| **QR Code & File Sharing** | Pembuat QR code resolusi tinggi untuk teks/URL serta web server HTTP lokal otomatis untuk transfer berkas antar perangkat via WiFi/LAN |
 | **Network Tools** | Kalkulator Subnet IP, Kalkulator CIDR, Usable Host Range Finder, dan Pelacak Diagnostik Jaringan |
 | **Cisco Packet Tracer** | Direktori perintah CLI Cisco IOS (Router, Switch, PC), generator skrip konfigurasi instan, parameter kustom, dan panduan verifikasi topologi lab |
 | **Schema Database** | Perancang skema database, perpustakaan DDL siap pakai (Auth & RBAC, E-Commerce, Akademik TKJ, Jaringan IPAM), generator tabel kustom interaktif, katalog perintah administrasi & backup CLI, serta kamus tipe data lintas DBMS (MySQL, MariaDB, PostgreSQL, SQLite, SQL Server, Oracle) |
-| **Security & Cryptography** | Generator Hash (MD5, SHA-1, SHA-256, SHA-512), JWT Inspector & Decoder, dan Generator Password Aman |
+| **Security & Cryptography** | Generator Hash (MD5, SHA-1, SHA-256, SHA-512), Verifikasi & Brute-force Checker, Password Vault tersimpan aman di SQLite, dan Generator Password Aman |
 | **Data & Text Converter** | Base64 Encoder/Decoder, URL Encoder, JSON <-> YAML Converter, Epoch / Unix Timestamp Converter, dan Text Case Formatter |
 | **Document & Media Tools** | Penggabung & Pemisah PDF, Image Converter / Optimizer, Optical Character Recognition (OCR), dan Pengemas Arsip ZIP |
 | **YouTube Media Downloader** | Pengunduh video dan audio YouTube dengan pemindai resolusi dinamis (4K, 1080p, 720p, 360p, hingga Audio M4A), visual progress bar, dan auto-muxing FFmpeg |
@@ -117,7 +120,7 @@ go build -tags x11 -ldflags="-s -w" -o it-toolbox .
 CC=x86_64-w64-mingw32-gcc CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -s -w" -o it-toolbox.exe .
 
 # Membangun Paket Installer Debian (.deb)
-bash build/linux/package-deb.sh 1.5.0
+bash build/linux/package-deb.sh 1.6.0
 ```
 
 ---

@@ -17,14 +17,17 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
+	"fyne.io/fyne/v2/canvas"
 	"github.com/yudz/it-toolbox/core/converter"
+	"github.com/yudz/it-toolbox/core/qrcode"
 	"github.com/yudz/it-toolbox/core/youtube"
 	"github.com/yudz/it-toolbox/ui/components"
 	"github.com/yudz/it-toolbox/ui/constants"
 )
 
 type FileConverterPage struct {
-	window fyne.Window
+	window       fyne.Window
+	qrFileServer *qrcode.FileShareServer
 }
 
 func NewFileConverterPage(win fyne.Window) *FileConverterPage {
@@ -34,7 +37,7 @@ func NewFileConverterPage(win fyne.Window) *FileConverterPage {
 func (p *FileConverterPage) Build() fyne.CanvasObject {
 	hero := components.NewHeroHeader(
 		constants.NavFileConverter,
-		"Konversi dokumen, gambar, ekstraksi teks OCR, kompresi berkas, manipulasi PDF, serta unduh video YouTube dengan resolusi pilihan.",
+		"Konversi dokumen, gambar, ekstraksi teks OCR, kompresi berkas, manipulasi PDF, generator QR code, serta unduh video YouTube dengan resolusi pilihan.",
 		components.BadgeCyan("FILE CONVERTER PRO"),
 	)
 
@@ -43,6 +46,7 @@ func (p *FileConverterPage) Build() fyne.CanvasObject {
 		container.NewTabItemWithIcon(constants.TabImgConverter, theme.FileImageIcon(), p.buildImgConverterTab()),
 		container.NewTabItemWithIcon(constants.TabOCR, theme.VisibilityIcon(), p.buildOCRTab()),
 		container.NewTabItemWithIcon(constants.TabPDFTools, theme.FolderOpenIcon(), p.buildPDFToolsTab()),
+		container.NewTabItemWithIcon(constants.TabQRCode, theme.ViewFullScreenIcon(), p.buildQRCodeTab()),
 		container.NewTabItemWithIcon(constants.TabYouTube, theme.DownloadIcon(), p.buildYouTubeDownloaderTab()),
 	)
 
@@ -56,6 +60,28 @@ func (p *FileConverterPage) BuildYouTubePage() fyne.CanvasObject {
 		components.BadgeCyan("YOUTUBE ENGINE PRO"),
 	)
 	return container.NewBorder(hero, nil, nil, nil, p.buildYouTubeDownloaderTab())
+}
+
+func (p *FileConverterPage) BuildQRCodePage() fyne.CanvasObject {
+	hero := components.NewHeroHeader(
+		constants.TabQRCode,
+		"Buat QR Code instan dari tautan URL website, teks bebas, atau berbagi foto, video, dan berkas apapun langsung via jaringan Wi-Fi lokal.",
+		components.BadgeCyan("QR CODE ENGINE PRO"),
+	)
+	return container.NewBorder(hero, nil, nil, nil, p.buildQRCodeTab())
+}
+
+func (p *FileConverterPage) openTarget(target string) {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", "", target)
+	case "darwin":
+		cmd = exec.Command("open", target)
+	default:
+		cmd = exec.Command("xdg-open", target)
+	}
+	_ = cmd.Start()
 }
 
 func (p *FileConverterPage) getDownloadDir() string {
@@ -974,5 +1000,442 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 	return container.NewVScroll(container.NewVBox(
 		inputCard,
 		detailsCard,
+	))
+}
+
+// ----------------------------------------------------------------------------
+// Generator QR Code & Berbagi Berkas Wi-Fi
+// ----------------------------------------------------------------------------
+func (p *FileConverterPage) buildQRCodeTab() fyne.CanvasObject {
+	currentMode := "text" // "text" or "file"
+	var currentPNGBytes []byte
+	var currentContent string
+
+	schemes := qrcode.GetAvailableColorSchemes()
+	var schemeNames []string
+	for _, s := range schemes {
+		schemeNames = append(schemeNames, s.Name)
+	}
+
+	// Preview Image Widget
+	qrImg := canvas.NewImageFromResource(theme.ViewFullScreenIcon())
+	qrImg.FillMode = canvas.ImageFillContain
+	qrImg.SetMinSize(fyne.NewSize(220, 220))
+
+	// Status & Content Labels
+	statusLabel := widget.NewLabel("Masukkan tautan atau pilih berkas untuk membuat QR code.")
+	statusLabel.Wrapping = fyne.TextWrapWord
+	statsLabel := widget.NewLabel("")
+
+	contentPreviewEntry := components.NewScrollableEntry()
+	contentPreviewEntry.Disable()
+	contentPreviewEntry.SetPlaceHolder("Konten atau tautan QR code akan tampil di sini...")
+
+	// Options
+	sizeSelect := widget.NewSelect([]string{"256 px", "512 px (Standar)", "1024 px (HD)"}, nil)
+	sizeSelect.SetSelected("512 px (Standar)")
+
+	levelSelect := widget.NewSelect([]string{
+		"Medium (15% - Rekomendasi)",
+		"Low (7%)",
+		"High (25%)",
+		"Highest (30%)",
+	}, nil)
+	levelSelect.SetSelected("Medium (15% - Rekomendasi)")
+
+	paletteSelect := widget.NewSelect(schemeNames, nil)
+	if len(schemeNames) > 0 {
+		paletteSelect.SetSelected(schemeNames[0])
+	}
+
+	var textEntry *widget.Entry
+
+	// Function to regenerate QR code image
+	updateQRCode := func() {
+		var rawText string
+		if currentMode == "file" {
+			if p.qrFileServer != nil && p.qrFileServer.IsRunning() {
+				rawText = p.qrFileServer.GetShareURL()
+			} else {
+				rawText = ""
+			}
+		} else {
+			if textEntry != nil {
+				rawText = strings.TrimSpace(textEntry.Text)
+			}
+		}
+
+		if rawText == "" {
+			if currentMode == "file" {
+				statusLabel.SetText("Pilih berkas lalu klik 'Mulai Berbagi (Wi-Fi)' untuk mengaktifkan server dan membuat QR code.")
+			} else {
+				statusLabel.SetText("Ketikkan teks atau URL website untuk membuat QR code.")
+			}
+			return
+		}
+
+		currentContent = rawText
+		contentPreviewEntry.SetText(rawText)
+
+		// Determine size
+		size := 512
+		if strings.HasPrefix(sizeSelect.Selected, "256") {
+			size = 256
+		} else if strings.HasPrefix(sizeSelect.Selected, "1024") {
+			size = 1024
+		}
+
+		// Determine level
+		recLevel := qrcode.ParseRecoveryLevel(levelSelect.Selected)
+
+		// Determine palette
+		selectedScheme := schemes[0]
+		for _, s := range schemes {
+			if s.Name == paletteSelect.Selected {
+				selectedScheme = s
+				break
+			}
+		}
+
+		pngBytes, err := qrcode.GenerateCustomQRCode(rawText, size, recLevel, selectedScheme.FG, selectedScheme.BG)
+		if err != nil {
+			statusLabel.SetText(fmt.Sprintf("Gagal membuat QR code: %v", err))
+			return
+		}
+
+		currentPNGBytes = pngBytes
+		res := fyne.NewStaticResource("qrcode.png", pngBytes)
+		qrImg.Resource = res
+		qrImg.Refresh()
+		statusLabel.SetText(fmt.Sprintf("QR Code siap (%d x %d px) - Level %s", size, size, levelSelect.Selected))
+	}
+
+	sizeSelect.OnChanged = func(_ string) { updateQRCode() }
+	levelSelect.OnChanged = func(_ string) { updateQRCode() }
+	paletteSelect.OnChanged = func(_ string) { updateQRCode() }
+
+	// Mode 1: Text / URL inputs
+	textEntry = components.NewScrollableEntry()
+	textEntry.SetPlaceHolder("Contoh: https://mywebsite.com atau pesan teks...")
+	textEntry.SetText("https://github.com/Great-YUDZZ/it-toolbox")
+	textEntry.OnChanged = func(_ string) {
+		if currentMode == "text" {
+			updateQRCode()
+		}
+	}
+
+	presetWebBtn := widget.NewButtonWithIcon("Web HTTPS", theme.NavigateNextIcon(), func() {
+		textEntry.SetText("https://")
+		updateQRCode()
+	})
+	presetWifiBtn := widget.NewButtonWithIcon("Wi-Fi Config", theme.SettingsIcon(), func() {
+		textEntry.SetText("WIFI:T:WPA;S:NamaSSID;P:PasswordWiFi;;")
+		updateQRCode()
+	})
+	presetWaBtn := widget.NewButtonWithIcon("WhatsApp", theme.MailComposeIcon(), func() {
+		textEntry.SetText("https://wa.me/6281234567890?text=Halo%20IT%20Toolbox")
+		updateQRCode()
+	})
+	presetMailBtn := widget.NewButtonWithIcon("Email", theme.MailSendIcon(), func() {
+		textEntry.SetText("mailto:admin@example.com?subject=Halo%20IT%20Toolbox")
+		updateQRCode()
+	})
+
+	presetRow := container.NewVBox(
+		widget.NewLabelWithStyle("Preset Cepat:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewHBox(presetWebBtn, presetWifiBtn, presetWaBtn, presetMailBtn),
+	)
+
+	textConfigContainer := container.NewVBox(
+		widget.NewLabelWithStyle("Masukkan Tautan URL atau Teks Bebas:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		textEntry,
+		presetRow,
+	)
+
+	// Mode 2: File Sharing inputs
+	filePathEntry := components.NewScrollableEntry()
+	filePathEntry.SetPlaceHolder("Pilih berkas foto, video, dokumen, atau berkas apapun...")
+
+	fileBadgeContainer := container.NewHBox()
+	fileInfoLabel := widget.NewLabel("Belum ada berkas dipilih.")
+
+	updateFileInfo := func(path string) {
+		fileBadgeContainer.Objects = nil
+		if path == "" {
+			fileInfoLabel.SetText("Belum ada berkas dipilih.")
+			fileBadgeContainer.Refresh()
+			return
+		}
+		fi, err := os.Stat(path)
+		if err != nil {
+			fileInfoLabel.SetText(fmt.Sprintf("Berkas tidak valid: %v", err))
+			fileBadgeContainer.Refresh()
+			return
+		}
+
+		sizeStr := qrcode.FormatFileSize(fi.Size())
+		ext := strings.ToLower(filepath.Ext(path))
+		var badge fyne.CanvasObject
+		switch ext {
+		case ".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp":
+			badge = components.BadgeCyan("Foto / Gambar")
+		case ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv":
+			badge = components.BadgeIndigo("Video")
+		case ".mp3", ".wav", ".ogg", ".flac", ".m4a":
+			badge = components.BadgeYellow("Audio")
+		case ".pdf", ".docx", ".xlsx", ".pptx", ".txt", ".zip", ".tar", ".gz":
+			badge = components.BadgeSuccess("Dokumen / Arsip")
+		default:
+			badge = components.BadgeMuted("Berkas Umum")
+		}
+
+		fileBadgeContainer.Add(badge)
+		fileBadgeContainer.Refresh()
+		fileInfoLabel.SetText(fmt.Sprintf("%s (%s)", filepath.Base(path), sizeStr))
+	}
+
+	browseFileBtn := widget.NewButtonWithIcon("Pilih Berkas...", theme.FileIcon(), func() {
+		dialog.ShowFileOpen(func(closer fyne.URIReadCloser, err error) {
+			if closer == nil || err != nil {
+				return
+			}
+			path := closer.URI().Path()
+			filePathEntry.SetText(path)
+			updateFileInfo(path)
+		}, p.window)
+	})
+	browseFileBtn.Importance = widget.HighImportance
+
+	filePathEntry.OnChanged = func(path string) {
+		updateFileInfo(strings.TrimSpace(path))
+	}
+
+	// Network IP & Port selection
+	localIPs, _ := qrcode.GetLocalIPv4Addresses()
+	var ipOptions []string
+	for _, ip := range localIPs {
+		ipOptions = append(ipOptions, ip)
+	}
+	if len(ipOptions) == 0 {
+		ipOptions = append(ipOptions, "127.0.0.1")
+	}
+
+	ipSelect := widget.NewSelect(ipOptions, nil)
+	ipSelect.SetSelected(ipOptions[0])
+
+	refreshIPBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
+		freshIPs, _ := qrcode.GetLocalIPv4Addresses()
+		if len(freshIPs) > 0 {
+			ipSelect.Options = freshIPs
+			ipSelect.SetSelected(freshIPs[0])
+		}
+	})
+	refreshIPBtn.Importance = widget.LowImportance
+
+	portEntry := components.NewScrollableEntry()
+	portEntry.SetText("8765")
+
+	serverBadgeContainer := container.NewHBox(components.BadgeMuted("Server Nonaktif"))
+	var toggleServerBtn *widget.Button
+
+	stopServerFunc := func() {
+		if p.qrFileServer != nil && p.qrFileServer.IsRunning() {
+			_ = p.qrFileServer.Stop()
+		}
+		toggleServerBtn.SetText("Mulai Berbagi (Wi-Fi)")
+		toggleServerBtn.SetIcon(theme.MediaPlayIcon())
+		toggleServerBtn.Importance = widget.HighImportance
+		serverBadgeContainer.Objects = []fyne.CanvasObject{components.BadgeMuted("Server Nonaktif")}
+		serverBadgeContainer.Refresh()
+		statsLabel.SetText("")
+		updateQRCode()
+	}
+
+	toggleServerBtn = widget.NewButtonWithIcon("Mulai Berbagi (Wi-Fi)", theme.MediaPlayIcon(), func() {
+		if p.qrFileServer != nil && p.qrFileServer.IsRunning() {
+			stopServerFunc()
+			return
+		}
+
+		filePath := strings.TrimSpace(filePathEntry.Text)
+		if filePath == "" {
+			dialog.ShowInformation("Perhatian", "Pilih berkas yang ingin dibagikan terlebih dahulu.", p.window)
+			return
+		}
+		if _, err := os.Stat(filePath); err != nil {
+			dialog.ShowError(fmt.Errorf("berkas tidak ditemukan: %w", err), p.window)
+			return
+		}
+
+		ip := ipSelect.Selected
+		if ip == "" {
+			ip = "0.0.0.0"
+		}
+		port, err := strconv.Atoi(strings.TrimSpace(portEntry.Text))
+		if err != nil || port <= 0 || port > 65535 {
+			port = 8765
+			portEntry.SetText("8765")
+		}
+
+		srv := qrcode.NewFileShareServer()
+		shareURL, err := srv.Start(filePath, port, ip)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("gagal memulai server Wi-Fi: %w", err), p.window)
+			return
+		}
+
+		p.qrFileServer = srv
+		toggleServerBtn.SetText("Hentikan Berbagi")
+		toggleServerBtn.SetIcon(theme.MediaStopIcon())
+		toggleServerBtn.Importance = widget.DangerImportance
+		serverBadgeContainer.Objects = []fyne.CanvasObject{components.BadgeSuccess("Server Aktif (Berbagi Berkas)")}
+		serverBadgeContainer.Refresh()
+
+		updateQRCode()
+
+		// Periodic status update while server is active
+		go func(activeSrv *qrcode.FileShareServer, expectedURL string) {
+			for activeSrv.IsRunning() {
+				time.Sleep(1 * time.Second)
+				_, _, _, count := activeSrv.GetFileInfo()
+				fyne.Do(func() {
+					if activeSrv.IsRunning() {
+						statsLabel.SetText(fmt.Sprintf("Tautan: %s | Total Akses / Unduhan: %d kali", expectedURL, count))
+					}
+				})
+			}
+		}(srv, shareURL)
+	})
+	toggleServerBtn.Importance = widget.HighImportance
+
+	networkRow := container.NewHBox(
+		widget.NewLabelWithStyle("IP Host:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		ipSelect,
+		refreshIPBtn,
+		widget.NewLabelWithStyle("Port:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		portEntry,
+		serverBadgeContainer,
+	)
+
+	fileConfigContainer := container.NewVBox(
+		widget.NewLabelWithStyle("Pilih Berkas yang Ingin Dibagikan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, browseFileBtn, filePathEntry),
+		container.NewHBox(fileBadgeContainer, fileInfoLabel),
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("Pengaturan Jaringan Server Wi-Fi Lokal:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		networkRow,
+		toggleServerBtn,
+		widget.NewLabel("Pastikan smartphone terhubung pada jaringan Wi-Fi / Hotspot yang sama."),
+	)
+	fileConfigContainer.Hide()
+
+	// Mode switch radio
+	modeRadio := widget.NewRadioGroup([]string{
+		"Tautan URL / Teks Bebas",
+		"Berbagi Berkas (Foto, Video, File) via Wi-Fi",
+	}, func(selected string) {
+		if selected == "Tautan URL / Teks Bebas" {
+			currentMode = "text"
+			fileConfigContainer.Hide()
+			textConfigContainer.Show()
+		} else {
+			currentMode = "file"
+			textConfigContainer.Hide()
+			fileConfigContainer.Show()
+		}
+		updateQRCode()
+	})
+	modeRadio.Horizontal = false
+	modeRadio.SetSelected("Tautan URL / Teks Bebas")
+
+	// Customization card
+	customCard := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Pengaturan Ukuran & Gaya QR Code:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewGridWithColumns(3,
+			container.NewVBox(canvas.NewText("Ukuran Gambar:", constants.ColorTextPrimary), sizeSelect),
+			container.NewVBox(canvas.NewText("Tingkat Koreksi Error:", constants.ColorTextPrimary), levelSelect),
+			container.NewVBox(canvas.NewText("Tema Palet Warna:", constants.ColorTextPrimary), paletteSelect),
+		),
+	), constants.ColorAccentCyan)
+
+	// Action buttons
+	copyBtn := widget.NewButtonWithIcon("Salin Tautan / Teks", theme.ContentCopyIcon(), func() {
+		if currentContent == "" {
+			dialog.ShowInformation("Perhatian", "Belum ada konten QR code untuk disalin.", p.window)
+			return
+		}
+		p.copyToClip(currentContent)
+	})
+
+	savePNGBtn := widget.NewButtonWithIcon("Simpan Gambar (PNG)", theme.DocumentSaveIcon(), func() {
+		if len(currentPNGBytes) == 0 {
+			dialog.ShowInformation("Perhatian", "Belum ada gambar QR code untuk disimpan.", p.window)
+			return
+		}
+		saveDlg := dialog.NewFileSave(func(uc fyne.URIWriteCloser, err error) {
+			if err != nil || uc == nil {
+				return
+			}
+			defer uc.Close()
+			_, err = uc.Write(currentPNGBytes)
+			if err != nil {
+				dialog.ShowError(err, p.window)
+				return
+			}
+			dialog.ShowInformation("Tersimpan", fmt.Sprintf("Berkas QR Code PNG berhasil disimpan:\n%s", uc.URI().Path()), p.window)
+		}, p.window)
+		saveDlg.SetFileName("qrcode.png")
+		saveDlg.Show()
+	})
+	savePNGBtn.Importance = widget.HighImportance
+
+	openBrowserBtn := widget.NewButtonWithIcon("Buka di Browser", theme.NavigateNextIcon(), func() {
+		if currentContent == "" {
+			dialog.ShowInformation("Perhatian", "Belum ada URL untuk dibuka.", p.window)
+			return
+		}
+		if !strings.HasPrefix(currentContent, "http://") && !strings.HasPrefix(currentContent, "https://") {
+			dialog.ShowInformation("Perhatian", "Konten bukan merupakan URL web (http/https).", p.window)
+			return
+		}
+		p.openTarget(currentContent)
+	})
+
+	actionButtonsRow := container.NewHBox(
+		savePNGBtn,
+		copyBtn,
+		openBrowserBtn,
+	)
+
+	qrBox := container.NewCenter(
+		container.NewPadded(qrImg),
+	)
+
+	previewCard := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Pratinjau QR Code & Ekspor:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		qrBox,
+		statusLabel,
+		statsLabel,
+		container.NewBorder(nil, nil,
+			widget.NewLabelWithStyle("Konten Terkode:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			nil,
+			contentPreviewEntry,
+		),
+		actionButtonsRow,
+	), constants.ColorSuccess)
+
+	// Initial render
+	updateQRCode()
+
+	return container.NewVScroll(container.NewVBox(
+		components.NewPlainCardWithAccent(container.NewVBox(
+			widget.NewLabelWithStyle("Pilih Mode Pembuatan QR Code:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			modeRadio,
+			widget.NewSeparator(),
+			textConfigContainer,
+			fileConfigContainer,
+		), constants.ColorAccentCyan),
+		customCard,
+		previewCard,
 	))
 }

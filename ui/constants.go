@@ -16,6 +16,7 @@ const (
 	NavLogbook     = constants.NavLogbook
 	NavTracker     = constants.NavTracker
 	NavFileConverter = constants.NavFileConverter
+	NavSecurity      = constants.NavSecurity
 
 	TabConverter   = constants.TabConverter
 	TabSubnet      = constants.TabSubnet

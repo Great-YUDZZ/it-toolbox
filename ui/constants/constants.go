@@ -4,7 +4,7 @@ package constants
 const (
 	AppTitle       = "IT Toolbox"
 	AppSubtitle    = "All-in-one Toolkit for IT Students & Developers"
-	AppVersion     = "1.5.0"
+	AppVersion     = "1.6.0"
 	DefaultWinW    = 960
 	DefaultWinH    = 640
 	SidebarWidth   = 200
@@ -15,6 +15,7 @@ const (
 	NavLogbook     = "Catatan & Debugging"
 	NavTracker     = "Pelacak Tugas"
 	NavFileConverter = "Konverter Berkas"
+	NavSecurity      = "Cyber Security Hub"
 	NavYouTube       = "Unduh YouTube"
 	NavCisco         = "Cisco Packet Tracer"
 	NavDatabase      = "Schema Database"
@@ -47,6 +48,14 @@ const (
 	TabOCR          = "Ekstraksi Teks (OCR)"
 	TabPDFTools     = "Merge & Split PDF"
 	TabYouTube      = "Unduh YouTube"
+	TabQRCode       = "Generator QR Code"
+
+	// Cyber Security Tabs
+	TabSecurityScanner   = "Port Scanner"
+	TabSecurityWebSSL    = "SSL & Web Security"
+	TabSecurityForensics = "Forensik & Log Audit"
+	TabSecurityEncoders  = "Encoder, JWT & ASCII"
+	TabSecurityPlaybook  = "Hardening Playbook"
 
 	// Reference Tabs
 	TabCommands    = "Commands"

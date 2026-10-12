@@ -108,6 +108,7 @@ func TestHashGenTabMinSizeBounded(t *testing.T) {
 	page := NewCalculatorPage(win)
 	tab := page.buildHashGenTab()
 
+
 	// Ensure layout does not overflow beyond standard window width
 	if tab.MinSize().Width > 600 {
 		t.Fatalf("HashGenTab MinSize width (%f) exceeds 600px, which causes cutoffs on standard screens", tab.MinSize().Width)
