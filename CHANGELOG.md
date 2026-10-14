@@ -6,6 +6,21 @@ Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/
 
 ---
 
+## [1.7.0] - 2026-10-14
+
+### Fitur Baru
+- **Key Decryptor (`core/security/decryptor.go`)**:
+  - Dukungan dekripsi cipher simetris modern: **AES-128/192/256** dalam mode CBC (dengan PKCS#7 unpadding) dan mode terotentikasi GCM.
+  - Dukungan cipher warisan: **DES** dan **Triple DES (3DES)** mode CBC.
+  - Dukungan cipher klasik: **Repeating-Key XOR** dan **Vigenere Cipher** (polyalphabetic case-preserving).
+  - Format masukan fleksibel: Base64, Hexadecimal, dan teks polos dengan penanganan format kunci/IV otomatis.
+  - Tombol muat contoh cepat untuk pengujian instan cipher AES dan Vigenere.
+- **MD5 Decrypt / Reverse Hash Lookup (`core/security/decryptor.go`)**:
+  - Arsitektur pencarian hybrid terpadu: **Kamus Lokal Offline** (`commonPasswords` berisi daftar kata sandi terpopuler), **Custom Wordlist** (daftar kata tambahan pengguna), dan **Online Reverse Database** publik gratis dengan batas waktu timeout 5 detik.
+  - Indikator status hasil cerdas (Ditemukan / Tidak Ditemukan) dengan pelaporan sumber kecocokan dan tombol salin hasil satu kali klik.
+
+---
+
 ## [1.6.0] - 2026-10-12
 
 ### Fitur Baru

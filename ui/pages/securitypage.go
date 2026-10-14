@@ -1012,7 +1012,233 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 			}
 		}),
 	)
-	encoderBox.Hide()
+	// Sub-mode 5: Key Decryptor
+	keyAlgoSelect := widget.NewSelect([]string{
+		"AES-128 (CBC PKCS7)",
+		"AES-192 (CBC PKCS7)",
+		"AES-256 (CBC PKCS7)",
+		"AES-GCM (Authenticated)",
+		"DES (CBC PKCS7)",
+		"Triple DES / 3DES (CBC PKCS7)",
+		"Repeating-Key XOR",
+		"Vigenere Cipher",
+	}, nil)
+	keyAlgoSelect.SetSelected("AES-128 (CBC PKCS7)")
+
+	keyEncodingSelect := widget.NewSelect([]string{"Base64", "Hex", "Plain Text"}, nil)
+	keyEncodingSelect.SetSelected("Base64")
+
+	keyCipherEntry := widget.NewMultiLineEntry()
+	keyCipherEntry.SetPlaceHolder("Tempelkan ciphertext terenkripsi di sini...")
+	keyCipherEntry.Wrapping = fyne.TextWrapWord
+	keyCipherEntry.SetMinRowsVisible(4)
+
+	keySecretEntry := components.NewScrollableEntry()
+	keySecretEntry.SetPlaceHolder("Kunci rahasia (contoh: 16 char untuk AES-128, 24 untuk AES-192, 32 untuk AES-256)...")
+
+	keyIVEntry := components.NewScrollableEntry()
+	keyIVEntry.SetPlaceHolder("IV / Nonce opsional (contoh: 16-byte teks/hex untuk CBC, 12-byte untuk GCM, biarkan kosong jika nol)...")
+
+	keyPlainOutput := widget.NewMultiLineEntry()
+	keyPlainOutput.SetPlaceHolder("Hasil dekripsi plaintext akan muncul di sini...")
+	keyPlainOutput.Wrapping = fyne.TextWrapWord
+	keyPlainOutput.SetMinRowsVisible(4)
+
+	btnExecuteDecrypt := widget.NewButtonWithIcon("Dekripsi Ciphertext", theme.ConfirmIcon(), func() {
+		cipherText := keyCipherEntry.Text
+		keyStr := keySecretEntry.Text
+		ivStr := keyIVEntry.Text
+		algo := keyAlgoSelect.Selected
+		enc := keyEncodingSelect.Selected
+
+		if strings.TrimSpace(cipherText) == "" {
+			dialog.ShowInformation("Perhatian", "Ciphertext tidak boleh kosong.", p.window)
+			return
+		}
+
+		res, err := security.DecryptWithKey(algo, enc, cipherText, keyStr, ivStr)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			keyPlainOutput.SetText(fmt.Sprintf("Galat Dekripsi: %v", err))
+			return
+		}
+
+		keyPlainOutput.SetText(res)
+		dialog.ShowInformation("Sukses", "Dekripsi berhasil diselesaikan.", p.window)
+	})
+	btnExecuteDecrypt.Importance = widget.HighImportance
+
+	btnSampleAES := widget.NewButton("Muat Contoh AES", func() {
+		keyAlgoSelect.SetSelected("AES-128 (CBC PKCS7)")
+		keyEncodingSelect.SetSelected("Base64")
+		keySecretEntry.SetText("kuncirahasia1234")
+		keyIVEntry.SetText("vektorinisiasi12")
+		keyCipherEntry.SetText("uM4/d+q6VjQjN8YdZ6qKFAq6c7V/mR5u87c+V3g/q2E=")
+	})
+	btnSampleAES.Importance = widget.LowImportance
+
+	btnSampleVig := widget.NewButton("Muat Contoh Vigenere", func() {
+		keyAlgoSelect.SetSelected("Vigenere Cipher")
+		keyEncodingSelect.SetSelected("Plain Text")
+		keySecretEntry.SetText("LEMON")
+		keyIVEntry.SetText("")
+		keyCipherEntry.SetText("LXFOPV EF RNHR!")
+	})
+	btnSampleVig.Importance = widget.LowImportance
+
+	keyDecryptBox := container.NewVBox(
+		widget.NewLabelWithStyle("Key Decryptor (Dekripsi Simetris Berbasis Kunci):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Mendukung cipher modern AES (CBC & GCM), DES, 3DES, serta cipher klasik XOR dan Vigenere."),
+		container.NewHBox(
+			widget.NewLabel("Algoritma:"),
+			keyAlgoSelect,
+			widget.NewLabel("Format Ciphertext:"),
+			keyEncodingSelect,
+			btnSampleAES,
+			btnSampleVig,
+		),
+		widget.NewLabelWithStyle("Ciphertext Input:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		keyCipherEntry,
+		container.NewGridWithColumns(2,
+			container.NewVBox(widget.NewLabelWithStyle("Secret Key:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), keySecretEntry),
+			container.NewVBox(widget.NewLabelWithStyle("Initialization Vector (IV) / Nonce:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), keyIVEntry),
+		),
+		btnExecuteDecrypt,
+		widget.NewLabelWithStyle("Plaintext Hasil Dekripsi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		keyPlainOutput,
+		widget.NewButtonWithIcon("Salin Plaintext", theme.ContentCopyIcon(), func() {
+			if keyPlainOutput.Text != "" {
+				p.copyToClip(keyPlainOutput.Text)
+			}
+		}),
+	)
+	keyDecryptBox.Hide()
+
+	// Sub-mode 6: MD5 Decrypt (Reverse Hash Lookup)
+	md5InputEntry := components.NewScrollableEntry()
+	md5InputEntry.SetPlaceHolder("Tempelkan hash MD5 32-karakter heksadesimal (contoh: 5f4dcc3b5aa765d61d8327deb882cf99)...")
+	md5InputEntry.SetText("5f4dcc3b5aa765d61d8327deb882cf99")
+
+	md5ModeSelect := widget.NewSelect([]string{
+		"Hybrid (Online API + Kamus Lokal)",
+		"Kamus Lokal Saja (Offline)",
+		"Custom Wordlist",
+	}, nil)
+	md5ModeSelect.SetSelected("Hybrid (Online API + Kamus Lokal)")
+
+	md5CustomWordsEntry := widget.NewMultiLineEntry()
+	md5CustomWordsEntry.SetPlaceHolder("Daftar kata sandi kustom tambahan (satu kata per baris)...")
+	md5CustomWordsEntry.Wrapping = fyne.TextWrapWord
+	md5CustomWordsEntry.SetMinRowsVisible(3)
+	md5CustomWordsEntry.Hide()
+
+	md5ModeSelect.OnChanged = func(s string) {
+		if s == "Custom Wordlist" {
+			md5CustomWordsEntry.Show()
+		} else {
+			md5CustomWordsEntry.Hide()
+		}
+	}
+
+	md5StatusBadgeBox := container.NewHBox(components.BadgeMuted("STATUS PENCARIAN"))
+	md5ResultEntry := widget.NewMultiLineEntry()
+	md5ResultEntry.SetPlaceHolder("Hasil plaintext hasil pencarian akan tampil di sini...")
+	md5ResultEntry.Wrapping = fyne.TextWrapWord
+	md5ResultEntry.SetMinRowsVisible(3)
+
+	btnCrackMD5 := widget.NewButtonWithIcon("Cari Plaintext MD5", theme.SearchIcon(), func() {
+		rawHash := strings.TrimSpace(md5InputEntry.Text)
+		if len(rawHash) != 32 {
+			dialog.ShowInformation("Format Hash Salah", "Hash MD5 harus tepat 32 karakter heksadesimal.", p.window)
+			return
+		}
+
+		md5StatusBadgeBox.Objects = nil
+		md5StatusBadgeBox.Add(components.BadgeWarning("SEDANG MEMERIKSA..."))
+		md5StatusBadgeBox.Refresh()
+		md5ResultEntry.SetText("Memproses pencarian hash...")
+
+		var customList []string
+		if md5ModeSelect.Selected == "Custom Wordlist" && md5CustomWordsEntry.Text != "" {
+			lines := strings.Split(md5CustomWordsEntry.Text, "\n")
+			for _, line := range lines {
+				if t := strings.TrimSpace(line); t != "" {
+					customList = append(customList, t)
+				}
+			}
+		}
+
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+			defer cancel()
+
+			var plain string
+			var source string
+			var found bool
+
+			if md5ModeSelect.Selected == "Kamus Lokal Saja (Offline)" {
+				plain, found = security.LookupMD5Local(rawHash)
+				source = "Kamus Lokal Bawaan"
+			} else if md5ModeSelect.Selected == "Custom Wordlist" {
+				plain, found = security.LookupMD5Custom(rawHash, customList)
+				if !found {
+					plain, found = security.LookupMD5Local(rawHash)
+					source = "Kamus Lokal Bawaan"
+				} else {
+					source = "Wordlist Kustom Pengguna"
+				}
+			} else {
+				res, err := security.ReverseMD5Hybrid(ctx, rawHash, customList)
+				if err == nil && res != nil {
+					plain = res.Plaintext
+					source = res.Source
+					found = true
+				}
+			}
+
+			// Render update to GUI
+			if p.window != nil {
+				if found && plain != "" {
+					md5StatusBadgeBox.Objects = nil
+					md5StatusBadgeBox.Add(components.BadgeSuccess("DITEMUKAN"))
+					md5StatusBadgeBox.Add(components.BadgeCyan("Sumber: " + source))
+					md5StatusBadgeBox.Refresh()
+
+					md5ResultEntry.SetText(fmt.Sprintf("Plaintext: %s\nHash MD5 : %s\nSumber   : %s", plain, rawHash, source))
+					dialog.ShowInformation("Hash Terpecahkan!", fmt.Sprintf("Plaintext ditemukan: %s\n(Sumber: %s)", plain, source), p.window)
+				} else {
+					md5StatusBadgeBox.Objects = nil
+					md5StatusBadgeBox.Add(components.BadgeDanger("TIDAK DITEMUKAN"))
+					md5StatusBadgeBox.Refresh()
+
+					md5ResultEntry.SetText("Hash MD5 tidak ditemukan pada kamus lokal maupun server online.\nTips: Coba gunakan Custom Wordlist atau kombinasikan dengan kamus kata sandi yang lebih spesifik.")
+				}
+			}
+		}()
+	})
+	btnCrackMD5.Importance = widget.HighImportance
+
+	md5DecryptBox := container.NewVBox(
+		widget.NewLabelWithStyle("MD5 Decrypt (Reverse Hash Lookup):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Pencarian plaintext dari hash MD5 menggunakan database rainbow table online dan kamus offline."),
+		container.NewHBox(
+			widget.NewLabel("Target Hash MD5:"),
+			widget.NewLabel("Metode:"),
+			md5ModeSelect,
+		),
+		md5InputEntry,
+		md5CustomWordsEntry,
+		btnCrackMD5,
+		widget.NewSeparator(),
+		container.NewBorder(nil, nil, widget.NewLabelWithStyle("Status Hasil:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), md5StatusBadgeBox),
+		md5ResultEntry,
+		widget.NewButtonWithIcon("Salin Hasil Plaintext", theme.ContentCopyIcon(), func() {
+			if md5ResultEntry.Text != "" {
+				p.copyToClip(md5ResultEntry.Text)
+			}
+		}),
+	)
+	md5DecryptBox.Hide()
 
 	// Main mode switcher for Tab 4
 	toolsRadio := widget.NewRadioGroup([]string{
@@ -1020,11 +1246,15 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 		"Penerjemah ASCII (ASCII Translator)",
 		"JWT Inspector (Offline Token Decoder)",
 		"Multi-Encoder & Hash Identifier",
+		"Key Decryptor (AES, DES, Vigenere, XOR)",
+		"MD5 Decrypt (Reverse Hash Lookup)",
 	}, func(s string) {
 		asciiTableBox.Hide()
 		asciiTranslatorBox.Hide()
 		jwtBox.Hide()
 		encoderBox.Hide()
+		keyDecryptBox.Hide()
+		md5DecryptBox.Hide()
 
 		switch s {
 		case "Tabel ASCII & Lookup (0-255)":
@@ -1035,19 +1265,25 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 			jwtBox.Show()
 		case "Multi-Encoder & Hash Identifier":
 			encoderBox.Show()
+		case "Key Decryptor (AES, DES, Vigenere, XOR)":
+			keyDecryptBox.Show()
+		case "MD5 Decrypt (Reverse Hash Lookup)":
+			md5DecryptBox.Show()
 		}
 	})
 	toolsRadio.Horizontal = false
 	toolsRadio.SetSelected("Tabel ASCII & Lookup (0-255)")
 
 	rootCard := components.NewPlainCardWithAccent(container.NewVBox(
-		widget.NewLabelWithStyle("Pilih Perkakas Encoder & ASCII:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Pilih Perkakas Encoder & Kriptografi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		toolsRadio,
 		widget.NewSeparator(),
 		asciiTableBox,
 		asciiTranslatorBox,
 		jwtBox,
 		encoderBox,
+		keyDecryptBox,
+		md5DecryptBox,
 	), constants.ColorAccentCyan)
 
 	return container.NewVScroll(container.NewVBox(
