@@ -325,7 +325,7 @@ type MainWindow struct {
 }
 
 func NewMainWindow(app fyne.App) *MainWindow {
-	win := app.NewWindow(constants.AppTitle + " — " + constants.AppSubtitle)
+	win := app.NewWindow(constants.AppTitle + ": " + constants.AppSubtitle)
 	win.Resize(fyne.NewSize(constants.DefaultWinW, constants.DefaultWinH))
 	win.CenterOnScreen()
 
@@ -364,7 +364,7 @@ func NewMainWindow(app fyne.App) *MainWindow {
 	win.SetContent(mw.RootContainer)
 	mw.showPage(constants.NavToolbox)
 
-	// Keyboard shortcuts: F11 for fullscreen, B or M to toggle sidebar
+	// Global Keyboard shortcuts: F11 fullscreen, B/M sidebar, Ctrl+K / Ctrl+F quick tool finder
 	win.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		if k.Name == fyne.KeyF11 {
 			isFull := !win.FullScreen()
@@ -376,6 +376,23 @@ func NewMainWindow(app fyne.App) *MainWindow {
 		} else if k.Name == fyne.KeyB || k.Name == fyne.KeyM {
 			mw.ToggleSidebar()
 		}
+	})
+
+	// Add desktop shortcut for Ctrl+K and Ctrl+F Command Palette
+	cmdPaletteCustom := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyK,
+		Modifier: fyne.KeyModifierShortcutDefault,
+	}
+	win.Canvas().AddShortcut(cmdPaletteCustom, func(_ fyne.Shortcut) {
+		mw.OpenCommandPalette()
+	})
+
+	cmdFindCustom := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyF,
+		Modifier: fyne.KeyModifierShortcutDefault,
+	}
+	win.Canvas().AddShortcut(cmdFindCustom, func(_ fyne.Shortcut) {
+		mw.OpenCommandPalette()
 	})
 
 	// Prompt for initial desktop / start menu shortcut setup on fresh run
@@ -621,8 +638,14 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 		subRow,
 	)
 
+	quickSearchBtn := widget.NewButtonWithIcon("Cari Tools (Ctrl+K)...", theme.SearchIcon(), func() {
+		m.OpenCommandPalette()
+	})
+	quickSearchBtn.Importance = widget.LowImportance
+
 	headerCard := container.NewVBox(
 		container.NewPadded(brandBox),
+		quickSearchBtn,
 		widget.NewSeparator(),
 	)
 
@@ -817,7 +840,13 @@ func (m *MainWindow) buildLayout() fyne.CanvasObject {
 	})
 	topFullBtn.Importance = widget.LowImportance
 
-	topActions := container.NewHBox(topThemeBtn, topFullBtn)
+	var topSearchBtn *widget.Button
+	topSearchBtn = widget.NewButtonWithIcon("Cari Tools (Ctrl+K)", theme.SearchIcon(), func() {
+		m.OpenCommandPalette()
+	})
+	topSearchBtn.Importance = widget.LowImportance
+
+	topActions := container.NewHBox(topSearchBtn, topThemeBtn, topFullBtn)
 	topBar := container.NewBorder(nil, nil, m.openSidebarBtn, topActions)
 	m.topBarWrapper = container.NewVBox(topBar, widget.NewSeparator())
 	m.topBarWrapper.Hide()
@@ -972,6 +1001,53 @@ func (m *MainWindow) ToggleSidebar() {
 	})
 	m.sidebarAnim.Curve = fyne.AnimationEaseInOut
 	m.sidebarAnim.Start()
+}
+
+// OpenCommandPalette opens the quick tool finder modal
+func (m *MainWindow) OpenCommandPalette() {
+	components.ShowCommandPalette(m.Window, func(pageName, tabName string) {
+		m.NavigateTo(pageName, tabName)
+	})
+}
+
+// NavigateTo opens a specific page and automatically selects the target tab
+func (m *MainWindow) NavigateTo(pageName, tabName string) {
+	if pageName == "" {
+		return
+	}
+	m.showPage(pageName)
+
+	if tabName == "" {
+		return
+	}
+
+	// Trigger specific tab selection if supported
+	switch pageName {
+	case constants.NavToolbox:
+		if m.calcPage != nil {
+			m.calcPage.SelectTab(tabName)
+		}
+	case constants.NavSecurity:
+		if m.securityPage != nil {
+			m.securityPage.SelectTab(tabName)
+		}
+	case constants.NavFileConverter:
+		if m.fileConvPage != nil {
+			m.fileConvPage.SelectTab(tabName)
+		}
+	case constants.NavCisco:
+		if m.ciscoPage != nil {
+			m.ciscoPage.SelectTab(tabName)
+		}
+	case constants.NavDatabase:
+		if m.dbSchemaPage != nil {
+			m.dbSchemaPage.SelectTab(tabName)
+		}
+	case constants.NavReference:
+		if m.refPage != nil {
+			m.refPage.SelectTab(tabName)
+		}
+	}
 }
 
 // ShowPage switches the active page

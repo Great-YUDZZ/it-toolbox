@@ -3,7 +3,7 @@ package constants
 import "image/color"
 
 // ============================================================================
-// DESIGN TOKEN SYSTEM — Neo-Brutalism & Neumorphism / Glassmorphism Multi-Theme
+// DESIGN TOKEN SYSTEM: Neo-Brutalism & Neumorphism / Glassmorphism Multi-Theme
 // ============================================================================
 
 const (
@@ -90,7 +90,7 @@ func SetTheme(themeName string) {
 		CurrentBorderWidth = BorderWidthNeumorph
 		CurrentBadgeRadius = CornerRadiusPill
 
-		// Glassmorphic Neumorphism (Soft Glass UI) — Luminous Frosted Glass over Cool Ambient Ice
+		// Glassmorphic Neumorphism (Soft Glass UI): Luminous Frosted Glass over Cool Ambient Ice
 		ColorBgBase = color.RGBA{R: 0xEF, G: 0xF4, B: 0xFA, A: 0xFF}      // Ethereal ice/pearl canvas
 		ColorBgSidebar = color.RGBA{R: 0xE8, G: 0xEE, B: 0xF7, A: 0xFF}   // Soft frosted sidebar
 		ColorBgCard = color.RGBA{R: 0xFF, G: 0xFF, B: 0xFF, A: 0xFF}      // Luminous frosted white glass card

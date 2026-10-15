@@ -4,6 +4,25 @@ Semua perubahan dan pembaruan penting pada proyek **IT Toolbox** didokumentasika
 
 Format berkas ini mengacu pada [Keep a Changelog](https://keepachangelog.com/id/1.0.0/) dan menganut prinsip [Semantic Versioning](https://semver.org/).
 
+## [1.8.0] - 2026-10-15
+
+### Fitur Baru
+- **Blockchain & Base Converter untuk CTF Web3 (`core/security/blockchain.go`)**:
+  - **Konversi Basis Bilangan Multi-Radiks & BigInt (256-bit Safe)**: Menerjemahkan bilangan Hexadecimal (0x), Decimal, Binary (0b), dan Octal (0o) dengan aman dari overflow 64-bit menggunakan `math/big.Int`. Menyediakan metrik panjang bit dan byte.
+  - **Kalkulator Satuan Ethereum**: Konversi presisi tinggi tanpa distorsi pembulatan antara Wei (10^0), Gwei (10^9), dan Ether (10^18) menggunakan `math/big.Float` 256-bit.
+  - **Solidity 4-Byte EVM Function Selector**: Kalkulasi 4-byte selector method EVM dari signature Solidity via hash Keccak-256 (contoh: `transfer(address,uint256)` -> `0xa9059cbb`).
+  - **Ethereum Keccak-256 Hashing**: Pemanfaatan algoritma Keccak-256 asli Ethereum melalui pustaka `golang.org/x/crypto/sha3`.
+  - **Base58 Encoder & Decoder**: Transformasi data biner ke Base58 standar Bitcoin dan IPFS dengan penanganan leading zeros yang akurat.
+  - **Byte Order Swapper**: Pembalik urutan byte string heksadesimal antara format Big-Endian dan Little-Endian.
+  - **Calldata Hex <-> Teks ASCII**: Penerjemah timbal balik antara calldata hex dan teks ASCII/UTF-8.
+- **Kartu Panduan Format & Tombol Contoh Uji Cepat (Cyber Security Hub)**:
+  - Kartu panduan format dan tombol contoh target pada Tab Port Scanner (`scanme.nmap.org`).
+  - Kartu panduan format dan tombol contoh target pada Tab Web SSL (`https://cloudflare.com`).
+  - Kartu panduan format berkas multi-hash dan log pada Tab Forensik.
+  - Kartu panduan format kunci enkripsi simetris, MD5, dan tombol `Muat Contoh MD5` pada Tab Kriptografi.
+- **Global Command Palette (`Ctrl+K`)**:
+  - Penambahan registrasi alat `sec_blockchain` dengan kata kunci blockchain, ctf, hex, bigint, wei, gwei, ether, base58, keccak, solidity, endian, calldata, abi.
+
 ---
 
 ## [1.7.0] - 2026-10-14

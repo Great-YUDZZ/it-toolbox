@@ -3,6 +3,7 @@ package pages
 import (
 	"fmt"
 	"image/color"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -17,7 +18,8 @@ import (
 )
 
 type ReferencePage struct {
-	window fyne.Window
+	window  fyne.Window
+	appTabs *container.AppTabs
 }
 
 func NewReferencePage(win fyne.Window) *ReferencePage {
@@ -31,13 +33,25 @@ func (p *ReferencePage) Build() fyne.CanvasObject {
 		components.BadgeCyan("DOCS & REFERENCE"),
 	)
 
-	tabs := container.NewAppTabs(
+	p.appTabs = container.NewAppTabs(
 		container.NewTabItemWithIcon(constants.TabCommands, theme.DocumentIcon(), p.buildCommandsTab()),
 		container.NewTabItemWithIcon(constants.TabPorts, theme.RadioButtonIcon(), p.buildPortsTab()),
 		container.NewTabItemWithIcon(constants.TabHTTPCodes, theme.InfoIcon(), p.buildHTTPCodesTab()),
 	)
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	return container.NewBorder(hero, nil, nil, nil, p.appTabs)
+}
+
+func (p *ReferencePage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 func (p *ReferencePage) copyToClip(txt string) {

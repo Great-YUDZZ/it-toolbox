@@ -22,6 +22,7 @@ type CiscoPage struct {
 	window fyne.Window
 
 	cachedView fyne.CanvasObject
+	appTabs    *container.AppTabs
 
 	searchQuery      string
 	selectedDevice   cisco.DeviceType
@@ -108,8 +109,21 @@ func (p *CiscoPage) Build() fyne.CanvasObject {
 		}
 	}
 
+	p.appTabs = tabs
 	p.cachedView = container.NewBorder(hero, nil, nil, nil, tabs)
 	return p.cachedView
+}
+
+func (p *CiscoPage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 func (p *CiscoPage) buildCategoryView(cat cisco.Category) fyne.CanvasObject {

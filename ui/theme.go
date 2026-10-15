@@ -10,7 +10,7 @@ import (
 )
 
 // ============================================================================
-// DESIGN TOKEN SYSTEM — Dynamic Theme Support (Neo-Brutalism & Neumorphism)
+// DESIGN TOKEN SYSTEM: Dynamic Theme Support (Neo-Brutalism & Neumorphism)
 // ============================================================================
 
 // Local mirror variables initialized from constants

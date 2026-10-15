@@ -18,7 +18,8 @@ import (
 )
 
 type SecurityPage struct {
-	window fyne.Window
+	window  fyne.Window
+	appTabs *container.AppTabs
 }
 
 func NewSecurityPage(win fyne.Window) *SecurityPage {
@@ -40,7 +41,7 @@ func (p *SecurityPage) Build() fyne.CanvasObject {
 		components.BadgeIndigo("CYBER SECURITY HUB PRO"),
 	)
 
-	tabs := container.NewAppTabs(
+	p.appTabs = container.NewAppTabs(
 		container.NewTabItemWithIcon(constants.TabSecurityScanner, theme.SearchIcon(), p.buildPortScannerTab()),
 		container.NewTabItemWithIcon(constants.TabSecurityWebSSL, theme.VisibilityIcon(), p.buildWebSSLTab()),
 		container.NewTabItemWithIcon(constants.TabSecurityForensics, theme.FileIcon(), p.buildForensicsTab()),
@@ -48,7 +49,19 @@ func (p *SecurityPage) Build() fyne.CanvasObject {
 		container.NewTabItemWithIcon(constants.TabSecurityPlaybook, theme.DocumentIcon(), p.buildPlaybookTab()),
 	)
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	return container.NewBorder(hero, nil, nil, nil, p.appTabs)
+}
+
+func (p *SecurityPage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -220,6 +233,21 @@ func (p *SecurityPage) buildPortScannerTab() fyne.CanvasObject {
 		dialog.ShowInformation("Ekspor Berhasil", "Laporan hasil audit port telah disalin ke clipboard.", p.window)
 	})
 
+	btnSampleScan := widget.NewButtonWithIcon("Contoh Target", theme.HelpIcon(), func() {
+		hostEntry.SetText("scanme.nmap.org")
+		portRangeEntry.SetText("22, 80, 443, 8080, 1000-1024")
+		timeoutSelect.SetSelected("350 ms (Standar Internet)")
+	})
+	btnSampleScan.Importance = widget.LowImportance
+
+	formatGuidePortLbl := widget.NewLabel("Host/IP Target: IPv4 (contoh: 192.168.1.1, 127.0.0.1) atau Domain FQDN (contoh: scanme.nmap.org, example.com).\nFormat Port: Port tunggal (80), daftar koma (21, 22, 80, 443), atau rentang strip (8000-8080, 1-1024).")
+	formatGuidePortLbl.Wrapping = fyne.TextWrapWord
+
+	formatGuidePort := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Panduan Format Input Port Scanner:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		formatGuidePortLbl,
+	), constants.ColorBorderSubtle)
+
 	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("Parameter Target Pemindaian Port:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		container.NewGridWithColumns(3,
@@ -233,6 +261,7 @@ func (p *SecurityPage) buildPortScannerTab() fyne.CanvasObject {
 			btnScan,
 			btnStop,
 			btnExport,
+			btnSampleScan,
 		),
 		progressBar,
 		container.NewBorder(nil, nil, statusLabel, badgeCountBox),
@@ -244,6 +273,7 @@ func (p *SecurityPage) buildPortScannerTab() fyne.CanvasObject {
 	), constants.ColorSuccess)
 
 	return container.NewVScroll(container.NewVBox(
+		formatGuidePort,
 		inputCard,
 		resultsCard,
 	))
@@ -403,11 +433,22 @@ func (p *SecurityPage) buildWebSSLTab() fyne.CanvasObject {
 			})
 		}()
 	})
-	btnAudit.Importance = widget.HighImportance
+	btnSampleWeb := widget.NewButtonWithIcon("Contoh Target", theme.HelpIcon(), func() {
+		urlEntry.SetText("https://cloudflare.com")
+	})
+	btnSampleWeb.Importance = widget.LowImportance
+
+	formatGuideWebSSLLbl := widget.NewLabel("Format URL: Masukkan protokol lengkap https://domain.com (contoh: https://google.com) atau nama domain langsung (contoh: github.com, cloudflare.com).\nCatatan: Pemeriksaan sertifikat TLS menggunakan port 443 standar, sedangkan security headers diperiksa melalui HTTP/HTTPS response.")
+	formatGuideWebSSLLbl.Wrapping = fyne.TextWrapWord
+
+	formatGuideWebSSL := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Panduan Format Input Web & SSL Scanner:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		formatGuideWebSSLLbl,
+	), constants.ColorBorderSubtle)
 
 	inputCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("Target Audit Web & Keamanan Domain:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		container.NewBorder(nil, nil, nil, btnAudit, urlEntry),
+		container.NewBorder(nil, nil, nil, container.NewHBox(btnAudit, btnSampleWeb), urlEntry),
 		statusLabel,
 	), constants.ColorAccentCyan)
 
@@ -431,6 +472,7 @@ func (p *SecurityPage) buildWebSSLTab() fyne.CanvasObject {
 	), constants.ColorAccentCobalt)
 
 	return container.NewVScroll(container.NewVBox(
+		formatGuideWebSSL,
 		inputCard,
 		sslCard,
 		headerCard,
@@ -716,6 +758,14 @@ Oct 12 04:05:12 web-server sshd[2845]: Accepted publickey for yudz from 192.168.
 	modeRadio.Horizontal = false
 	modeRadio.SetSelected("Integritas & Multi-Hash Berkas")
 
+	formatGuideForensicsLbl := widget.NewLabel("1. Integritas Berkas: Semua jenis berkas biner/teks (exe, zip, iso, pdf, dll). Hash pembanding mendukung format heksadesimal 32 karakter (MD5), 40 karakter (SHA-1), 64 karakter (SHA-256), atau 128 karakter (SHA-512).\n2. Log Linux/SSH: Format syslog auth.log standar (contoh: 'Oct 12 04:02:11 host sshd[123]: Failed password for root from 1.2.3.4 port 22 ssh2').\n3. Log Web Server: Format Nginx/Apache Combined Log Format (contoh: '1.2.3.4 - - [12/Oct/2026:04:02:11 +0000] \"GET /index.php HTTP/1.1\" 200 452').")
+	formatGuideForensicsLbl.Wrapping = fyne.TextWrapWord
+
+	formatGuideForensics := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Panduan Format Input Forensik & Log Audit:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		formatGuideForensicsLbl,
+	), constants.ColorBorderSubtle)
+
 	rootCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("Pilih Mode Forensik Keamanan:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		modeRadio,
@@ -725,6 +775,7 @@ Oct 12 04:05:12 web-server sshd[2845]: Accepted publickey for yudz from 192.168.
 	), constants.ColorAccentCyan)
 
 	return container.NewVScroll(container.NewVBox(
+		formatGuideForensics,
 		rootCard,
 	))
 }
@@ -1218,6 +1269,11 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 	})
 	btnCrackMD5.Importance = widget.HighImportance
 
+	btnSampleMD5 := widget.NewButtonWithIcon("Muat Contoh MD5", theme.HelpIcon(), func() {
+		md5InputEntry.SetText("5f4dcc3b5aa765d61d8327deb882cf99")
+	})
+	btnSampleMD5.Importance = widget.LowImportance
+
 	md5DecryptBox := container.NewVBox(
 		widget.NewLabelWithStyle("MD5 Decrypt (Reverse Hash Lookup):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Pencarian plaintext dari hash MD5 menggunakan database rainbow table online dan kamus offline."),
@@ -1225,6 +1281,7 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 			widget.NewLabel("Target Hash MD5:"),
 			widget.NewLabel("Metode:"),
 			md5ModeSelect,
+			btnSampleMD5,
 		),
 		md5InputEntry,
 		md5CustomWordsEntry,
@@ -1240,6 +1297,305 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 	)
 	md5DecryptBox.Hide()
 
+	// Sub-mode 7: Blockchain & Base Converter (Hex, BigInt, Wei, Base58, ABI)
+	baseInputEntry := components.NewScrollableEntry()
+	baseInputEntry.SetPlaceHolder("Masukkan angka (contoh: 0x2a, 42, 0b101010, atau angka besar 256-bit)...")
+	baseInputEntry.SetText("0x2a")
+
+	baseRadixSelect := widget.NewSelect([]string{
+		"Auto Detect (0x, 0b, 0o, desimal)",
+		"Hexadecimal (Basis 16)",
+		"Decimal (Basis 10)",
+		"Binary (Basis 2)",
+		"Octal (Basis 8)",
+	}, nil)
+	baseRadixSelect.SetSelected("Auto Detect (0x, 0b, 0o, desimal)")
+
+	btnSampleBase := widget.NewButtonWithIcon("Muat Contoh BigInt", theme.HelpIcon(), func() {
+		baseRadixSelect.SetSelected("Hexadecimal (Basis 16)")
+		baseInputEntry.SetText("0xde0b6b3a7640000") // 1 Ether in Wei (10^18)
+	})
+	btnSampleBase.Importance = widget.LowImportance
+
+	baseResultDec := components.NewScrollableEntry()
+	baseResultDec.Disable()
+	baseResultHex := components.NewScrollableEntry()
+	baseResultHex.Disable()
+	baseResultBin := components.NewScrollableEntry()
+	baseResultBin.Disable()
+	baseResultOct := components.NewScrollableEntry()
+	baseResultOct.Disable()
+	baseMetaBadgeBox := container.NewHBox(
+		components.BadgeCyan("0 BITS"),
+		components.BadgeIndigo("0 BYTES"),
+	)
+
+	makeCopyRow := func(title string, entry *widget.Entry) fyne.CanvasObject {
+		btnCopy := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {
+			if entry.Text != "" {
+				p.copyToClip(entry.Text)
+			}
+		})
+		btnCopy.Importance = widget.LowImportance
+		return container.NewBorder(
+			nil, nil,
+			container.NewHBox(widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})),
+			btnCopy,
+			entry,
+		)
+	}
+
+	btnConvertBase := widget.NewButtonWithIcon("Konversi Bilangan Basis", theme.ViewRefreshIcon(), func() {
+		raw := strings.TrimSpace(baseInputEntry.Text)
+		if raw == "" {
+			dialog.ShowInformation("Perhatian", "Masukkan bilangan terlebih dahulu.", p.window)
+			return
+		}
+
+		var mode string
+		switch baseRadixSelect.Selected {
+		case "Hexadecimal (Basis 16)":
+			mode = "hex"
+		case "Decimal (Basis 10)":
+			mode = "dec"
+		case "Binary (Basis 2)":
+			mode = "bin"
+		case "Octal (Basis 8)":
+			mode = "oct"
+		default:
+			mode = "auto"
+		}
+
+		res, err := security.ConvertBaseNumber(raw, mode)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			return
+		}
+
+		baseResultDec.SetText(res.Decimal)
+		baseResultHex.SetText(res.Hex)
+		baseResultBin.SetText(res.Binary)
+		baseResultOct.SetText(res.Octal)
+
+		baseMetaBadgeBox.Objects = nil
+		baseMetaBadgeBox.Add(components.BadgeCyan(fmt.Sprintf("%d BITS", res.BitLen)))
+		baseMetaBadgeBox.Add(components.BadgeIndigo(fmt.Sprintf("%d BYTES", res.ByteLen)))
+		baseMetaBadgeBox.Refresh()
+	})
+	btnConvertBase.Importance = widget.HighImportance
+
+	// 2. Ethereum Unit Converter
+	weiInputEntry := components.NewScrollableEntry()
+	weiInputEntry.SetPlaceHolder("Jumlah nilai (contoh: 1.5 atau 1000000000000000000)...")
+	weiInputEntry.SetText("1")
+
+	weiUnitSelect := widget.NewSelect([]string{"Ether (ETH)", "Gwei", "Wei"}, nil)
+	weiUnitSelect.SetSelected("Ether (ETH)")
+
+	btnSampleWei := widget.NewButtonWithIcon("Muat 1 ETH", theme.HelpIcon(), func() {
+		weiUnitSelect.SetSelected("Ether (ETH)")
+		weiInputEntry.SetText("1")
+	})
+	btnSampleWei.Importance = widget.LowImportance
+
+	weiResWei := components.NewScrollableEntry()
+	weiResWei.Disable()
+	weiResGwei := components.NewScrollableEntry()
+	weiResGwei.Disable()
+	weiResEth := components.NewScrollableEntry()
+	weiResEth.Disable()
+
+	btnConvertWei := widget.NewButtonWithIcon("Kalkulasi Unit Ethereum", theme.ViewRefreshIcon(), func() {
+		amt := strings.TrimSpace(weiInputEntry.Text)
+		if amt == "" {
+			dialog.ShowInformation("Perhatian", "Masukkan jumlah saldo.", p.window)
+			return
+		}
+
+		var u string
+		switch weiUnitSelect.Selected {
+		case "Ether (ETH)":
+			u = "ether"
+		case "Gwei":
+			u = "gwei"
+		default:
+			u = "wei"
+		}
+
+		res, err := security.ConvertWei(amt, u)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			return
+		}
+
+		weiResWei.SetText(res.Wei)
+		weiResGwei.SetText(res.Gwei)
+		weiResEth.SetText(res.Ether)
+	})
+	btnConvertWei.Importance = widget.HighImportance
+
+	// 3. Web3, ABI, & CTF Encodings
+	selectorInput := components.NewScrollableEntry()
+	selectorInput.SetPlaceHolder("Solidity function signature (contoh: transfer(address,uint256))...")
+	selectorInput.SetText("transfer(address,uint256)")
+
+	selectorOutput := components.NewScrollableEntry()
+	selectorOutput.Disable()
+
+	btnCalcSelector := widget.NewButtonWithIcon("Hitung 4-Byte Selector", theme.ConfirmIcon(), func() {
+		sig := strings.TrimSpace(selectorInput.Text)
+		if sig == "" {
+			dialog.ShowInformation("Perhatian", "Masukkan signature fungsi Solidity.", p.window)
+			return
+		}
+		sel := security.ComputeFunctionSelector(sig)
+		hash := security.Keccak256Hash([]byte(sig))
+		selectorOutput.SetText(fmt.Sprintf("Selector: %s | Full Keccak256: %s", sel, hash))
+	})
+	btnCalcSelector.Importance = widget.LowImportance
+
+	btnCopySelector := widget.NewButtonWithIcon("Salin Selector", theme.ContentCopyIcon(), func() {
+		if selectorOutput.Text != "" {
+			p.copyToClip(selectorOutput.Text)
+		}
+	})
+	btnCopySelector.Importance = widget.LowImportance
+
+	endianInput := components.NewScrollableEntry()
+	endianInput.SetPlaceHolder("Hex input untuk dibalik endianness (contoh: 0x12345678)...")
+	endianInput.SetText("0x12345678")
+
+	endianOutput := components.NewScrollableEntry()
+	endianOutput.Disable()
+
+	btnSwapEndian := widget.NewButtonWithIcon("Balik Endianness", theme.ViewRefreshIcon(), func() {
+		res, err := security.ReverseEndiannessHex(endianInput.Text)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			return
+		}
+		endianOutput.SetText(res)
+	})
+	btnSwapEndian.Importance = widget.LowImportance
+
+	btnCopyEndian := widget.NewButtonWithIcon("Salin Endian", theme.ContentCopyIcon(), func() {
+		if endianOutput.Text != "" {
+			p.copyToClip(endianOutput.Text)
+		}
+	})
+	btnCopyEndian.Importance = widget.LowImportance
+
+	b58Input := components.NewScrollableEntry()
+	b58Input.SetPlaceHolder("Teks atau Base58 string (contoh: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa)...")
+	b58Input.SetText("Hello Web3")
+
+	b58Output := components.NewScrollableEntry()
+	b58Output.Disable()
+
+	btnEncodeB58 := widget.NewButton("Encode Base58", func() {
+		res := security.EncodeBase58([]byte(b58Input.Text))
+		b58Output.SetText(res)
+	})
+	btnEncodeB58.Importance = widget.LowImportance
+
+	btnDecodeB58 := widget.NewButton("Decode Base58", func() {
+		bytes, err := security.DecodeBase58(b58Input.Text)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			return
+		}
+		b58Output.SetText(string(bytes))
+	})
+	btnDecodeB58.Importance = widget.LowImportance
+
+	btnCopyB58 := widget.NewButtonWithIcon("Salin Base58", theme.ContentCopyIcon(), func() {
+		if b58Output.Text != "" {
+			p.copyToClip(b58Output.Text)
+		}
+	})
+	btnCopyB58.Importance = widget.LowImportance
+
+	calldataInput := components.NewScrollableEntry()
+	calldataInput.SetPlaceHolder("Hex calldata (0x48656c6c6f) atau teks ASCII biasa...")
+	calldataInput.SetText("0x48656c6c6f2057656233")
+
+	calldataOutput := components.NewScrollableEntry()
+	calldataOutput.Disable()
+
+	btnHexToAscii := widget.NewButton("Hex ke ASCII", func() {
+		res, err := security.HexToASCII(calldataInput.Text)
+		if err != nil {
+			dialog.ShowError(err, p.window)
+			return
+		}
+		calldataOutput.SetText(res)
+	})
+	btnHexToAscii.Importance = widget.LowImportance
+
+	btnAsciiToHex := widget.NewButton("ASCII ke Hex", func() {
+		res := security.ASCIIToHex(calldataInput.Text)
+		calldataOutput.SetText(res)
+	})
+	btnAsciiToHex.Importance = widget.LowImportance
+
+	btnCopyCalldata := widget.NewButtonWithIcon("Salin Calldata", theme.ContentCopyIcon(), func() {
+		if calldataOutput.Text != "" {
+			p.copyToClip(calldataOutput.Text)
+		}
+	})
+	btnCopyCalldata.Importance = widget.LowImportance
+
+	blockchainBox := container.NewVBox(
+		widget.NewLabelWithStyle("Blockchain & Base Converter (Hex, BigInt, Wei, Base58, EVM ABI):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Peralatan komprehensif untuk analisis bilangan multi-radiks presisi tinggi, kalkulasi mata uang EVM, dan decoding CTF Blockchain."),
+		widget.NewSeparator(),
+
+		// Bagian 1
+		widget.NewLabelWithStyle("1. Konversi Bilangan Multi-Radiks & BigInt (256-bit Safe):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewGridWithColumns(3,
+			baseInputEntry,
+			baseRadixSelect,
+			container.NewHBox(btnConvertBase, btnSampleBase),
+		),
+		baseMetaBadgeBox,
+		makeCopyRow("Desimal (Dec / BigInt):", baseResultDec),
+		makeCopyRow("Heksadesimal (Hex):     ", baseResultHex),
+		makeCopyRow("Biner (Binary):          ", baseResultBin),
+		makeCopyRow("Oktal (Octal):           ", baseResultOct),
+		widget.NewSeparator(),
+
+		// Bagian 2
+		widget.NewLabelWithStyle("2. Kalkulator Satuan Ethereum (Wei, Gwei, Ether):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewGridWithColumns(3,
+			weiInputEntry,
+			weiUnitSelect,
+			container.NewHBox(btnConvertWei, btnSampleWei),
+		),
+		makeCopyRow("Wei (10^0):   ", weiResWei),
+		makeCopyRow("Gwei (10^9):  ", weiResGwei),
+		makeCopyRow("Ether (10^18):", weiResEth),
+		widget.NewSeparator(),
+
+		// Bagian 3
+		widget.NewLabelWithStyle("3. Solidity ABI & Encodings CTF Web3:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("A. 4-Byte EVM Function Selector (Keccak-256):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, container.NewHBox(btnCalcSelector, btnCopySelector), selectorInput),
+		selectorOutput,
+
+		widget.NewLabelWithStyle("B. Byte Order Swapper (Big-Endian <-> Little-Endian):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, container.NewHBox(btnSwapEndian, btnCopyEndian), endianInput),
+		endianOutput,
+
+		widget.NewLabelWithStyle("C. Base58 Encoder / Decoder (Bitcoin / IPFS):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, container.NewHBox(btnEncodeB58, btnDecodeB58, btnCopyB58), b58Input),
+		b58Output,
+
+		widget.NewLabelWithStyle("D. Calldata Hex <-> Teks ASCII:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewBorder(nil, nil, nil, container.NewHBox(btnHexToAscii, btnAsciiToHex, btnCopyCalldata), calldataInput),
+		calldataOutput,
+	)
+	blockchainBox.Hide()
+
 	// Main mode switcher for Tab 4
 	toolsRadio := widget.NewRadioGroup([]string{
 		"Tabel ASCII & Lookup (0-255)",
@@ -1248,6 +1604,7 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 		"Multi-Encoder & Hash Identifier",
 		"Key Decryptor (AES, DES, Vigenere, XOR)",
 		"MD5 Decrypt (Reverse Hash Lookup)",
+		"Blockchain & Base Converter (Hex, BigInt, Wei, Base58, ABI)",
 	}, func(s string) {
 		asciiTableBox.Hide()
 		asciiTranslatorBox.Hide()
@@ -1255,6 +1612,7 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 		encoderBox.Hide()
 		keyDecryptBox.Hide()
 		md5DecryptBox.Hide()
+		blockchainBox.Hide()
 
 		switch s {
 		case "Tabel ASCII & Lookup (0-255)":
@@ -1269,10 +1627,20 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 			keyDecryptBox.Show()
 		case "MD5 Decrypt (Reverse Hash Lookup)":
 			md5DecryptBox.Show()
+		case "Blockchain & Base Converter (Hex, BigInt, Wei, Base58, ABI)":
+			blockchainBox.Show()
 		}
 	})
 	toolsRadio.Horizontal = false
 	toolsRadio.SetSelected("Tabel ASCII & Lookup (0-255)")
+
+	formatGuideEncodersLbl := widget.NewLabel("1. Key Decryptor: Format input AES/DES mendukung Base64, Hex, atau Plain Text. Kunci rahasia 16 byte (AES-128), 24 byte (AES-192), 32 byte (AES-256), atau 8 byte (DES). Vigenere menggunakan kunci kata alfabet A-Z.\n2. MD5 Decrypt: Masukkan 32 karakter hex MD5 valid (contoh: 5f4dcc3b5aa765d61d8327deb882cf99 untuk 'password').\n3. Blockchain Converter: Mendukung bilangan hex prefiks 0x, biner 0b, oktal 0o, desimal integer hingga 256-bit, konversi saldo Wei/Gwei/Ether, 4-byte selector (contoh: 'transfer(address,uint256)'), dan Base58.")
+	formatGuideEncodersLbl.Wrapping = fyne.TextWrapWord
+
+	formatGuideEncoders := components.NewPlainCardWithAccent(container.NewVBox(
+		widget.NewLabelWithStyle("Panduan Format Input Perkakas Kriptografi & Blockchain:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		formatGuideEncodersLbl,
+	), constants.ColorBorderSubtle)
 
 	rootCard := components.NewPlainCardWithAccent(container.NewVBox(
 		widget.NewLabelWithStyle("Pilih Perkakas Encoder & Kriptografi:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -1284,9 +1652,11 @@ func (p *SecurityPage) buildEncodersASCIITab() fyne.CanvasObject {
 		encoderBox,
 		keyDecryptBox,
 		md5DecryptBox,
+		blockchainBox,
 	), constants.ColorAccentCyan)
 
 	return container.NewVScroll(container.NewVBox(
+		formatGuideEncoders,
 		rootCard,
 	))
 }

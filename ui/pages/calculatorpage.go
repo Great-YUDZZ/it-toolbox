@@ -25,7 +25,8 @@ import (
 )
 
 type CalculatorPage struct {
-	window fyne.Window
+	window  fyne.Window
+	appTabs *container.AppTabs
 }
 
 func NewCalculatorPage(win fyne.Window) *CalculatorPage {
@@ -39,14 +40,26 @@ func (p *CalculatorPage) Build() fyne.CanvasObject {
 		components.BadgeCyan("NETWORK & CODE"),
 	)
 
-	tabs := container.NewAppTabs(
+	p.appTabs = container.NewAppTabs(
 		container.NewTabItemWithIcon(constants.TabSubnet, theme.ComputerIcon(), p.buildSubnetTab()),
 		container.NewTabItemWithIcon(constants.TabConverter, theme.MenuIcon(), p.buildConverterTab()),
 		container.NewTabItemWithIcon(constants.TabHashGen, theme.VisibilityIcon(), p.buildHashGenTab()),
 		container.NewTabItemWithIcon(constants.TabFormatter, theme.DocumentCreateIcon(), p.buildFormatterTab()),
 	)
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	return container.NewBorder(hero, nil, nil, nil, p.appTabs)
+}
+
+func (p *CalculatorPage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 func (p *CalculatorPage) copyToClip(txt string) {

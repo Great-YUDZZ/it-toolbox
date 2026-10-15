@@ -231,3 +231,28 @@ func TestScrollableMultiLineEntryEventPropagation(t *testing.T) {
 		t.Errorf("Expected scroller.Offset.Y to change after scrolling over entry, remained %f", scroller.Offset.Y)
 	}
 }
+
+func TestMainWindowNavigateTo(t *testing.T) {
+	app := test.NewApp()
+	app.Preferences().SetBool("shortcut_configured", true)
+	mw := ui.NewMainWindow(app)
+
+	// Test deep navigation to Cyber Security Hub -> Encoder, JWT & ASCII Tools
+	mw.NavigateTo(constants.NavSecurity, constants.TabSecurityEncoders)
+	if mw.ActiveMenu != constants.NavSecurity {
+		t.Errorf("Expected ActiveMenu to be %s, got %s", constants.NavSecurity, mw.ActiveMenu)
+	}
+
+	// Test deep navigation to Toolbox & Kalkulator -> Subnet & IP
+	mw.NavigateTo(constants.NavToolbox, constants.TabSubnet)
+	if mw.ActiveMenu != constants.NavToolbox {
+		t.Errorf("Expected ActiveMenu to be %s, got %s", constants.NavToolbox, mw.ActiveMenu)
+	}
+
+	// Test deep navigation to File Converter -> Generator QR Code
+	mw.NavigateTo(constants.NavFileConverter, constants.TabQRCode)
+	if mw.ActiveMenu != constants.NavFileConverter {
+		t.Errorf("Expected ActiveMenu to be %s, got %s", constants.NavFileConverter, mw.ActiveMenu)
+	}
+}
+

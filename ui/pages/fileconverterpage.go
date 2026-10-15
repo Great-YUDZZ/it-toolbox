@@ -28,6 +28,7 @@ import (
 type FileConverterPage struct {
 	window       fyne.Window
 	qrFileServer *qrcode.FileShareServer
+	appTabs      *container.AppTabs
 }
 
 func NewFileConverterPage(win fyne.Window) *FileConverterPage {
@@ -41,7 +42,7 @@ func (p *FileConverterPage) Build() fyne.CanvasObject {
 		components.BadgeCyan("FILE CONVERTER PRO"),
 	)
 
-	tabs := container.NewAppTabs(
+	p.appTabs = container.NewAppTabs(
 		container.NewTabItemWithIcon(constants.TabDocConverter, theme.DocumentIcon(), p.buildDocConverterTab()),
 		container.NewTabItemWithIcon(constants.TabImgConverter, theme.FileImageIcon(), p.buildImgConverterTab()),
 		container.NewTabItemWithIcon(constants.TabOCR, theme.VisibilityIcon(), p.buildOCRTab()),
@@ -50,7 +51,19 @@ func (p *FileConverterPage) Build() fyne.CanvasObject {
 		container.NewTabItemWithIcon(constants.TabYouTube, theme.DownloadIcon(), p.buildYouTubeDownloaderTab()),
 	)
 
-	return container.NewBorder(hero, nil, nil, nil, tabs)
+	return container.NewBorder(hero, nil, nil, nil, p.appTabs)
+}
+
+func (p *FileConverterPage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 func (p *FileConverterPage) BuildYouTubePage() fyne.CanvasObject {
@@ -963,7 +976,7 @@ func (p *FileConverterPage) buildYouTubeDownloaderTab() fyne.CanvasObject {
 				func(downloaded, total int64, pct, speed float64, status string) {
 					fyne.Do(func() {
 						downloadProgressBar.SetValue(pct / 100.0)
-						statusLabel.SetText(fmt.Sprintf("[%s] %.1f%% — %s", selectedOption.QualityLabel, pct, status))
+						statusLabel.SetText(fmt.Sprintf("[%s] %.1f%% : %s", selectedOption.QualityLabel, pct, status))
 					})
 				})
 

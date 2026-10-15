@@ -21,6 +21,7 @@ type DBSchemaPage struct {
 	window fyne.Window
 
 	cachedView fyne.CanvasObject
+	appTabs    *container.AppTabs
 
 	// Builder State
 	builderTableDef dbschema.TableDef
@@ -115,8 +116,21 @@ func (p *DBSchemaPage) Build() fyne.CanvasObject {
 		}
 	}
 
+	p.appTabs = tabs
 	p.cachedView = container.NewBorder(hero, nil, nil, nil, tabs)
 	return p.cachedView
+}
+
+func (p *DBSchemaPage) SelectTab(tabName string) {
+	if p.appTabs == nil || tabName == "" {
+		return
+	}
+	for _, item := range p.appTabs.Items {
+		if strings.EqualFold(item.Text, tabName) {
+			p.appTabs.Select(item)
+			return
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------
@@ -440,7 +454,7 @@ func (p *DBSchemaPage) showParameterModal(cmd dbschema.DBCommandItem) {
 func (p *DBSchemaPage) showSQLPreviewModal(tableName, sqlText, engine string, colCount int) {
 	var d dialog.Dialog
 
-	title := canvas.NewText(fmt.Sprintf("Preview DDL SQL — %s", tableName), constants.ColorTextPrimary)
+	title := canvas.NewText(fmt.Sprintf("Preview DDL SQL: %s", tableName), constants.ColorTextPrimary)
 	title.TextSize = constants.FontSizeH2
 	title.TextStyle = fyne.TextStyle{Bold: true}
 

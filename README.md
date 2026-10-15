@@ -69,7 +69,7 @@ IT Toolbox menyediakan paket distribusi siap pakai untuk sistem operasi Linux da
 
 | Modul | Deskripsi Fungsi |
 | :--- | :--- |
-| **Cyber Security Hub** | Network & TCP Port Scanner konkuren (worker pool & banner grabbing), Web & SSL Security Auditor (skoring A+ hingga F, perbaikan konfigurasi Nginx/Apache, audit DNS SPF/DMARC), Forensics & Log Anomaly Parser (1-pass multi-hasher, magic bytes anti-kamuflase, analisis SSH auth & Web log, generator blokir UFW/iptables/PowerShell, VirusTotal v3), Offline JWT Inspector, Identifikasi Hash, dan System Hardening Playbook |
+| **Cyber Security Hub** | Network & TCP Port Scanner konkuren (worker pool & banner grabbing), Web & SSL Security Auditor (skoring A+ hingga F, remediasi Nginx/Apache, audit DNS SPF/DMARC), Forensics & Log Anomaly Parser (1-pass multi-hasher, magic bytes anti-kamuflase, analisis SSH auth & Web log, generator blokir UFW/iptables/PowerShell, VirusTotal v3), Key Decryptor (AES CBC/GCM, DES, 3DES, XOR, Vigenere), MD5 Reverse Hash Lookup hybrid, Blockchain & Base Converter CTF Web3 (Hex, BigInt 256-bit, Wei/Gwei/Ether, 4-byte EVM selector, Base58, Endianness), Offline JWT Inspector, Identifikasi Hash, dan System Hardening Playbook |
 | **Interactive ASCII Suite** | Tabel ASCII lengkap 0-255 (Control, Printable, Extended) dengan pencarian cepat, serta Penerjemah Dua Arah (Teks ke Desimal, Biner, Heksadesimal, Oktal dengan pemisah kustom) |
 | **QR Code & File Sharing** | Pembuat QR code resolusi tinggi untuk teks/URL serta web server HTTP lokal otomatis untuk transfer berkas antar perangkat via WiFi/LAN |
 | **Network Tools** | Kalkulator Subnet IP, Kalkulator CIDR, Usable Host Range Finder, dan Pelacak Diagnostik Jaringan |
